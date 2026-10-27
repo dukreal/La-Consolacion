@@ -1,0 +1,7 @@
+node_modules/
+.env
+_backup/
+backend/uploads/payments/*
+backend/uploads/profile/*
+!backend/uploads/**/.gitkeep
+frontend/dist/
