@@ -3,8 +3,7 @@
 ob_start();
 
 session_start();
-require_once 'db.php';
-
+require_once __DIR__ . '/../../config/db.php';
 // Clear any output buffer
 ob_clean();
 
