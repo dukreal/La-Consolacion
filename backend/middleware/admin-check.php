@@ -10,7 +10,7 @@ if (!isset($_SESSION['user_id'])) {
 }
 
 // Real-time role verification - check database on every page load
-require_once 'db.php';
+require_once __DIR__ . '/../config/db.php';
 
 try {
     $user_id = $_SESSION['user_id'];
