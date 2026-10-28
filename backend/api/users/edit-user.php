@@ -2,8 +2,8 @@
 // Prevent any output before JSON
 ob_start();
 
-require_once 'admin-check.php';
-require_once 'db.php';
+require_once __DIR__ . '/../../middleware/admin-check.php';
+require_once __DIR__ . '/../../config/db.php';
 
 // Clear any output buffer
 ob_clean();

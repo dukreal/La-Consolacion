@@ -1,6 +1,6 @@
 <?php
-require_once 'admin-check.php';
-require_once 'db.php';
+require_once __DIR__ . '/../../middleware/admin-check.php';
+require_once __DIR__ . '/../../config/db.php';
 
 if (!isset($_GET['order_id'])) {
     http_response_code(400);

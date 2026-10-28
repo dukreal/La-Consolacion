@@ -1,5 +1,5 @@
 <?php
-require_once 'db.php';
+require_once __DIR__ . '/../../config/db.php';
 $errors = [];
 if (!isset($_SESSION)) session_start();
 if (!isset($_SESSION['username']) && isset($_SESSION['admin_username'])) {

@@ -1,7 +1,7 @@
 <?php
 session_start();
-require_once 'admin-check.php';
-require_once 'db.php';
+require_once __DIR__ . '/../../middleware/admin-check.php';
+require_once __DIR__ . '/../../config/db.php';
 
 // Check if user is logged in and is admin
 if (!isset($_SESSION['user_id'])) {

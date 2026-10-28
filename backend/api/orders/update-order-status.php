@@ -1,6 +1,6 @@
 <?php
-require_once 'admin-check.php';
-require_once 'db.php';
+require_once __DIR__ . '/../../middleware/admin-check.php';
+require_once __DIR__ . '/../../config/db.php';
 
 // Handle AJAX status update
 if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['order_id'], $_POST['new_status'])) {

@@ -1,5 +1,5 @@
 <?php
-require 'db.php';
+require __DIR__ . '/../../config/db.php';
 
 date_default_timezone_set('Asia/Manila');
 

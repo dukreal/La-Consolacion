@@ -1,7 +1,7 @@
 <?php
 session_start();
-require_once 'admin-check.php';
-require_once 'db.php';
+require_once __DIR__ . '/../../middleware/admin-check.php';
+require_once __DIR__ . '/../../config/db.php';
 
 // Check admin level - only SuperAdmin (level 2) can delete products
 $user_id = $_SESSION['user_id'];

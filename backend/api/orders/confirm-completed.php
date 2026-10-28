@@ -1,6 +1,6 @@
 <?php
-require_once 'admin-check.php';
-require_once 'db.php';
+require_once __DIR__ . '/../../middleware/admin-check.php';
+require_once __DIR__ . '/../../config/db.php';
 
 if (!isset($_POST['order_id'])) exit('Missing order_id');
 $order_id = intval($_POST['order_id']);
