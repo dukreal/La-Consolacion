@@ -1,10 +1,7 @@
 <?php
 session_start();
-
-// Destroy all session data
+$_SESSION = [];
 session_destroy();
 
-// Redirect to main login
-header('Location: login.php');
-exit();
-?> 
+header('Content-Type: application/json');
+echo json_encode(['success' => true]);
