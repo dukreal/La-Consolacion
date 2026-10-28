@@ -1,12 +1,18 @@
+import { Route, Routes } from 'react-router-dom'
+import ComingSoon from './components/common/ComingSoon'
+import PublicLayout from './components/layout/PublicLayout'
+
 export default function App() {
   return (
-    <div className="min-h-screen flex items-center justify-center bg-stone-100">
-      <h1
-        className="text-4xl font-bold text-amber-700"
-        style={{ fontFamily: "'Playfair Display', serif" }}
-      >
-        La Consolacion Jewelry
-      </h1>
-    </div>
+    <Routes>
+      <Route element={<PublicLayout />}>
+        <Route path="/" element={<ComingSoon title="Home" />} />
+        <Route path="/shop" element={<ComingSoon title="Shop" />} />
+        <Route path="/login" element={<ComingSoon title="Login" />} />
+        <Route path="/register" element={<ComingSoon title="Register" />} />
+        <Route path="/profile" element={<ComingSoon title="Profile" />} />
+        <Route path="/admin" element={<ComingSoon title="Admin Dashboard" />} />
+      </Route>
+    </Routes>
   )
 }
