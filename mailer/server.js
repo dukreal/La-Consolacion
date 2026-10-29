@@ -3,6 +3,16 @@ const nodemailer = require("nodemailer");
 const bodyParser = require("body-parser");
 const cors = require("cors");
 
+// Settings come from mailer/.env (never commit that file).
+const MAIL_USER = process.env.MAIL_USER;
+const MAIL_PASS = process.env.MAIL_PASS;
+const PORT = process.env.PORT || 3000;
+
+if (!MAIL_USER || !MAIL_PASS) {
+  console.error("Missing MAIL_USER or MAIL_PASS. Create mailer/.env (see .env.example).");
+  process.exit(1);
+}
+
 const app = express();
 app.use(cors());
 app.use(bodyParser.json());
@@ -12,8 +22,8 @@ app.use(express.urlencoded({ extended: true }));
 const transporter = nodemailer.createTransport({
   service: "gmail",
   auth: {
-    user: "eryndra.quistal@gmail.com", // 1. CHANGE THIS
-    pass: "auhx psgq xrme osll",
+    user: MAIL_USER,
+    pass: MAIL_PASS,
   },
   tls: {
     rejectUnauthorized: false,
@@ -37,7 +47,7 @@ app.post("/send-reset", async (req, res) => {
 
   try {
     await transporter.sendMail({
-      from: '"LA Consolacion Jewelry" <eryndra.quistal@gmail.com>', // 3. CHANGE THIS
+      from: `"LA Consolacion Jewelry" <${MAIL_USER}>`,
       to,
       subject,
       text,
@@ -60,7 +70,7 @@ app.post("/send-order-notification", async (req, res) => {
 
   try {
     const mailOptions = {
-      from: '"LA Consolacion Jewelry" <eryndra.quistal@gmail.com>', // 4. CHANGE THIS
+      from: `"LA Consolacion Jewelry" <${MAIL_USER}>`,
       to,
       subject,
       text,
@@ -82,7 +92,6 @@ app.post("/send-order-notification", async (req, res) => {
 });
 
 // Start the server
-const PORT = 3000;
 app.listen(PORT, () => {
   console.log(`Nodemailer server running on port ${PORT}`);
 });

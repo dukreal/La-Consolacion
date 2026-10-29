@@ -1,4 +1,9 @@
 {
+  "name": "lcj-mailer",
+  "private": true,
+  "scripts": {
+    "start": "node --env-file=.env server.js"
+  },
   "dependencies": {
     "body-parser": "^2.2.0",
     "cors": "^2.8.5",

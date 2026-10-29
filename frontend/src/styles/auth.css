@@ -1,0 +1,243 @@
+/* Styles for the login, register, forgot/reset password and verify-email pages.
+   Ported from the "Login & Registration Form Styles" section of the old style.css. */
+
+.form-bg {
+  min-height: 100vh;
+  width: 100%;
+  background: linear-gradient(120deg, #f5f6fa 60%, #eaf3fa 100%);
+  font-family: "Segoe UI", Arial, sans-serif;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  position: relative;
+  overflow-y: auto;
+  padding-bottom: 40px;
+  z-index: 0;
+}
+
+.form-container {
+  width: 100%;
+  max-width: 400px;
+  margin: 60px auto 40px auto;
+  background: #fff;
+  border-radius: 18px;
+  box-shadow: 0 8px 32px rgba(34, 48, 106, 0.1);
+  padding: 2.5rem 2rem 2rem 2rem;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  z-index: 2;
+}
+.form-container h2 {
+  font-family: "Playfair Display", serif;
+  color: #22306a;
+  font-size: 2rem;
+  font-weight: 700;
+  margin-bottom: 1.5rem;
+}
+.form-container form {
+  width: 100%;
+  display: flex;
+  flex-direction: column;
+  gap: 1.1rem;
+}
+.form-container input[type="text"],
+.form-container input[type="email"],
+.form-container input[type="password"] {
+  width: 100%;
+  padding: 0.7rem 1rem;
+  border: 1.5px solid #e0e3eb;
+  border-radius: 8px;
+  font-size: 1rem;
+  background: #f7f8fc;
+  color: #22306a;
+  outline: none;
+  transition: border 0.2s;
+}
+.form-container input[type="text"]:focus,
+.form-container input[type="email"]:focus,
+.form-container input[type="password"]:focus {
+  border-color: #22306a;
+  background: #fff;
+}
+.form-container button[type="submit"] {
+  background: #22306a;
+  color: #fff;
+  border: none;
+  border-radius: 8px;
+  font-size: 1.08rem;
+  font-weight: 600;
+  padding: 0.7em 0;
+  margin-top: 0.5rem;
+  cursor: pointer;
+  box-shadow: 0 2px 8px rgba(34, 48, 106, 0.08);
+  transition: background 0.2s, color 0.2s;
+}
+.form-container button[type="submit"]:hover {
+  background: #1a2550;
+}
+.form-container button[type="submit"]:disabled {
+  opacity: 0.7;
+  cursor: not-allowed;
+}
+.form-container p {
+  margin-top: 1.2rem;
+  font-size: 1rem;
+  color: #444;
+  text-align: center;
+}
+.form-container a {
+  color: #22306a;
+  text-decoration: underline;
+  transition: color 0.2s;
+}
+.form-container a:hover {
+  color: #2474b6;
+}
+#error-message {
+  margin-top: 0.7rem;
+  color: #dc2626;
+  font-size: 0.98rem;
+  text-align: center;
+}
+
+.form-logo {
+  width: 80px;
+  height: 80px;
+  object-fit: contain;
+  margin-bottom: 1.2rem;
+  border-radius: 16px;
+  box-shadow: 0 2px 8px rgba(34, 48, 106, 0.1);
+}
+.form-welcome {
+  color: #444;
+  font-size: 1.08rem;
+  margin-bottom: 1.2rem;
+  text-align: center;
+}
+.input-group {
+  position: relative;
+  display: flex;
+  align-items: center;
+  margin-bottom: 0.2rem;
+  height: 48px;
+}
+.input-group input {
+  width: 100%;
+  height: 48px;
+  line-height: 48px;
+  padding: 0 1rem 0 3rem;
+  border: 1.5px solid #e0e3eb;
+  border-radius: 10px;
+  font-size: 1rem;
+  background: #f7f8fc;
+  color: #22306a;
+  outline: none;
+  transition: border 0.2s, box-shadow 0.2s;
+  margin-bottom: 0;
+  box-sizing: border-box;
+}
+.input-group i {
+  position: absolute;
+  left: 14px;
+  top: 50%;
+  transform: translateY(-50%);
+  color: #b0b4c3;
+  font-size: 1.2rem;
+  z-index: 2;
+  pointer-events: none;
+}
+.form-divider {
+  width: 100%;
+  text-align: center;
+  border-bottom: 1px solid #e0e3eb;
+  line-height: 0.1em;
+  margin: 1.2rem 0 1.2rem 0;
+  position: relative;
+}
+.form-divider span {
+  background: #fff;
+  color: #b0b4c3;
+  padding: 0 16px;
+  font-size: 0.98rem;
+  position: relative;
+  top: 0.6em;
+}
+.fade-in {
+  animation: fadeIn 0.8s cubic-bezier(0.39, 0.575, 0.56, 1) both;
+}
+@keyframes fadeIn {
+  0% {
+    opacity: 0;
+    transform: translateY(30px);
+  }
+  100% {
+    opacity: 1;
+    transform: none;
+  }
+}
+
+/* Green / red message boxes (registration, forgot and reset password) */
+.notice {
+  width: 100%;
+  text-align: center;
+  margin-bottom: 20px;
+  padding: 10px;
+  border-radius: 5px;
+}
+.notice-success {
+  color: #155724;
+  background: #d4edda;
+}
+.notice-error {
+  color: #721c24;
+  background: #f8d7da;
+}
+
+@media (max-width: 600px) {
+  .form-container {
+    max-width: 98vw;
+    padding: 1.2rem 0.5rem 1.5rem 0.5rem;
+  }
+  .form-container h2 {
+    font-size: 1.4rem;
+  }
+  .form-logo {
+    width: 56px;
+    height: 56px;
+  }
+  .form-welcome {
+    font-size: 0.98rem;
+  }
+}
+
+/* Verify-email page (these styles were inline in the old verify-email.php) */
+.verify-page {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 100vh;
+  background: #f7f7f7;
+}
+.verify-container {
+  background: #fff;
+  padding: 2rem 3rem;
+  border-radius: 10px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+  text-align: center;
+}
+.verify-success {
+  color: #27ae60;
+  font-size: 1.2rem;
+}
+.verify-error {
+  color: #c0392b;
+  font-size: 1.2rem;
+}
+.verify-container a {
+  color: #2980b9;
+  text-decoration: none;
+}
+.verify-container a:hover {
+  text-decoration: underline;
+}
