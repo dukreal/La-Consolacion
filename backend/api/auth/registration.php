@@ -43,14 +43,34 @@ if ($stmt->fetch()) {
 if (count($errors) > 0) {
     json_response(['success' => false, 'errors' => $errors], 422);
 }
+// The register form has no username field, but the database needs a unique one.
+// Use the part of the email before "@" (ana.cruz@gmail.com -> ana.cruz) and add a number if it is taken.
+if ($username === '') {
+    $base = strstr($email, '@', true);
+    $username = $base;
+    $suffix = 1;
+    $check = $pdo->prepare('SELECT 1 FROM users WHERE username = ?');
+    while (true) {
+        $check->execute([$username]);
+        $taken = $check->fetchColumn();
+        $check->closeCursor();
+        if (!$taken) {
+            break;
+        }
+        $username = $base . ++$suffix; // ana.cruz2, ana.cruz3, ...
+    }
+}
 
 $hash = password_hash($password, PASSWORD_DEFAULT);
+
 $role = 'user';
 $token = bin2hex(random_bytes(32));
 $expires = date('Y-m-d H:i:s', strtotime('+1 day'));
 
-$stmt = $pdo->prepare('INSERT INTO users (first_name, last_name, username, email, password, role, is_verified, verification_token, token_expires_at) VALUES (?, ?, ?, ?, ?, ?, 0, ?, ?)');
-if (!$stmt->execute([$first_name, $last_name, $username, $email, $hash, $role, $token, $expires])) {
+try {
+    $stmt = $pdo->prepare('INSERT INTO users (first_name, last_name, username, email, password, role, is_verified, verification_token, token_expires_at) VALUES (?, ?, ?, ?, ?, ?, 0, ?, ?)');
+    $stmt->execute([$first_name, $last_name, $username, $email, $hash, $role, $token, $expires]);
+} catch (PDOException $e) {
     json_response(['success' => false, 'errors' => ['Registration failed. Please try again.']], 500);
 }
 
