@@ -1,6 +1,6 @@
 import { useEffect, useRef, useState } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
-import { useAuth } from '../../context/AuthContext'
+import { useAuth } from '../../hooks/useAuth'
 
 const navLink =
   'inter text-gray-700 hover:text-blue-600 transition-colors duration-300 font-medium'
@@ -50,7 +50,7 @@ export default function Header() {
     }
   }, [])
 
-  const profileName = user ? user.username : 'Guest'
+  const profileName = user ? user.username || user.firstName || 'User' : 'Guest'
   const profileEmail = user ? user.email : 'Not logged in'
   const initial = user ? (user.firstName || '').slice(0, 2).toUpperCase() || 'U' : 'G'
   const profileImg = user?.profileImage ? `/uploads/profile/${user.profileImage}` : ''
