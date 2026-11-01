@@ -1,0 +1,28 @@
+/* Page background used by the Home and Shop pages.
+   These rules were applied to <body> in the old style.css; here they sit on a wrapper
+   so they do not leak into the admin pages. */
+.site-bg {
+  font-family: "Segoe UI", "Arial", sans-serif;
+  background: linear-gradient(120deg, #f5f6fa 60%, #f7f8fc 100%);
+  color: #222;
+  position: relative;
+  min-height: 100vh;
+}
+.site-bg::before {
+  content: "";
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100vw;
+  height: 100vh;
+  z-index: 0;
+  pointer-events: none;
+  background: radial-gradient(circle at 15% 20%, rgba(173, 216, 230, 0.18) 0, rgba(173, 216, 230, 0) 40%),
+    radial-gradient(circle at 80% 10%, rgba(255, 255, 200, 0.18) 0, rgba(255, 255, 200, 0) 40%),
+    radial-gradient(circle at 70% 80%, rgba(200, 255, 255, 0.18) 0, rgba(200, 255, 255, 0) 40%),
+    radial-gradient(circle at 20% 80%, rgba(255, 240, 200, 0.18) 0, rgba(255, 240, 200, 0) 40%);
+}
+.site-bg > * {
+  position: relative;
+  z-index: 1;
+}

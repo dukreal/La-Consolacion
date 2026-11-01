@@ -2,6 +2,7 @@ import { Route, Routes } from 'react-router-dom'
 import ComingSoon from './components/common/ComingSoon'
 import PublicLayout from './components/layout/PublicLayout'
 import ForgotPassword from './pages/public/ForgotPassword'
+import Home from './pages/public/Home'
 import Login from './pages/public/Login'
 import Register from './pages/public/Register'
 import ResetPassword from './pages/public/ResetPassword'
@@ -19,7 +20,7 @@ export default function App() {
 
       {/* Pages that show the shared header */}
       <Route element={<PublicLayout />}>
-        <Route path="/" element={<ComingSoon title="Home" />} />
+        <Route path="/" element={<Home />} />
         <Route path="/shop" element={<ComingSoon title="Shop" />} />
         <Route path="/profile" element={<ComingSoon title="Profile" />} />
         <Route path="/admin" element={<ComingSoon title="Admin Dashboard" />} />
