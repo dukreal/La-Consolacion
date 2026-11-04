@@ -26,3 +26,9 @@
   position: relative;
   z-index: 1;
 }
+
+/* On the Shop, <main> must not form its own stacking layer. Otherwise the product modal
+   (z-50) is trapped inside it and the sticky header (also z-50) is drawn on top of the modal. */
+.shop-page > main {
+  z-index: auto;
+}
