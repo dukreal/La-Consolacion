@@ -28,7 +28,7 @@ function MenuLink({ to, icon, label, color = 'blue', extraClass = '', onClick })
   )
 }
 
-export default function Header() {
+export default function Header({ sticky = false }) {
   const { user, logout } = useAuth()
   const navigate = useNavigate()
   const [open, setOpen] = useState(false)
@@ -63,7 +63,7 @@ export default function Header() {
   }
 
   return (
-    <header className="bg-white shadow-sm border-b border-gray-100 w-full">
+    <header className={`bg-white shadow-sm border-b border-gray-100 ${sticky ? 'sticky top-0 z-50 ' : ''}w-full`}>
       <div className="w-full px-6">
         <div className="flex items-center justify-between py-4">
           {/* Logo */}

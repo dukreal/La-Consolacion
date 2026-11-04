@@ -2,6 +2,7 @@ import { Route, Routes } from 'react-router-dom'
 import ComingSoon from './components/common/ComingSoon'
 import ProtectedRoute from './components/common/ProtectedRoute'
 import PublicLayout from './components/layout/PublicLayout'
+import Shop from './pages/customer/Shop'
 import ForgotPassword from './pages/public/ForgotPassword'
 import Home from './pages/public/Home'
 import Login from './pages/public/Login'
@@ -25,7 +26,7 @@ export default function App() {
 
         {/* Pages that need a logged-in user (guests are sent to /login) */}
         <Route element={<ProtectedRoute />}>
-          <Route path="/shop" element={<ComingSoon title="Shop" />} />
+          <Route path="/shop" element={<Shop />} />
           <Route path="/profile" element={<ComingSoon title="Profile" />} />
         </Route>
 
