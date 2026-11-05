@@ -63,7 +63,7 @@ export default function Header({ sticky = false }) {
   }
 
   return (
-    <header className={`bg-white shadow-sm border-b border-gray-100 ${sticky ? 'sticky top-0 z-50 ' : ''}w-full`}>
+    <header className={`bg-white shadow-sm border-b border-gray-100 ${sticky ? 'sticky top-0 z-50 ' : 'relative z-50 '}w-full`}>
       <div className="w-full px-6">
         <div className="flex items-center justify-between py-4">
           {/* Logo */}

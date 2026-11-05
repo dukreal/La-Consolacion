@@ -1,8 +1,10 @@
-import { useEffect, useRef, useState } from 'react'
+import { useCallback, useEffect, useRef, useState } from 'react'
+import CartPanel from '../../components/cart/CartPanel'
 import CategoryFilter from '../../components/shop/CategoryFilter'
 import ProductCard from '../../components/shop/ProductCard'
 import ProductModal from '../../components/shop/ProductModal'
 import SortSelect from '../../components/shop/SortSelect'
+import { useOpenFromUrl } from '../../hooks/useOpenFromUrl'
 import { getProducts } from '../../services/productService'
 
 // Names used in the "No ... Found" message
@@ -30,6 +32,7 @@ export default function Shop() {
   const [run, setRun] = useState(0) // changes to replay the slide-in animation
   const [cardAnimation, setCardAnimation] = useState({ name: 'fade-in', delay: 0 })
   const [selected, setSelected] = useState(null) // the product shown in the modal
+  const [cartOpen, setCartOpen] = useState(false)
   const filterTimer = useRef(null)
 
   // Load the products once
@@ -51,6 +54,10 @@ export default function Shop() {
   }, [])
 
   useEffect(() => () => clearTimeout(filterTimer.current), [])
+
+  // The header's "My Cart" link opens the panel through ?openCart=true
+  const openCart = useCallback(() => setCartOpen(true), [])
+  useOpenFromUrl('openCart', openCart)
 
   // Same animation as the old page: cards slide out, then the matching ones slide in one by one
   const handleFilter = (filter) => {
@@ -138,7 +145,12 @@ export default function Shop() {
         )}
       </div>
 
-      {selected && <ProductModal product={selected} onClose={() => setSelected(null)} />}
+      {/* The cart panel comes before the modal on purpose: like the old page, the modal stays on top of it */}
+      <CartPanel open={cartOpen} onClose={() => setCartOpen(false)} />
+
+      {selected && (
+        <ProductModal product={selected} onClose={() => setSelected(null)} onAddedToCart={openCart} />
+      )}
     </>
   )
 }

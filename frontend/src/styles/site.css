@@ -27,8 +27,9 @@
   z-index: 1;
 }
 
-/* On the Shop, <main> must not form its own stacking layer. Otherwise the product modal
-   (z-50) is trapped inside it and the sticky header (also z-50) is drawn on top of the modal. */
-.shop-page > main {
+/* <main> must not form its own stacking layer. Otherwise anything inside it (the product modal,
+   the cart panel, the login popup) is trapped below the header, and the header's own dropdown
+   is drawn under the page content. */
+.site-bg > main {
   z-index: auto;
 }
