@@ -1,5 +1,6 @@
 import { useCallback, useEffect, useRef, useState } from 'react'
 import CartPanel from '../../components/cart/CartPanel'
+import OrderHistoryPanel from '../../components/orders/OrderHistoryPanel'
 import CategoryFilter from '../../components/shop/CategoryFilter'
 import ProductCard from '../../components/shop/ProductCard'
 import ProductModal from '../../components/shop/ProductModal'
@@ -33,6 +34,7 @@ export default function Shop() {
   const [cardAnimation, setCardAnimation] = useState({ name: 'fade-in', delay: 0 })
   const [selected, setSelected] = useState(null) // the product shown in the modal
   const [cartOpen, setCartOpen] = useState(false)
+  const [ordersOpen, setOrdersOpen] = useState(false)
   const filterTimer = useRef(null)
 
   // Load the products once
@@ -58,6 +60,10 @@ export default function Shop() {
   // The header's "My Cart" link opens the panel through ?openCart=true
   const openCart = useCallback(() => setCartOpen(true), [])
   useOpenFromUrl('openCart', openCart)
+
+  // ...and "Order History" through ?openOrderHistory=true
+  const openOrders = useCallback(() => setOrdersOpen(true), [])
+  useOpenFromUrl('openOrderHistory', openOrders)
 
   // Same animation as the old page: cards slide out, then the matching ones slide in one by one
   const handleFilter = (filter) => {
@@ -147,6 +153,7 @@ export default function Shop() {
 
       {/* The cart panel comes before the modal on purpose: like the old page, the modal stays on top of it */}
       <CartPanel open={cartOpen} onClose={() => setCartOpen(false)} />
+      <OrderHistoryPanel open={ordersOpen} onClose={() => setOrdersOpen(false)} />
 
       {selected && (
         <ProductModal product={selected} onClose={() => setSelected(null)} onAddedToCart={openCart} />
