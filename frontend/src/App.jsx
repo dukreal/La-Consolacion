@@ -28,6 +28,7 @@ export default function App() {
         <Route element={<ProtectedRoute />}>
           <Route path="/shop" element={<Shop />} />
           <Route path="/profile" element={<ComingSoon title="Profile" />} />
+          <Route path="/checkout" element={<ComingSoon title="Checkout" />} />
         </Route>
 
         <Route path="/admin" element={<ComingSoon title="Admin Dashboard" />} />

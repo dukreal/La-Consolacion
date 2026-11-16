@@ -1,10 +1,13 @@
 import { useCallback, useEffect, useRef, useState } from 'react'
 import CartPanel from '../../components/cart/CartPanel'
 import OrderHistoryPanel from '../../components/orders/OrderHistoryPanel'
+import LoadingOverlay from '../../components/common/LoadingOverlay'
 import CategoryFilter from '../../components/shop/CategoryFilter'
 import ProductCard from '../../components/shop/ProductCard'
 import ProductModal from '../../components/shop/ProductModal'
+import ProfileIncompleteModal from '../../components/shop/ProfileIncompleteModal'
 import SortSelect from '../../components/shop/SortSelect'
+import { useCheckout } from '../../hooks/useCheckout'
 import { useOpenFromUrl } from '../../hooks/useOpenFromUrl'
 import { getProducts } from '../../services/productService'
 
@@ -59,11 +62,16 @@ export default function Shop() {
 
   // The header's "My Cart" link opens the panel through ?openCart=true
   const openCart = useCallback(() => setCartOpen(true), [])
+  const closeCart = useCallback(() => setCartOpen(false), [])
+  const closeProduct = useCallback(() => setSelected(null), [])
   useOpenFromUrl('openCart', openCart)
 
   // ...and "Order History" through ?openOrderHistory=true
   const openOrders = useCallback(() => setOrdersOpen(true), [])
   useOpenFromUrl('openOrderHistory', openOrders)
+
+  // Buy Now and Proceed to Checkout
+  const checkout = useCheckout({ onCartClose: closeCart })
 
   // Same animation as the old page: cards slide out, then the matching ones slide in one by one
   const handleFilter = (filter) => {
@@ -152,12 +160,23 @@ export default function Shop() {
       </div>
 
       {/* The cart panel comes before the modal on purpose: like the old page, the modal stays on top of it */}
-      <CartPanel open={cartOpen} onClose={() => setCartOpen(false)} />
+      <CartPanel open={cartOpen} onClose={closeCart} onCheckout={checkout.checkoutCart} />
       <OrderHistoryPanel open={ordersOpen} onClose={() => setOrdersOpen(false)} />
 
       {selected && (
-        <ProductModal product={selected} onClose={() => setSelected(null)} onAddedToCart={openCart} />
+        <ProductModal
+          product={selected}
+          onClose={closeProduct}
+          onAddedToCart={openCart}
+          onBuyNow={checkout.buyNow}
+        />
       )}
+
+      {checkout.profileModalOpen && (
+        <ProfileIncompleteModal onClose={checkout.closeProfileModal} onUpdateProfile={checkout.goToProfile} />
+      )}
+
+      {checkout.loading && <LoadingOverlay />}
     </>
   )
 }

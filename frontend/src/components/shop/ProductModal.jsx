@@ -21,6 +21,7 @@ const grey = { backgroundColor: '#9ca3af', color: 'white', borderColor: '#9ca3af
 export default function ProductModal({ product, onClose, onAddedToCart, onBuyNow }) {
   const { addToCart, getQuantity } = useCart()
   const [status, setStatus] = useState('idle') // 'idle' | 'adding' | 'added'
+  const [buying, setBuying] = useState(false) // Buy Now is preparing the order
   const timer = useRef(null)
 
   // Close with Escape, stop the page behind from scrolling while the modal is open
@@ -33,9 +34,12 @@ export default function ProductModal({ product, onClose, onAddedToCart, onBuyNow
     return () => {
       document.removeEventListener('keydown', onKey)
       document.body.style.overflow = 'auto'
-      clearTimeout(timer.current)
     }
   }, [onClose])
+
+  // Stop the "Added!" reset timer only when the modal really goes away.
+  // (It must not live in the effect above: that one re-runs whenever onClose changes.)
+  useEffect(() => () => clearTimeout(timer.current), [])
 
   const inCart = getQuantity(product.id)
   const outOfStock = product.stock <= 0
@@ -199,10 +203,19 @@ export default function ProductModal({ product, onClose, onAddedToCart, onBuyNow
                   <div className="space-y-4">
                     <button
                       id="buyNowBtn"
-                      onClick={onBuyNow}
+                      onClick={() => onBuyNow?.(product, () => setBuying(true))}
+                      disabled={buying}
+                      style={buying ? { backgroundColor: '#6b7280', color: 'white' } : undefined}
                       className="w-full py-4 px-6 gold-gradient text-white font-semibold rounded-2xl hover:shadow-2xl hover:-translate-y-1 transition-all duration-300 inter text-lg"
                     >
-                      Buy Now
+                      {buying ? (
+                        <div className="flex items-center justify-center">
+                          <div className="animate-spin rounded-full h-5 w-5 border-b-2 border-white mr-2"></div>
+                          Processing...
+                        </div>
+                      ) : (
+                        'Buy Now'
+                      )}
                     </button>
                     <div className="grid grid-cols-2 gap-4">
                       <button
