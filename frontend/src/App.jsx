@@ -1,7 +1,10 @@
 import { Route, Routes } from 'react-router-dom'
 import ComingSoon from './components/common/ComingSoon'
+import ProtectedRoute from './components/common/ProtectedRoute'
 import PublicLayout from './components/layout/PublicLayout'
+import Shop from './pages/customer/Shop'
 import ForgotPassword from './pages/public/ForgotPassword'
+import Home from './pages/public/Home'
 import Login from './pages/public/Login'
 import Register from './pages/public/Register'
 import ResetPassword from './pages/public/ResetPassword'
@@ -19,9 +22,15 @@ export default function App() {
 
       {/* Pages that show the shared header */}
       <Route element={<PublicLayout />}>
-        <Route path="/" element={<ComingSoon title="Home" />} />
-        <Route path="/shop" element={<ComingSoon title="Shop" />} />
-        <Route path="/profile" element={<ComingSoon title="Profile" />} />
+        <Route path="/" element={<Home />} />
+
+        {/* Pages that need a logged-in user (guests are sent to /login) */}
+        <Route element={<ProtectedRoute />}>
+          <Route path="/shop" element={<Shop />} />
+          <Route path="/profile" element={<ComingSoon title="Profile" />} />
+          <Route path="/checkout" element={<ComingSoon title="Checkout" />} />
+        </Route>
+
         <Route path="/admin" element={<ComingSoon title="Admin Dashboard" />} />
       </Route>
     </Routes>
