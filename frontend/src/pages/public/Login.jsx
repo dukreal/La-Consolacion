@@ -1,5 +1,5 @@
 import { useState } from 'react'
-import { Link, useNavigate, useSearchParams } from 'react-router-dom'
+import { Link, useLocation, useNavigate, useSearchParams } from 'react-router-dom'
 import AuthCard from '../../components/common/AuthCard'
 import { useAuth } from '../../hooks/useAuth'
 import { api } from '../../services/api'
@@ -16,6 +16,7 @@ const redirectMessages = {
 export default function Login() {
   const [params] = useSearchParams()
   const navigate = useNavigate()
+  const location = useLocation()
   const { refresh } = useAuth()
 
   const [email, setEmail] = useState('')
@@ -34,7 +35,10 @@ export default function Login() {
       const data = await api('/auth/login.php', { method: 'POST', body: { email, password } })
       if (data.success) {
         await refresh() // load the logged-in user into AuthContext
-        navigate(data.role === 'admin' ? '/admin' : '/')
+        // Back to the page that asked for a login (for example a custom order link), otherwise
+        // the admin dashboard or Home like before
+        const from = location.state?.from
+        navigate(from || (data.role === 'admin' ? '/admin' : '/'), { replace: Boolean(from) })
       } else {
         setError(data.error)
       }

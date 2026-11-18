@@ -5,6 +5,8 @@
 //   api('/cart/add-to-cart.php', { method: 'POST', form: {...} })
 //                                                           -> sends form data, which is what
 //                                                              PHP's $_POST reads (cart, orders)
+//   api('/orders/payment.php', { method: 'POST', form: new FormData() })
+//                                                           -> sends a form with files (uploads)
 const BASE = '/api'
 
 export async function api(path, { method = 'GET', body, form } = {}) {
@@ -13,7 +15,9 @@ export async function api(path, { method = 'GET', body, form } = {}) {
     credentials: 'include', // sends the PHP session cookie
   }
 
-  if (form) {
+  if (form instanceof FormData) {
+    options.body = form // the browser adds the right Content-Type for file uploads
+  } else if (form) {
     options.body = new URLSearchParams(form) // product_id=3&quantity=1
   } else if (body) {
     options.headers = { 'Content-Type': 'application/json' }

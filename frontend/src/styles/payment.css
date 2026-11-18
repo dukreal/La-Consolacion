@@ -1,0 +1,163 @@
+/* Styles for the payment pages (checkout and custom order payment).
+   Ported from the <style> block of the old payment.html and payment-form.php.
+   Wrapped in .payment-page so they cannot affect other pages. */
+
+.payment-page .accent-blue {
+  color: #2d5979;
+}
+.payment-page .bg-accent-blue {
+  background-color: #2d5979;
+}
+.payment-page .border-accent-blue {
+  border-color: #2d5979;
+}
+.payment-page .file-upload-area {
+  border: 2px dashed #2d5979;
+  transition: all 0.3s ease;
+  background: #fafbfc;
+}
+.payment-page .file-upload-area:hover {
+  background-color: rgba(45, 89, 121, 0.05);
+  border-color: #234a66;
+}
+.payment-page .file-upload-area.dragover {
+  background-color: rgba(45, 89, 121, 0.1);
+  border-color: #234a66;
+}
+.payment-page .image-preview {
+  position: relative;
+  display: inline-block;
+}
+.payment-page .remove-btn {
+  position: absolute;
+  top: -8px;
+  right: -8px;
+  background: #ef4444;
+  color: white;
+  border-radius: 50%;
+  width: 24px;
+  height: 24px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  font-size: 14px;
+  line-height: 1;
+  border: none;
+  transition: background-color 0.2s;
+}
+.payment-page .remove-btn:hover {
+  background: #dc2626;
+}
+.payment-page .modern-card {
+  background: #fff;
+  border-radius: 1.25rem;
+  box-shadow: 0 4px 24px 0 rgba(34, 42, 69, 0.08);
+  border: 1px solid #f3f4f6;
+}
+
+/* Ensure both cards are the same height on desktop */
+@media (min-width: 768px) {
+  .payment-page .payment-step2 {
+    align-items: stretch;
+    min-height: 520px;
+  }
+  .payment-page .modern-card {
+    height: 100%;
+  }
+}
+
+/* Loading screen animations (LoadingOverlay uses these class names) */
+@keyframes paySpin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+@keyframes payPulse {
+  0%,
+  100% {
+    opacity: 1;
+  }
+  50% {
+    opacity: 0.6;
+  }
+}
+@keyframes payFadeIn {
+  from {
+    opacity: 0;
+    transform: translateY(10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+.payment-page .animate-spin-slow {
+  animation: paySpin 2s linear infinite;
+}
+.payment-page .animate-pulse-slow {
+  animation: payPulse 2s ease-in-out infinite;
+}
+.payment-page .animate-fade-in {
+  animation: payFadeIn 0.8s ease-out;
+}
+
+/* ---- Payment success page (from the <style> block of the old payment_success.php) ---- */
+.payment-page .hover-accent-blue:hover {
+  background-color: #234a66;
+}
+.payment-page .success-icon {
+  animation: payScaleIn 0.8s ease-out;
+}
+@keyframes payScaleIn {
+  0% {
+    transform: scale(0);
+    opacity: 0;
+  }
+  50% {
+    transform: scale(1.1);
+    opacity: 0.8;
+  }
+  100% {
+    transform: scale(1);
+    opacity: 1;
+  }
+}
+.payment-page .countdown-circle {
+  animation: payCountdownPulse 1s ease-in-out infinite;
+}
+@keyframes payCountdownPulse {
+  0%,
+  100% {
+    transform: scale(1);
+  }
+  50% {
+    transform: scale(1.05);
+  }
+}
+.payment-page .fade-in {
+  animation: paySuccessFadeIn 0.6s ease-out;
+}
+@keyframes paySuccessFadeIn {
+  from {
+    opacity: 0;
+    transform: translateY(20px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+.payment-page .progress-bar {
+  width: 100%;
+  height: 4px;
+  background-color: #e5e7eb;
+  border-radius: 2px;
+  overflow: hidden;
+  margin-top: 1rem;
+}
+.payment-page .progress-fill {
+  height: 100%;
+  background-color: #2d5979;
+  transition: width 1s linear;
+}

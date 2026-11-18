@@ -1,0 +1,106 @@
+/* Styles for the custom order preview. Ported from the <style> block of the old custom-preview.php.
+   Wrapped in .custom-order-page so they cannot affect other pages. */
+.custom-order-page {
+  background: linear-gradient(135deg, #f8fafc 0%, #e0f2fe 50%, #e8eaf6 100%);
+  font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+  padding: 20px;
+  min-height: 100vh;
+}
+.custom-order-page .preview-box {
+  max-width: 600px;
+  margin: 40px auto;
+  padding: 40px;
+  border: 1px solid #e2e8f0;
+  border-radius: 16px;
+  background: white;
+  box-shadow: 0 10px 25px rgba(0, 0, 0, 0.1);
+}
+.custom-order-page .preview-box h2 {
+  margin-top: 0;
+  color: #1e40af;
+  font-size: 28px;
+  font-weight: 700;
+  text-align: center;
+  margin-bottom: 30px;
+}
+.custom-order-page .preview-label {
+  font-weight: 600;
+  color: #374151;
+  font-size: 14px;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  margin-bottom: 5px;
+}
+.custom-order-page .preview-value {
+  margin-bottom: 20px;
+  color: #1f2937;
+  font-size: 16px;
+  padding: 8px 0;
+  border-bottom: 1px solid #f3f4f6;
+  white-space: pre-line; /* keeps the line breaks of the description (nl2br in the old page) */
+}
+.custom-order-page .btn {
+  display: inline-block;
+  padding: 15px 30px;
+  background: linear-gradient(135deg, #10b981 0%, #059669 100%);
+  color: #fff;
+  border-radius: 8px;
+  text-decoration: none;
+  font-weight: 600;
+  font-size: 16px;
+  margin-top: 30px;
+  text-align: center;
+  width: 100%;
+  box-sizing: border-box;
+  transition: all 0.3s ease;
+}
+.custom-order-page .btn:hover {
+  background: linear-gradient(135deg, #059669 0%, #047857 100%);
+  transform: translateY(-2px);
+  box-shadow: 0 8px 20px rgba(16, 185, 129, 0.3);
+}
+.custom-order-page .preview-img {
+  max-width: 200px;
+  max-height: 200px;
+  border-radius: 12px;
+  border: 3px solid #e5e7eb;
+  margin: 0 auto 20px auto;
+  display: block;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+}
+.custom-order-page .status-badge {
+  display: inline-block;
+  padding: 6px 12px;
+  border-radius: 20px;
+  font-size: 12px;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+.custom-order-page .status-pending {
+  background: #fef3c7;
+  color: #92400e;
+}
+.custom-order-page .status-processing {
+  background: #dbeafe;
+  color: #1e40af;
+}
+.custom-order-page .status-completed {
+  background: #d1fae5;
+  color: #065f46;
+}
+.custom-order-page .status-cancelled {
+  background: #fee2e2;
+  color: #991b1b;
+}
+.custom-order-page .price-display {
+  font-size: 24px;
+  font-weight: 700;
+  color: #059669;
+  text-align: center;
+  margin: 20px 0;
+  padding: 15px;
+  background: #f0fdf4;
+  border-radius: 8px;
+  border: 2px solid #bbf7d0;
+}

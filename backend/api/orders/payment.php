@@ -1,172 +1,159 @@
 <?php
-// DEBUG: Add debugging
-error_reporting(E_ALL);
-ini_set('display_errors', 1);
-
+// Records a payment and creates the order. React's checkout page sends its form here.
+// Everything is saved in ONE transaction: either the payment, the order and its items are all
+// saved (and the stock is reduced), or nothing is.
 session_start();
+require_once __DIR__ . '/../../config/db.php';
+require_once __DIR__ . '/../../helpers/json.php';
 
-// DEBUG: Log payment processing
-error_log("🔍 PAYMENT DEBUG: Payment processing started");
-error_log("🔍 PAYMENT DEBUG: POST data: " . print_r($_POST, true));
-error_log("🔍 PAYMENT DEBUG: FILES data: " . print_r($_FILES, true));
+if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
+    json_response(['success' => false, 'error' => 'Method not allowed.'], 405);
+}
 
-if ($_SERVER['REQUEST_METHOD'] === 'POST') {
-    $amount = $_POST['amount'] ?? '';
-    $mobile = $_POST['mobile'] ?? '';
-    $reference = $_POST['reference'] ?? '';
-    $product_id = $_POST['product_id'] ?? null; // Make sure your form sends this
-    $user_id = isset($_SESSION['user_id']) ? $_SESSION['user_id'] : null;
-    if (!$user_id) {
-        header('Location: ../login.php?error=login_required');
-        exit();
+$user_id = $_SESSION['user_id'] ?? null;
+if (!$user_id) {
+    json_response(['success' => false, 'error' => 'Please log in to complete your payment.'], 401);
+}
+
+// A file bigger than PHP's post_max_size makes PHP throw away the whole form ($_POST is empty)
+if (empty($_POST) && empty($_FILES) && (int) ($_SERVER['CONTENT_LENGTH'] ?? 0) > 0) {
+    json_response(['success' => false, 'error' => 'Invalid file type or size. Use PNG, JPG, or GIF under 10MB.'], 413);
+}
+
+$amount = $_POST['amount'] ?? '';
+$mobile = $_POST['mobile'] ?? '';
+$reference = $_POST['reference'] ?? '';
+$service = $_POST['service'] ?? '';
+$from_cart = ($_POST['from_cart'] ?? '') === '1';
+
+if (!preg_match('/^\d{1,10}(\.\d{1,2})?$/', $amount)) {
+    json_response(['success' => false, 'error' => 'Invalid amount format. Up to 10 digits with 2 decimals allowed.'], 422);
+}
+if (!preg_match('/^\d{11}$/', $mobile)) {
+    json_response(['success' => false, 'error' => 'Mobile number must be exactly 11 digits.'], 422);
+}
+
+// What is being bought: a list of [product_id, qty]
+$lines = [];
+if ($from_cart) {
+    // Checkout from the cart: read the cart from the database (never trust the browser for this)
+    $stmt = $pdo->prepare(
+        'SELECT c.product_id, c.quantity
+         FROM cart c
+         JOIN products p ON c.product_id = p.id
+         WHERE c.user_id = ? AND p.deleted = 0'
+    );
+    $stmt->execute([$user_id]);
+    foreach ($stmt->fetchAll() as $row) {
+        $lines[] = ['product_id' => (int) $row['product_id'], 'qty' => max(1, (int) $row['quantity'])];
     }
-
-    // Validate amount format: up to 10 digits before decimal, and up to 2 after
-    if (!preg_match('/^\d{1,10}(\.\d{1,2})?$/', $amount)) {
-        die("Invalid amount format. Up to 10 digits with 2 decimals allowed.");
+    if (empty($lines)) {
+        json_response(['success' => false, 'error' => 'No items in cart to checkout.'], 422);
     }
-
-    // Validate mobile: must be exactly 11 digits
-    if (!preg_match('/^\d{11}$/', $mobile)) {
-        die("Mobile number must be exactly 11 digits.");
+} else {
+    // "Buy Now" and custom orders: the page sends product_id[] (and optionally quantity[])
+    $product_ids = $_POST['product_id'] ?? [];
+    if (!is_array($product_ids)) {
+        $product_ids = [$product_ids];
     }
-
-    // Check if this is a cart checkout
-    $from_cart = isset($_POST['from_cart']) && $_POST['from_cart'] == '1';
-    
-    if ($from_cart) {
-        // Get cart items for this user
-        $pdo = new PDO("mysql:host=localhost;dbname=lcj", "root", "");
-        $pdo->setAttribute(PDO::ATTR_ERRMODE, PDO::ERRMODE_EXCEPTION);
-        
-        $stmt = $pdo->prepare("
-            SELECT c.product_id, c.quantity, p.price, p.name
-            FROM cart c
-            JOIN products p ON c.product_id = p.id
-            WHERE c.user_id = ? AND p.deleted = 0
-        ");
-        $stmt->execute([$user_id]);
-        $cart_items = $stmt->fetchAll();
-        
-        if (empty($cart_items)) {
-            die("No items in cart to checkout.");
+    $quantities = $_POST['quantity'] ?? [];
+    foreach ($product_ids as $index => $pid) {
+        $qty = 1;
+        if (is_array($quantities) && isset($quantities[$index]) && is_numeric($quantities[$index])) {
+            $qty = max(1, intval($quantities[$index]));
         }
-        
-        // Extract product IDs and quantities from cart
-        $product_id = [];
-        $quantities = [];
-        foreach ($cart_items as $item) {
-            $product_id[] = $item['product_id'];
-            $quantities[] = $item['quantity'];
+        if ((int) $pid > 0) {
+            $lines[] = ['product_id' => (int) $pid, 'qty' => $qty];
         }
-    } else {
-        // Regular single product order
-        if (empty($product_id)) {
-            die("No product selected for order.");
-        }
-
-        // If product_id is not an array, make it an array
-        if (!is_array($product_id)) {
-            $product_id = [$product_id];
-        }
-        
-        // Default quantities for single product orders
-        $quantities = $_POST['quantity'] ?? [];
     }
-
-    $uploadedFile = null;
-    if (isset($_FILES['payment_screenshot']) && $_FILES['payment_screenshot']['error'] === UPLOAD_ERR_OK) {
-        $uploadedFile = $_FILES['payment_screenshot'];
-
-        $allowedTypes = ['image/jpeg', 'image/png', 'image/gif'];
-        $maxSize = 10 * 1024 * 1024; // 10MB
-
-        if (in_array($uploadedFile['type'], $allowedTypes) && $uploadedFile['size'] <= $maxSize) {
-            // 1. Prepare upload directory
-            $targetDir = __DIR__ . '/../Image/payment-upload/';
-            if (!file_exists($targetDir)) {
-                mkdir($targetDir, 0777, true);
-            }
-
-            // 2. Create a unique filename to avoid collisions
-            $extension = pathinfo($uploadedFile['name'], PATHINFO_EXTENSION);
-            $newFilename = uniqid('payment_', true) . '.' . $extension;
-            $targetPath = $targetDir . $newFilename;
-
-            // 3. Move the uploaded file
-            if (move_uploaded_file($uploadedFile['tmp_name'], $targetPath)) {
-                // ✅ 4. Save metadata to the database
-                try {
-                    $pdo = new PDO(
-                        "mysql:host=localhost;dbname=lcj",
-                        "root",
-                        ""
-                    ); 
-                    $pdo->setAttribute(PDO::ATTR_ERRMODE, PDO::ERRMODE_EXCEPTION);
-
-                    $service = $_POST['service'] ?? '';
-                    $reference_number = $reference;
-                    // Insert into the payments table (store filename only)
-                    $stmt = $pdo->prepare("INSERT INTO payments (reference_number, service, image, mobile, amount, uploaded_at) VALUES (?, ?, ?, ?, ?, NOW())");
-                    $stmt->execute([$reference_number, $service, $newFilename, $mobile, $amount]);
-                    $payment_id = $pdo->lastInsertId();
-
-                    // Insert into orders table (no product_id)
-                    $order_stmt = $pdo->prepare("INSERT INTO orders (payment_id, user_id, status) VALUES (?, ?, 'pending')");
-                    $order_stmt->execute([$payment_id, $user_id]);
-                    $order_id = $pdo->lastInsertId();
-
-                    // Prepare statement to fetch product price
-                    $price_stmt = $pdo->prepare("SELECT price FROM products WHERE id = ?");
-                    // Prepare statement to insert into order_items
-                    $item_stmt = $pdo->prepare("INSERT INTO order_items (order_id, product_id, quantity, price_at_purchase) VALUES (?, ?, ?, ?)");
-                    // Prepare statement to update stock
-                    $update_stock_stmt = $pdo->prepare("UPDATE products SET stock = stock - ? WHERE id = ?");
-
-                    foreach ($product_id as $index => $pid) {
-                        // Get quantity for this product
-                        $qty = 1;
-                        if (is_array($quantities) && isset($quantities[$index]) && is_numeric($quantities[$index])) {
-                            $qty = max(1, intval($quantities[$index]));
-                        }
-                        // Fetch product price
-                        $price_stmt->execute([$pid]);
-                        $product = $price_stmt->fetch(PDO::FETCH_ASSOC);
-                        $price = $product ? $product['price'] : 0;
-                        // Insert into order_items
-                        $item_stmt->execute([$order_id, $pid, $qty, $price]);
-                        // Decrement stock by quantity
-                        $update_stock_stmt->execute([$qty, $pid]);
-                    }
-                    
-                    // Clear cart if this was a cart checkout
-                    if ($from_cart) {
-                        $clear_cart_stmt = $pdo->prepare("DELETE FROM cart WHERE user_id = ?");
-                        $clear_cart_stmt->execute([$user_id]);
-                    }
-                } catch (PDOException $e) {
-                    die("Database error: " . $e->getMessage());
-                }
-
-                // DEBUG: Log successful payment
-                error_log("🔍 PAYMENT DEBUG: Payment successful, redirecting to success page");
-                error_log("🔍 PAYMENT DEBUG: Redirect URL: payment_success.php?amount=$amount&mobile=$mobile&reference=$reference");
-                
-                // ✅ 5. Redirect with amount for success display
-                header("Location: payment_success.php?amount=$amount&mobile=$mobile&reference=$reference");
-
-                exit;
-            } else {
-                $success = false;
-                $message = "Failed to save uploaded file.";
-            }
-        } else {
-            $success = false;
-            $message = "Invalid file type or size. Use PNG, JPG, or GIF under 10MB.";
-        }
-    } else {
-        $success = false;
-        $message = "Please upload a payment screenshot.";
+    if (empty($lines)) {
+        json_response(['success' => false, 'error' => 'No product selected for order.'], 422);
     }
 }
-?>
+
+// The payment screenshot
+$file = $_FILES['payment_screenshot'] ?? null;
+if ($file && in_array($file['error'], [UPLOAD_ERR_INI_SIZE, UPLOAD_ERR_FORM_SIZE], true)) {
+    json_response(['success' => false, 'error' => 'Invalid file type or size. Use PNG, JPG, or GIF under 10MB.'], 422);
+}
+if (!$file || $file['error'] !== UPLOAD_ERR_OK) {
+    json_response(['success' => false, 'error' => 'Please upload a payment screenshot.'], 422);
+}
+$allowed_types = [IMAGETYPE_JPEG => 'jpg', IMAGETYPE_PNG => 'png', IMAGETYPE_GIF => 'gif'];
+$image_info = @getimagesize($file['tmp_name']); // looks at the real file, not the name the browser sent
+if ($file['size'] > 10 * 1024 * 1024 || !$image_info || !isset($allowed_types[$image_info[2]])) {
+    json_response(['success' => false, 'error' => 'Invalid file type or size. Use PNG, JPG, or GIF under 10MB.'], 422);
+}
+
+$target_dir = __DIR__ . '/../../uploads/payments/';
+if (!file_exists($target_dir)) {
+    mkdir($target_dir, 0777, true);
+}
+$new_filename = uniqid('payment_', true) . '.' . $allowed_types[$image_info[2]];
+$target_path = $target_dir . $new_filename;
+if (!move_uploaded_file($file['tmp_name'], $target_path)) {
+    json_response(['success' => false, 'error' => 'Failed to save uploaded file.'], 500);
+}
+
+try {
+    $pdo->beginTransaction();
+
+    // How many of each product are wanted. The rows are locked while we check the stock,
+    // so two buyers cannot take the last item at the same time.
+    $needed = [];
+    foreach ($lines as $line) {
+        $needed[$line['product_id']] = ($needed[$line['product_id']] ?? 0) + $line['qty'];
+    }
+    $product_stmt = $pdo->prepare('SELECT id, name, price, stock FROM products WHERE id = ? AND deleted = 0 FOR UPDATE');
+    $products = [];
+    foreach ($needed as $pid => $qty) {
+        $product_stmt->execute([$pid]);
+        $product = $product_stmt->fetch();
+        if (!$product) {
+            throw new RuntimeException('One of the products is no longer available.');
+        }
+        if ((int) $product['stock'] < $qty) {
+            throw new RuntimeException('Not enough stock for ' . $product['name'] . '. Only ' . (int) $product['stock'] . ' left.');
+        }
+        $products[$pid] = $product;
+    }
+
+    $stmt = $pdo->prepare('INSERT INTO payments (reference_number, service, image, mobile, amount, uploaded_at) VALUES (?, ?, ?, ?, ?, NOW())');
+    $stmt->execute([$reference, $service, $new_filename, $mobile, $amount]);
+    $payment_id = $pdo->lastInsertId();
+
+    $stmt = $pdo->prepare("INSERT INTO orders (payment_id, user_id, status) VALUES (?, ?, 'pending')");
+    $stmt->execute([$payment_id, $user_id]);
+    $order_id = $pdo->lastInsertId();
+
+    $item_stmt = $pdo->prepare('INSERT INTO order_items (order_id, product_id, quantity, price_at_purchase) VALUES (?, ?, ?, ?)');
+    $stock_stmt = $pdo->prepare('UPDATE products SET stock = stock - ? WHERE id = ?');
+    foreach ($lines as $line) {
+        $item_stmt->execute([$order_id, $line['product_id'], $line['qty'], $products[$line['product_id']]['price']]);
+        $stock_stmt->execute([$line['qty'], $line['product_id']]);
+    }
+
+    if ($from_cart) {
+        $stmt = $pdo->prepare('DELETE FROM cart WHERE user_id = ?');
+        $stmt->execute([$user_id]);
+    }
+
+    $pdo->commit();
+} catch (PDOException $e) {
+    $pdo->rollBack();
+    @unlink($target_path);
+    error_log('payment.php database error: ' . $e->getMessage());
+    json_response(['success' => false, 'error' => 'Database error. Please try again.'], 500);
+} catch (RuntimeException $e) {
+    $pdo->rollBack();
+    @unlink($target_path);
+    json_response(['success' => false, 'error' => $e->getMessage()], 409);
+}
+
+json_response([
+    'success'   => true,
+    'order_id'  => (int) $order_id,
+    'amount'    => $amount,
+    'mobile'    => $mobile,
+    'reference' => $reference,
+]);
