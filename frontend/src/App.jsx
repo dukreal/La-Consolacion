@@ -1,7 +1,10 @@
 import { Route, Routes } from 'react-router-dom'
+import AdminLayout from './components/admin/AdminLayout'
+import AdminRoute from './components/admin/AdminRoute'
 import ComingSoon from './components/common/ComingSoon'
 import ProtectedRoute from './components/common/ProtectedRoute'
 import PublicLayout from './components/layout/PublicLayout'
+import Overview from './pages/admin/Overview'
 import Checkout from './pages/customer/Checkout'
 import CustomOrderPayment from './pages/customer/CustomOrderPayment'
 import PaymentSuccess from './pages/customer/PaymentSuccess'
@@ -34,6 +37,18 @@ export default function App() {
       <Route path="/payment-success" element={<PaymentSuccess />} />
       <Route path="/custom-order/:id" element={<CustomOrderPreview />} />
 
+      {/* Admin pages: admin top bar and sidebar, admins only */}
+      <Route element={<AdminRoute />}>
+        <Route element={<AdminLayout />}>
+          <Route path="/admin" element={<Overview />} />
+          <Route path="/admin/orders" element={<ComingSoon title="Orders" />} />
+          <Route path="/admin/walk-in" element={<ComingSoon title="Walk-In Order" />} />
+          <Route path="/admin/inventory" element={<ComingSoon title="Inventory" />} />
+          <Route path="/admin/users" element={<ComingSoon title="Users" />} />
+          <Route path="/admin/logs" element={<ComingSoon title="Logs" />} />
+        </Route>
+      </Route>
+
       {/* Pages that show the shared header */}
       <Route element={<PublicLayout />}>
         <Route path="/" element={<Home />} />
@@ -43,7 +58,6 @@ export default function App() {
           <Route path="/shop" element={<Shop />} />
         </Route>
 
-        <Route path="/admin" element={<ComingSoon title="Admin Dashboard" />} />
       </Route>
     </Routes>
   )
