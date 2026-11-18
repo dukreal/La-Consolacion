@@ -5,6 +5,7 @@ import ComingSoon from './components/common/ComingSoon'
 import ProtectedRoute from './components/common/ProtectedRoute'
 import PublicLayout from './components/layout/PublicLayout'
 import Overview from './pages/admin/Overview'
+import Users from './pages/admin/Users'
 import Checkout from './pages/customer/Checkout'
 import CustomOrderPayment from './pages/customer/CustomOrderPayment'
 import PaymentSuccess from './pages/customer/PaymentSuccess'
@@ -44,7 +45,7 @@ export default function App() {
           <Route path="/admin/orders" element={<ComingSoon title="Orders" />} />
           <Route path="/admin/walk-in" element={<ComingSoon title="Walk-In Order" />} />
           <Route path="/admin/inventory" element={<ComingSoon title="Inventory" />} />
-          <Route path="/admin/users" element={<ComingSoon title="Users" />} />
+          <Route path="/admin/users" element={<Users />} />
           <Route path="/admin/logs" element={<ComingSoon title="Logs" />} />
         </Route>
       </Route>
