@@ -33,10 +33,16 @@ if (strlen($password) < 6) {
     $errors[] = 'Password must be at least 6 characters.';
 }
 
-// Check if email already exists
-$stmt = $pdo->prepare('SELECT id FROM users WHERE email = ?');
+// Check if email already exists.
+// A "guest" account (made by the admin's Add Custom Order for a customer with no account)
+// does not count: registering takes it over, so the customer keeps their custom order.
+$stmt = $pdo->prepare('SELECT id, role FROM users WHERE email = ?');
 $stmt->execute([$email]);
-if ($stmt->fetch()) {
+$existing = $stmt->fetch();
+$guest_id = null;
+if ($existing && $existing['role'] === 'guest') {
+    $guest_id = (int) $existing['id'];
+} elseif ($existing) {
     $errors[] = 'Email already registered.';
 }
 
@@ -68,8 +74,14 @@ $token = bin2hex(random_bytes(32));
 $expires = date('Y-m-d H:i:s', strtotime('+1 day'));
 
 try {
-    $stmt = $pdo->prepare('INSERT INTO users (first_name, last_name, username, email, password, role, is_verified, verification_token, token_expires_at) VALUES (?, ?, ?, ?, ?, ?, 0, ?, ?)');
-    $stmt->execute([$first_name, $last_name, $username, $email, $hash, $role, $token, $expires]);
+    if ($guest_id) {
+        // Turn the guest account into a normal one (same id, so its orders stay linked)
+        $stmt = $pdo->prepare('UPDATE users SET first_name = ?, last_name = ?, username = ?, password = ?, role = ?, is_verified = 0, verification_token = ?, token_expires_at = ?, deleted = 0 WHERE id = ?');
+        $stmt->execute([$first_name, $last_name, $username, $hash, $role, $token, $expires, $guest_id]);
+    } else {
+        $stmt = $pdo->prepare('INSERT INTO users (first_name, last_name, username, email, password, role, is_verified, verification_token, token_expires_at) VALUES (?, ?, ?, ?, ?, ?, 0, ?, ?)');
+        $stmt->execute([$first_name, $last_name, $username, $email, $hash, $role, $token, $expires]);
+    }
 } catch (PDOException $e) {
     json_response(['success' => false, 'errors' => ['Registration failed. Please try again.']], 500);
 }
