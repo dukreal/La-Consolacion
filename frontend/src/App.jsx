@@ -2,6 +2,7 @@ import { Route, Routes } from 'react-router-dom'
 import ComingSoon from './components/common/ComingSoon'
 import ProtectedRoute from './components/common/ProtectedRoute'
 import PublicLayout from './components/layout/PublicLayout'
+import Checkout from './pages/customer/Checkout'
 import Shop from './pages/customer/Shop'
 import ForgotPassword from './pages/public/ForgotPassword'
 import Home from './pages/public/Home'
@@ -20,6 +21,12 @@ export default function App() {
       <Route path="/forgot-password" element={<ForgotPassword />} />
       <Route path="/reset-password" element={<ResetPassword />} />
 
+      {/* Payment pages: full page without the site header (same as the old payment pages) */}
+      <Route element={<ProtectedRoute />}>
+        <Route path="/checkout" element={<Checkout />} />
+      </Route>
+      <Route path="/payment-success" element={<ComingSoon title="Payment Successful" />} />
+
       {/* Pages that show the shared header */}
       <Route element={<PublicLayout />}>
         <Route path="/" element={<Home />} />
@@ -28,7 +35,6 @@ export default function App() {
         <Route element={<ProtectedRoute />}>
           <Route path="/shop" element={<Shop />} />
           <Route path="/profile" element={<ComingSoon title="Profile" />} />
-          <Route path="/checkout" element={<ComingSoon title="Checkout" />} />
         </Route>
 
         <Route path="/admin" element={<ComingSoon title="Admin Dashboard" />} />
