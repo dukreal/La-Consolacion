@@ -45,3 +45,33 @@ export async function getInventory() {
 export function deleteProduct(id) {
   return api('/products/delete-product.php', { method: 'POST', form: { id } })
 }
+
+// Builds the form the Add Premade / Edit Product pages send (field names PHP reads)
+function premadeForm(fields, image) {
+  const form = new FormData()
+  form.append('itemName', fields.name)
+  form.append('itemPrice', fields.price)
+  form.append('itemStock', fields.stock)
+  form.append('itemType', fields.type)
+  form.append('itemMaterial', fields.material)
+  form.append('itemDescription', fields.description)
+  if (image) form.append('itemImage', image)
+  return form
+}
+
+// Adds a premade product (SuperAdmin only). Returns { success, id } or { success: false, error }
+export function addProduct(fields, image) {
+  return api('/products/add-product.php', { method: 'POST', form: premadeForm(fields, image) })
+}
+
+// One premade product for the Edit Product page: { product, adminLevel }
+export function getProduct(id) {
+  return api(`/products/edit-product.php?id=${id}`)
+}
+
+// Saves the Edit Product form. Admins (level 1) only change the stock; PHP ignores the rest.
+export function updateProduct(id, fields, image) {
+  const form = premadeForm(fields, image)
+  form.append('id', id)
+  return api('/products/edit-product.php', { method: 'POST', form })
+}
