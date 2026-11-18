@@ -4,6 +4,7 @@ import AdminRoute from './components/admin/AdminRoute'
 import ComingSoon from './components/common/ComingSoon'
 import ProtectedRoute from './components/common/ProtectedRoute'
 import PublicLayout from './components/layout/PublicLayout'
+import Inventory from './pages/admin/Inventory'
 import Logs from './pages/admin/Logs'
 import Overview from './pages/admin/Overview'
 import Users from './pages/admin/Users'
@@ -45,7 +46,11 @@ export default function App() {
           <Route path="/admin" element={<Overview />} />
           <Route path="/admin/orders" element={<ComingSoon title="Orders" />} />
           <Route path="/admin/walk-in" element={<ComingSoon title="Walk-In Order" />} />
-          <Route path="/admin/inventory" element={<ComingSoon title="Inventory" />} />
+          <Route path="/admin/inventory" element={<Inventory />} />
+          <Route path="/admin/inventory/add" element={<ComingSoon title="Add Premade" />} />
+          <Route path="/admin/inventory/edit/:id" element={<ComingSoon title="Edit Product" />} />
+          <Route path="/admin/inventory/add-custom" element={<ComingSoon title="Add Custom Order" />} />
+          <Route path="/admin/inventory/edit-custom/:id" element={<ComingSoon title="Edit Custom Order" />} />
           <Route path="/admin/users" element={<Users />} />
           <Route path="/admin/logs" element={<Logs />} />
         </Route>

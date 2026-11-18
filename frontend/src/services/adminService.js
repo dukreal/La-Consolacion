@@ -33,3 +33,15 @@ export function updateUser({ id, firstName, lastName, username, email, role }) {
 export function deleteUser(id) {
   return api('/users/delete-user.php', { method: 'POST', form: { id } })
 }
+
+// All products for the Inventory page: { products, adminLevel }
+export async function getInventory() {
+  const data = await api('/admin/inventory.php')
+  if (!data.success) throw new Error(data.message || data.error || 'Could not load the inventory')
+  return data
+}
+
+// Soft-deletes a product (SuperAdmin only). Returns { success } or { success: false, error, message }
+export function deleteProduct(id) {
+  return api('/products/delete-product.php', { method: 'POST', form: { id } })
+}
