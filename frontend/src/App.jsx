@@ -3,9 +3,11 @@ import ComingSoon from './components/common/ComingSoon'
 import ProtectedRoute from './components/common/ProtectedRoute'
 import PublicLayout from './components/layout/PublicLayout'
 import Checkout from './pages/customer/Checkout'
+import CustomOrderPayment from './pages/customer/CustomOrderPayment'
 import PaymentSuccess from './pages/customer/PaymentSuccess'
 import Profile from './pages/customer/Profile'
 import Shop from './pages/customer/Shop'
+import CustomOrderPreview from './pages/public/CustomOrderPreview'
 import ForgotPassword from './pages/public/ForgotPassword'
 import Home from './pages/public/Home'
 import Login from './pages/public/Login'
@@ -27,8 +29,10 @@ export default function App() {
       <Route element={<ProtectedRoute />}>
         <Route path="/checkout" element={<Checkout />} />
         <Route path="/profile" element={<Profile />} />
+        <Route path="/custom-order/:id/payment" element={<CustomOrderPayment />} />
       </Route>
       <Route path="/payment-success" element={<PaymentSuccess />} />
+      <Route path="/custom-order/:id" element={<CustomOrderPreview />} />
 
       {/* Pages that show the shared header */}
       <Route element={<PublicLayout />}>
