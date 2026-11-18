@@ -52,7 +52,14 @@ export default function PaymentSuccess() {
     try {
       // html2canvas is big, so it is only downloaded when someone actually clicks the button
       const { default: html2canvas } = await import('html2canvas')
-      const canvas = await html2canvas(receiptRef.current, { backgroundColor: '#ffffff', scale: 2, useCORS: true })
+      const canvas = await html2canvas(receiptRef.current, {
+        backgroundColor: '#ffffff',
+        scale: 2,
+        useCORS: true,
+        // html2canvas photographs a hidden copy of the page, where the fade-in animation starts
+        // again from invisible. Switch it off in that copy so the receipt comes out solid and sharp.
+        onclone: (copy) => copy.querySelector('#successMessage')?.classList.remove('fade-in'),
+      })
       const link = document.createElement('a')
       link.download = 'payment_receipt.png'
       link.href = canvas.toDataURL('image/png')

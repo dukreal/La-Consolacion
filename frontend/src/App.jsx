@@ -4,6 +4,7 @@ import ProtectedRoute from './components/common/ProtectedRoute'
 import PublicLayout from './components/layout/PublicLayout'
 import Checkout from './pages/customer/Checkout'
 import PaymentSuccess from './pages/customer/PaymentSuccess'
+import Profile from './pages/customer/Profile'
 import Shop from './pages/customer/Shop'
 import ForgotPassword from './pages/public/ForgotPassword'
 import Home from './pages/public/Home'
@@ -22,9 +23,10 @@ export default function App() {
       <Route path="/forgot-password" element={<ForgotPassword />} />
       <Route path="/reset-password" element={<ResetPassword />} />
 
-      {/* Payment pages: full page without the site header (same as the old payment pages) */}
+      {/* Full pages without the site header, behind login (same as the old checkout and profile pages) */}
       <Route element={<ProtectedRoute />}>
         <Route path="/checkout" element={<Checkout />} />
+        <Route path="/profile" element={<Profile />} />
       </Route>
       <Route path="/payment-success" element={<PaymentSuccess />} />
 
@@ -35,7 +37,6 @@ export default function App() {
         {/* Pages that need a logged-in user (guests are sent to /login) */}
         <Route element={<ProtectedRoute />}>
           <Route path="/shop" element={<Shop />} />
-          <Route path="/profile" element={<ComingSoon title="Profile" />} />
         </Route>
 
         <Route path="/admin" element={<ComingSoon title="Admin Dashboard" />} />
