@@ -101,3 +101,63 @@
 .payment-page .animate-fade-in {
   animation: payFadeIn 0.8s ease-out;
 }
+
+/* ---- Payment success page (from the <style> block of the old payment_success.php) ---- */
+.payment-page .hover-accent-blue:hover {
+  background-color: #234a66;
+}
+.payment-page .success-icon {
+  animation: payScaleIn 0.8s ease-out;
+}
+@keyframes payScaleIn {
+  0% {
+    transform: scale(0);
+    opacity: 0;
+  }
+  50% {
+    transform: scale(1.1);
+    opacity: 0.8;
+  }
+  100% {
+    transform: scale(1);
+    opacity: 1;
+  }
+}
+.payment-page .countdown-circle {
+  animation: payCountdownPulse 1s ease-in-out infinite;
+}
+@keyframes payCountdownPulse {
+  0%,
+  100% {
+    transform: scale(1);
+  }
+  50% {
+    transform: scale(1.05);
+  }
+}
+.payment-page .fade-in {
+  animation: paySuccessFadeIn 0.6s ease-out;
+}
+@keyframes paySuccessFadeIn {
+  from {
+    opacity: 0;
+    transform: translateY(20px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+.payment-page .progress-bar {
+  width: 100%;
+  height: 4px;
+  background-color: #e5e7eb;
+  border-radius: 2px;
+  overflow: hidden;
+  margin-top: 1rem;
+}
+.payment-page .progress-fill {
+  height: 100%;
+  background-color: #2d5979;
+  transition: width 1s linear;
+}

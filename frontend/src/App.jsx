@@ -3,6 +3,7 @@ import ComingSoon from './components/common/ComingSoon'
 import ProtectedRoute from './components/common/ProtectedRoute'
 import PublicLayout from './components/layout/PublicLayout'
 import Checkout from './pages/customer/Checkout'
+import PaymentSuccess from './pages/customer/PaymentSuccess'
 import Shop from './pages/customer/Shop'
 import ForgotPassword from './pages/public/ForgotPassword'
 import Home from './pages/public/Home'
@@ -25,7 +26,7 @@ export default function App() {
       <Route element={<ProtectedRoute />}>
         <Route path="/checkout" element={<Checkout />} />
       </Route>
-      <Route path="/payment-success" element={<ComingSoon title="Payment Successful" />} />
+      <Route path="/payment-success" element={<PaymentSuccess />} />
 
       {/* Pages that show the shared header */}
       <Route element={<PublicLayout />}>
