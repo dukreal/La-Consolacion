@@ -4,6 +4,7 @@ import AdminRoute from './components/admin/AdminRoute'
 import ComingSoon from './components/common/ComingSoon'
 import ProtectedRoute from './components/common/ProtectedRoute'
 import PublicLayout from './components/layout/PublicLayout'
+import Logs from './pages/admin/Logs'
 import Overview from './pages/admin/Overview'
 import Users from './pages/admin/Users'
 import Checkout from './pages/customer/Checkout'
@@ -46,7 +47,7 @@ export default function App() {
           <Route path="/admin/walk-in" element={<ComingSoon title="Walk-In Order" />} />
           <Route path="/admin/inventory" element={<ComingSoon title="Inventory" />} />
           <Route path="/admin/users" element={<Users />} />
-          <Route path="/admin/logs" element={<ComingSoon title="Logs" />} />
+          <Route path="/admin/logs" element={<Logs />} />
         </Route>
       </Route>
 

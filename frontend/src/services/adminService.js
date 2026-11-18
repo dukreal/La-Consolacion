@@ -7,6 +7,13 @@ export async function getOverview() {
   return data
 }
 
+// One page (8 rows) of activity logs: { logs, page, perPage, total, totalPages }
+export async function getLogs(page = 1) {
+  const data = await api(`/admin/logs.php?page=${page}`)
+  if (!data.success) throw new Error(data.message || data.error || 'Could not load logs')
+  return data
+}
+
 // All users for the Users page: { users, adminLevel, currentUserId }
 export async function getUsers() {
   const data = await api('/admin/users.php')
