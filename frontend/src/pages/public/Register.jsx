@@ -60,8 +60,12 @@ export default function Register() {
     }
   }
 
+  // Every message (the checks in the browser and the server's) shows at the top of the card,
+  // so it is always visible without scrolling
+  const errors = clientError ? [clientError] : serverErrors
+
   return (
-    <AuthCard title="Register" subtitle="Create your account to start your jewelry journey.">
+    <AuthCard wide title="Register" subtitle="Create your account to start your jewelry journey.">
       {success && (
         <Notice type="success">
           {success}
@@ -72,38 +76,46 @@ export default function Register() {
           )}
         </Notice>
       )}
-      {serverErrors.length > 0 && (
+      {errors.length > 0 && (
         <Notice type="error">
-          {serverErrors.map((msg) => (
+          {errors.map((msg) => (
             <div key={msg}>{msg}</div>
           ))}
         </Notice>
       )}
 
       <form onSubmit={handleSubmit}>
-        <div className="input-group">
-          <input type="text" name="first_name" placeholder="First Name" required value={form.first_name} onChange={handleChange} />
-        </div>
-        <div className="input-group">
-          <input type="text" name="last_name" placeholder="Last Name" required value={form.last_name} onChange={handleChange} />
+        {/* First and last name side by side */}
+        <div className="form-row">
+          <div className="input-group">
+            <input type="text" name="first_name" placeholder="First Name" aria-label="First Name" autoComplete="given-name" required value={form.first_name} onChange={handleChange} />
+          </div>
+          <div className="input-group">
+            <input type="text" name="last_name" placeholder="Last Name" aria-label="Last Name" autoComplete="family-name" required value={form.last_name} onChange={handleChange} />
+          </div>
         </div>
         <div className="input-group">
           <input
             type="email"
             name="email"
             placeholder="Gmail only"
+            aria-label="Gmail address"
+            autoComplete="email"
             required
-            pattern="^[a-zA-Z0-9._%+-]+@gmail\.com$"
+            pattern="[a-zA-Z0-9._%+\-]+@gmail\.com"
             title="Gmail only"
             value={form.email}
             onChange={handleChange}
           />
         </div>
-        <div className="input-group">
-          <input type="password" name="password" placeholder="Password" required minLength={6} value={form.password} onChange={handleChange} />
-        </div>
-        <div className="input-group">
-          <input type="password" name="confirm_password" placeholder="Confirm Password" required minLength={6} value={form.confirm_password} onChange={handleChange} />
+        {/* Password and confirmation: side by side from 480px wide, stacked on phones */}
+        <div className="form-row form-row-wide-only">
+          <div className="input-group">
+            <input type="password" name="password" placeholder="Password" aria-label="Password" autoComplete="new-password" required minLength={6} value={form.password} onChange={handleChange} />
+          </div>
+          <div className="input-group">
+            <input type="password" name="confirm_password" placeholder="Confirm Password" aria-label="Confirm Password" autoComplete="new-password" required minLength={6} value={form.confirm_password} onChange={handleChange} />
+          </div>
         </div>
         <button type="submit" disabled={submitting}>Register</button>
         <div className="form-divider"><span>or</span></div>
@@ -111,7 +123,6 @@ export default function Register() {
           Already have an account? <Link to="/login" state={loginState}>Login here</Link>.
         </p>
       </form>
-      <div id="error-message" style={{ color: 'red' }}>{clientError}</div>
     </AuthCard>
   )
 }
