@@ -107,3 +107,19 @@ export function updateCustomOrder(id, fields, image) {
   form.append('id', id)
   return api('/products/edit-custom.php', { method: 'POST', form })
 }
+
+// Products that can be sold on the Walk-In page (in stock, not custom): { products }
+export async function getWalkInProducts() {
+  const data = await api('/admin/walk-in.php')
+  if (!data.success) throw new Error(data.message || data.error || 'Could not load products')
+  return data
+}
+
+// Records a walk-in sale. method: 'CASH' | 'GCASH' | 'PAYMAYA' | 'GOTYME'
+// Returns { success, orderId } or { success: false, error }
+export function recordWalkInSale({ productId, quantity, method, reference }) {
+  return api('/admin/walk-in.php', {
+    method: 'POST',
+    form: { product_id: productId, quantity, payment_method: method, reference_number: reference },
+  })
+}

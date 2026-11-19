@@ -12,6 +12,7 @@ import Inventory from './pages/admin/Inventory'
 import Logs from './pages/admin/Logs'
 import Overview from './pages/admin/Overview'
 import Users from './pages/admin/Users'
+import WalkIn from './pages/admin/WalkIn'
 import Checkout from './pages/customer/Checkout'
 import CustomOrderPayment from './pages/customer/CustomOrderPayment'
 import PaymentSuccess from './pages/customer/PaymentSuccess'
@@ -49,7 +50,7 @@ export default function App() {
         <Route element={<AdminLayout />}>
           <Route path="/admin" element={<Overview />} />
           <Route path="/admin/orders" element={<ComingSoon title="Orders" />} />
-          <Route path="/admin/walk-in" element={<ComingSoon title="Walk-In Order" />} />
+          <Route path="/admin/walk-in" element={<WalkIn />} />
           <Route path="/admin/inventory" element={<Inventory />} />
           <Route path="/admin/inventory/add" element={<AddProduct />} />
           <Route path="/admin/inventory/edit/:id" element={<EditProduct />} />
