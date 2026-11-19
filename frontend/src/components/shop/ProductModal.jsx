@@ -1,5 +1,7 @@
 import { useEffect, useRef, useState } from 'react'
+import { useBodyScrollLock } from '../../hooks/useBodyScrollLock'
 import { useCart } from '../../hooks/useCart'
+import { useEscapeKey } from '../../hooks/useEscapeKey'
 import { formatPrice } from '../../utils/formatPrice'
 
 const DEFAULT_DESCRIPTION =
@@ -25,18 +27,9 @@ export default function ProductModal({ product, onClose, onAddedToCart, onBuyNow
   const [imageFailed, setImageFailed] = useState(false)
   const timer = useRef(null)
 
-  // Close with Escape, stop the page behind from scrolling while the modal is open
-  useEffect(() => {
-    const onKey = (e) => {
-      if (e.key === 'Escape') onClose()
-    }
-    document.addEventListener('keydown', onKey)
-    document.body.style.overflow = 'hidden'
-    return () => {
-      document.removeEventListener('keydown', onKey)
-      document.body.style.overflow = 'auto'
-    }
-  }, [onClose])
+  // Close with Escape, stop the page behind from scrolling (without it shifting sideways)
+  useEscapeKey(true, onClose)
+  useBodyScrollLock()
 
   // Stop the "Added!" reset timer only when the modal really goes away.
   // (It must not live in the effect above: that one re-runs whenever onClose changes.)

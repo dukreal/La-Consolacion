@@ -1,5 +1,6 @@
 import { useEffect } from 'react'
 import { useCart } from '../../hooks/useCart'
+import { useBodyScrollLock } from '../../hooks/useBodyScrollLock'
 import { useEscapeKey } from '../../hooks/useEscapeKey'
 import CartItem from './CartItem'
 
@@ -11,13 +12,9 @@ export default function CartPanel({ open, onClose, onCheckout }) {
 
   // Refresh the cart each time the panel opens, and stop the page behind from scrolling
   useEffect(() => {
-    if (!open) return
-    document.body.style.overflow = 'hidden'
-    loadCart()
-    return () => {
-      document.body.style.overflow = 'auto'
-    }
+    if (open) loadCart()
   }, [open, loadCart])
+  useBodyScrollLock(open)
 
   useEscapeKey(open, onClose)
 
