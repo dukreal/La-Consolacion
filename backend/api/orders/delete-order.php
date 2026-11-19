@@ -1,87 +1,31 @@
 <?php
-// Prevent any output before JSON
-ob_start();
+// Soft-deletes an order from the admin Orders page (hides it; the row stays in the database).
+// SuperAdmin only: only SuperAdmins see the Delete button, and the old file did not check
+// anything on the server, so anyone could delete orders.
+require_once __DIR__ . '/../../helpers/admin.php';
 
-// Disable error display to prevent HTML output
-error_reporting(0);
-ini_set('display_errors', 0);
+$admin = require_admin(2);
 
-// Start session to get admin username
-if (session_status() === PHP_SESSION_NONE) {
-    session_start();
+if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
+    json_response(['success' => false, 'error' => 'Invalid request method'], 405);
 }
 
-// Simple database connection without includes
+$id = (int) ($_POST['id'] ?? 0);
+if (!$id) {
+    json_response(['success' => false, 'error' => 'No order ID provided'], 422);
+}
+
 try {
-    $host = 'localhost';
-    $db   = 'lcj';
-    $user = 'root';
-    $pass = '';
-    $charset = 'utf8mb4';
-
-    $dsn = "mysql:host=$host;dbname=$db;charset=$charset";
-    $options = [
-        PDO::ATTR_ERRMODE            => PDO::ERRMODE_EXCEPTION,
-        PDO::ATTR_DEFAULT_FETCH_MODE => PDO::FETCH_ASSOC,
-        PDO::ATTR_EMULATE_PREPARES   => false,
-    ];
-
-    $pdo = new PDO($dsn, $user, $pass, $options);
-} catch (Exception $e) {
-    ob_clean();
-    header('Content-Type: application/json');
-    echo json_encode(['success' => false, 'error' => 'Database connection error: ' . $e->getMessage()]);
-    exit;
+    $stmt = $pdo->prepare('UPDATE orders SET deleted = 1 WHERE id = ? AND deleted = 0');
+    $stmt->execute([$id]);
+    if ($stmt->rowCount() === 0) {
+        json_response(['success' => false, 'error' => 'Order not found or already deleted'], 404);
+    }
+} catch (PDOException $e) {
+    error_log('delete-order.php database error: ' . $e->getMessage());
+    json_response(['success' => false, 'error' => 'Failed to delete order.'], 500);
 }
 
-// Clear any output buffer
-ob_clean();
+log_action($pdo, $admin['username'], 'Delete Order', "Deleted Order ID: {$id}");
 
-header('Content-Type: application/json');
-
-if ($_SERVER['REQUEST_METHOD'] === 'POST') {
-    $id = $_POST['id'] ?? null;
-    if (!$id) {
-        echo json_encode(['success' => false, 'error' => 'No order ID provided']);
-        exit;
-    }
-    
-    try {
-        // First, fetch order details for logging
-        $stmt = $pdo->prepare('SELECT * FROM orders WHERE id = ? AND deleted = 0');
-        $stmt->execute([$id]);
-        $order = $stmt->fetch();
-        
-        if (!$order) {
-            echo json_encode(['success' => false, 'error' => 'Order not found or already deleted']);
-            exit;
-        }
-        
-        // Soft delete the order
-        $stmt = $pdo->prepare('UPDATE orders SET deleted = 1 WHERE id = ?');
-        $success = $stmt->execute([$id]);
-        
-        if ($success) {
-            // Simple logging without external function
-            try {
-                $details = "Deleted Order ID: {$order['id']}";
-                $stmt = $pdo->prepare("INSERT INTO logs (user, action, details, created_at) VALUES (?, ?, ?, NOW())");
-                // Use session username if available, otherwise use 'Admin'
-                $adminUser = isset($_SESSION['username']) ? $_SESSION['username'] : 'Admin';
-                $stmt->execute([$adminUser, 'Delete Order', $details]);
-            } catch (Exception $logError) {
-                // Log error silently - don't fail the deletion for logging issues
-                error_log("Log action failed: " . $logError->getMessage());
-            }
-        }
-        
-        echo json_encode(['success' => $success]);
-    } catch (PDOException $e) {
-        echo json_encode(['success' => false, 'error' => 'Database error: ' . $e->getMessage()]);
-    } catch (Exception $e) {
-        echo json_encode(['success' => false, 'error' => 'An error occurred: ' . $e->getMessage()]);
-    }
-} else {
-    echo json_encode(['success' => false, 'error' => 'Invalid request method']);
-}
-?> 
+json_response(['success' => true]);

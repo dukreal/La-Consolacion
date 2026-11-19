@@ -1,5 +1,5 @@
 import { useState } from 'react'
-import { Link } from 'react-router-dom'
+import { Link, useLocation } from 'react-router-dom'
 import AuthCard from '../../components/common/AuthCard'
 import Notice from '../../components/common/Notice'
 import { api } from '../../services/api'
@@ -23,6 +23,9 @@ function validate(form) {
 }
 
 export default function Register() {
+  // The page to go back to after logging in (set when Login sent the customer here)
+  const from = useLocation().state?.from
+  const loginState = from ? { from } : undefined
   const [form, setForm] = useState(emptyForm)
   const [clientError, setClientError] = useState('')
   const [serverErrors, setServerErrors] = useState([])
@@ -59,7 +62,16 @@ export default function Register() {
 
   return (
     <AuthCard title="Register" subtitle="Create your account to start your jewelry journey.">
-      {success && <Notice type="success">{success}</Notice>}
+      {success && (
+        <Notice type="success">
+          {success}
+          {from && (
+            <div style={{ marginTop: '6px' }}>
+              <Link to="/login" state={loginState}>Log in to continue to your payment</Link>.
+            </div>
+          )}
+        </Notice>
+      )}
       {serverErrors.length > 0 && (
         <Notice type="error">
           {serverErrors.map((msg) => (
@@ -96,7 +108,7 @@ export default function Register() {
         <button type="submit" disabled={submitting}>Register</button>
         <div className="form-divider"><span>or</span></div>
         <p>
-          Already have an account? <Link to="/login">Login here</Link>.
+          Already have an account? <Link to="/login" state={loginState}>Login here</Link>.
         </p>
       </form>
       <div id="error-message" style={{ color: 'red' }}>{clientError}</div>

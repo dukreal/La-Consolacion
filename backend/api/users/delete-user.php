@@ -1,77 +1,45 @@
 <?php
-require_once __DIR__ . '/../../middleware/admin-check.php';
-require __DIR__ . '/../../config/db.php';
+// Soft-deletes a user from the admin Users page (their orders stay for the history).
+// SuperAdmin only, like the Delete button on the page (the old server did not check this).
+require_once __DIR__ . '/../../helpers/admin.php';
 
-header('Content-Type: application/json');
+$admin = require_admin(2);
 
-if ($_SERVER['REQUEST_METHOD'] === 'POST') {
-    $id = $_POST['id'] ?? null;
-    if (!$id) {
-        echo json_encode(['success' => false, 'error' => 'No user ID provided']);
-        exit;
-    }
-    
-    try {
-        // Check if deleted column exists in users table
-        $checkColumn = $pdo->query("SHOW COLUMNS FROM users LIKE 'deleted'");
-        $hasDeletedColumn = $checkColumn->rowCount() > 0;
-        
-        if (!$hasDeletedColumn) {
-            // Add deleted column if it doesn't exist
-            $pdo->exec("ALTER TABLE users ADD COLUMN deleted TINYINT(1) DEFAULT 0");
-        }
-        
-        // Get user details before soft deletion for logging
-        $stmt = $pdo->prepare('SELECT username, email FROM users WHERE id = ? AND deleted = 0');
-        $stmt->execute([$id]);
-        $user = $stmt->fetch();
-        
-        if (!$user) {
-            echo json_encode(['success' => false, 'error' => 'User not found or already deleted']);
-            exit;
-        }
-        
-        // Check if user has any orders
-        $stmt = $pdo->prepare('SELECT COUNT(*) as order_count FROM orders WHERE user_id = ?');
-        $stmt->execute([$id]);
-        $orderCount = $stmt->fetch()['order_count'];
-        
-        // Soft delete the user (set deleted = 1)
-        $stmt = $pdo->prepare('UPDATE users SET deleted = 1 WHERE id = ?');
-        $success = $stmt->execute([$id]);
-        
-        if ($success) {
-            // Log the soft deletion
-            if (isset($_SESSION['username'])) {
-                $details = "Soft deleted user: {$user['username']} ({$user['email']})";
-                if ($orderCount > 0) {
-                    $details .= " - User has {$orderCount} orders (preserved for history)";
-                }
-                log_action($pdo, $_SESSION['username'], 'Soft Delete User', $details);
-            }
-            
-            echo json_encode(['success' => true]);
-        } else {
-            $pdoError = $stmt->errorInfo();
-            echo json_encode([
-                'success' => false,
-                'error' => 'Failed to soft delete user (DB error)',
-                'pdo_error' => $pdoError
-            ]);
-        }
-    } catch (PDOException $e) {
-        echo json_encode([
-            'success' => false,
-            'error' => 'PDOException: ' . $e->getMessage(),
-            'code' => $e->getCode()
-        ]);
-    } catch (Exception $e) {
-        echo json_encode([
-            'success' => false,
-            'error' => 'Exception: ' . $e->getMessage()
-        ]);
-    }
-} else {
-    echo json_encode(['success' => false, 'error' => 'Invalid request']);
+if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
+    json_response(['success' => false, 'error' => 'Invalid request'], 405);
 }
-?> 
+
+$id = (int) ($_POST['id'] ?? 0);
+if (!$id) {
+    json_response(['success' => false, 'error' => 'No user ID provided'], 422);
+}
+if ($id === $admin['id']) {
+    json_response(['success' => false, 'error' => 'You cannot delete your own account.'], 422);
+}
+
+try {
+    $stmt = $pdo->prepare('SELECT username, email FROM users WHERE id = ? AND deleted = 0');
+    $stmt->execute([$id]);
+    $user = $stmt->fetch();
+    if (!$user) {
+        json_response(['success' => false, 'error' => 'User not found or already deleted'], 404);
+    }
+
+    $stmt = $pdo->prepare('SELECT COUNT(*) FROM orders WHERE user_id = ?');
+    $stmt->execute([$id]);
+    $order_count = (int) $stmt->fetchColumn();
+
+    $stmt = $pdo->prepare('UPDATE users SET deleted = 1 WHERE id = ?');
+    $stmt->execute([$id]);
+} catch (PDOException $e) {
+    error_log('delete-user.php database error: ' . $e->getMessage());
+    json_response(['success' => false, 'error' => 'Failed to delete user'], 500);
+}
+
+$details = "Soft deleted user: {$user['username']} ({$user['email']})";
+if ($order_count > 0) {
+    $details .= " - User has {$order_count} orders (preserved for history)";
+}
+log_action($pdo, $admin['username'], 'Soft Delete User', $details);
+
+json_response(['success' => true]);

@@ -104,7 +104,7 @@ try {
     foreach ($lines as $line) {
         $needed[$line['product_id']] = ($needed[$line['product_id']] ?? 0) + $line['qty'];
     }
-    $product_stmt = $pdo->prepare('SELECT id, name, price, stock FROM products WHERE id = ? AND deleted = 0 FOR UPDATE');
+    $product_stmt = $pdo->prepare('SELECT id, name, price, stock, type FROM products WHERE id = ? AND deleted = 0 FOR UPDATE');
     $products = [];
     foreach ($needed as $pid => $qty) {
         $product_stmt->execute([$pid]);
@@ -122,15 +122,35 @@ try {
     $stmt->execute([$reference, $service, $new_filename, $mobile, $amount]);
     $payment_id = $pdo->lastInsertId();
 
-    $stmt = $pdo->prepare("INSERT INTO orders (payment_id, user_id, status) VALUES (?, ?, 'pending')");
-    $stmt->execute([$payment_id, $user_id]);
-    $order_id = $pdo->lastInsertId();
+    // Paying for a custom order: the admin's "Add Custom Order" already made an unpaid order
+    // for this customer. Fill in that order instead of making a second one.
+    $existing_order_id = null;
+    if (!$from_cart && count($lines) === 1 && $products[$lines[0]['product_id']]['type'] === 'custom') {
+        $stmt = $pdo->prepare(
+            'SELECT o.id FROM orders o
+             JOIN order_items oi ON oi.order_id = o.id
+             WHERE oi.product_id = ? AND o.user_id = ? AND o.payment_id IS NULL AND o.deleted = 0
+             ORDER BY o.id LIMIT 1 FOR UPDATE'
+        );
+        $stmt->execute([$lines[0]['product_id'], $user_id]);
+        $existing_order_id = $stmt->fetchColumn() ?: null;
+    }
 
-    $item_stmt = $pdo->prepare('INSERT INTO order_items (order_id, product_id, quantity, price_at_purchase) VALUES (?, ?, ?, ?)');
     $stock_stmt = $pdo->prepare('UPDATE products SET stock = stock - ? WHERE id = ?');
-    foreach ($lines as $line) {
-        $item_stmt->execute([$order_id, $line['product_id'], $line['qty'], $products[$line['product_id']]['price']]);
-        $stock_stmt->execute([$line['qty'], $line['product_id']]);
+    if ($existing_order_id) {
+        $pdo->prepare('UPDATE orders SET payment_id = ? WHERE id = ?')->execute([$payment_id, $existing_order_id]);
+        $order_id = $existing_order_id;
+        $stock_stmt->execute([$lines[0]['qty'], $lines[0]['product_id']]); // its order item is already there
+    } else {
+        $stmt = $pdo->prepare("INSERT INTO orders (payment_id, user_id, status) VALUES (?, ?, 'pending')");
+        $stmt->execute([$payment_id, $user_id]);
+        $order_id = $pdo->lastInsertId();
+
+        $item_stmt = $pdo->prepare('INSERT INTO order_items (order_id, product_id, quantity, price_at_purchase) VALUES (?, ?, ?, ?)');
+        foreach ($lines as $line) {
+            $item_stmt->execute([$order_id, $line['product_id'], $line['qty'], $products[$line['product_id']]['price']]);
+            $stock_stmt->execute([$line['qty'], $line['product_id']]);
+        }
     }
 
     if ($from_cart) {

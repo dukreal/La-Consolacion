@@ -1,84 +1,80 @@
 <?php
-require_once __DIR__ . '/../../middleware/admin-check.php';
-require_once __DIR__ . '/../../config/db.php';
+// One order for the Details pop-up on the admin Orders page.
+// GET ?order_id=N → the order, its customer and its products.
+require_once __DIR__ . '/../../helpers/admin.php';
 
-if (!isset($_GET['order_id'])) {
-    http_response_code(400);
-    echo json_encode(['error' => 'Order ID is required']);
-    exit;
+require_admin();
+
+$order_id = (int) ($_GET['order_id'] ?? 0);
+if (!$order_id) {
+    json_response(['success' => false, 'error' => 'Order ID is required'], 400);
 }
-
-$order_id = intval($_GET['order_id']);
 
 try {
-    // Fetch order details with customer and payment info (including orders without payments)
-    $stmt = $pdo->prepare('
-        SELECT o.*, u.username, u.email, pay.reference_number, pay.service, pay.mobile, pay.amount
-        FROM orders o
-        JOIN users u ON o.user_id = u.id
-        LEFT JOIN payments pay ON o.payment_id = pay.id
-        WHERE o.id = ?
-    ');
+    $stmt = $pdo->prepare(
+        'SELECT o.id, o.status, o.payment_id, o.date_ordered, o.date_completed,
+                u.username, u.email, u.profile_image, pay.reference_number, pay.service, pay.mobile
+         FROM orders o
+         JOIN users u ON o.user_id = u.id
+         LEFT JOIN payments pay ON o.payment_id = pay.id
+         WHERE o.id = ? AND o.deleted = 0'
+    );
     $stmt->execute([$order_id]);
     $order = $stmt->fetch(PDO::FETCH_ASSOC);
-
     if (!$order) {
-        http_response_code(404);
-        echo json_encode(['error' => 'Order not found']);
-        exit;
+        json_response(['success' => false, 'error' => 'Order not found'], 404);
     }
 
-    // Fetch order items with product details
-    $item_stmt = $pdo->prepare('
-        SELECT oi.*, p.name as product_name, p.description as product_description, p.image as product_image, p.type as product_type
-        FROM order_items oi
-        JOIN products p ON oi.product_id = p.id
-        WHERE oi.order_id = ?
-    ');
-    $item_stmt->execute([$order_id]);
-    $items = $item_stmt->fetchAll(PDO::FETCH_ASSOC);
-
-    // Calculate total
-    $total = 0;
-    foreach ($items as $item) {
-        $total += $item['price_at_purchase'] * $item['quantity'];
-    }
-
-    // Prepare response
-    $response = [
-        'order' => [
-            'id' => $order['id'],
-            'date_ordered' => $order['date_ordered'],
-            'date_completed' => $order['date_completed'],
-            'status' => $order['status'] ?? 'pending', // Default to 'pending' if null
-            'reference_number' => $order['reference_number'],
-            'service' => $order['service']
-        ],
-        'customer' => [
-            'name' => $order['username'],
-            'email' => $order['email'] ?? 'N/A',
-            'mobile' => $order['mobile'] ?? 'N/A'
-        ],
-        'products' => array_map(function($item) {
-            return [
-                'id' => $item['product_id'],
-                'name' => $item['product_name'],
-                'description' => $item['product_description'],
-                'image' => $item['product_image'],
-                'type' => $item['product_type'],
-                'quantity' => $item['quantity'],
-                'price' => $item['price_at_purchase'],
-                'total' => $item['price_at_purchase'] * $item['quantity']
-            ];
-        }, $items),
-        'total' => $total
-    ];
-
-    header('Content-Type: application/json');
-    echo json_encode($response);
-
+    $stmt = $pdo->prepare(
+        'SELECT oi.product_id, oi.quantity, oi.price_at_purchase, p.name, p.description, p.image, p.type
+         FROM order_items oi
+         JOIN products p ON oi.product_id = p.id
+         WHERE oi.order_id = ?
+         ORDER BY oi.id'
+    );
+    $stmt->execute([$order_id]);
+    $items = $stmt->fetchAll(PDO::FETCH_ASSOC);
 } catch (PDOException $e) {
-    http_response_code(500);
-    echo json_encode(['error' => 'Database error: ' . $e->getMessage()]);
+    error_log('get-order-details.php database error: ' . $e->getMessage());
+    json_response(['success' => false, 'error' => 'Database error. Please try again.'], 500);
 }
-?> 
+
+$total = 0;
+foreach ($items as $item) {
+    $total += $item['price_at_purchase'] * $item['quantity'];
+}
+// The old pop-up had a spot for the customer's photo but never received one; now it does
+$photo = $order['profile_image'] && is_file(__DIR__ . '/../../uploads/profile/' . $order['profile_image'])
+    ? $order['profile_image'] : null;
+
+json_response([
+    'success'  => true,
+    'order'    => [
+        'id'            => (int) $order['id'],
+        'status'        => strtolower($order['status'] ?? 'pending'),
+        'paid'          => $order['payment_id'] !== null,
+        'dateOrdered'   => $order['date_ordered'],
+        'dateCompleted' => $order['date_completed'],
+        'service'       => $order['service'],
+    ],
+    'customer' => [
+        'name'         => $order['username'],
+        'email'        => $order['email'] ?? 'N/A',
+        'mobile'       => $order['mobile'] ?? 'N/A',
+        'profileImage' => $photo,
+        // Same test as the old pop-up: the walk-in account, or a cash sale
+        'isWalkIn'     => $order['username'] === 'walkin_guest' || str_contains((string) $order['email'], 'walkin')
+            || strtolower((string) $order['service']) === 'cash',
+    ],
+    'products' => array_map(fn ($item) => [
+        'id'          => (int) $item['product_id'],
+        'name'        => $item['name'],
+        'description' => $item['description'],
+        'image'       => $item['image'],
+        'folder'      => $item['type'] === 'custom' ? 'custom' : 'products',
+        'quantity'    => (int) $item['quantity'],
+        'price'       => (float) $item['price_at_purchase'],
+        'total'       => $item['price_at_purchase'] * $item['quantity'],
+    ], $items),
+    'total'    => $total,
+]);

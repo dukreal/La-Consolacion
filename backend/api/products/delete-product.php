@@ -1,55 +1,38 @@
 <?php
-session_start();
-require_once __DIR__ . '/../../middleware/admin-check.php';
-require_once __DIR__ . '/../../config/db.php';
+// Soft-deletes a product from the admin Inventory page. SuperAdmin only.
+// A custom product's custom_orders row (same id) is soft-deleted too, like before.
+require_once __DIR__ . '/../../helpers/admin.php';
 
-// Check admin level - only SuperAdmin (level 2) can delete products
-$user_id = $_SESSION['user_id'];
-$stmt = $pdo->prepare('SELECT u.role, a.admin_level FROM users u LEFT JOIN admin a ON u.id = a.user_id WHERE u.id = ?');
-$stmt->execute([$user_id]);
-$currentAdmin = $stmt->fetch();
+$admin = require_admin(2);
 
-if (!is_admin($currentAdmin, 2)) {
-    header('Location: admin-inventory.php?error=insufficient_permissions');
-    exit();
+if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
+    json_response(['success' => false, 'error' => 'Invalid request'], 405);
 }
 
-if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['id'])) {
-    $id = intval($_POST['id']);
-    $success = false;
-    $error = '';
-    
-    try {
-        // Fetch the full product row
-        $stmt = $pdo->prepare('SELECT * FROM products WHERE id = ?');
-        $stmt->execute([$id]);
-        $product = $stmt->fetch(PDO::FETCH_ASSOC);
+$id = (int) ($_POST['id'] ?? 0);
+if (!$id) {
+    json_response(['success' => false, 'error' => 'No product ID provided'], 422);
+}
 
-        if (!$product) {
-            $error = 'Product not found';
-        } else {
-            // Always soft delete the product
-            $stmt = $pdo->prepare('UPDATE products SET deleted = 1 WHERE id = ?');
-            $success = $stmt->execute([$id]);
-            // Also soft delete related custom_orders if they exist
-            $stmt = $pdo->prepare('UPDATE custom_orders SET deleted = 1 WHERE id = ?');
-            $stmt->execute([$id]);
-            if ($success) {
-                $details = "Soft deleted product ID: {$id}";
-                log_action($pdo, $_SESSION['username'], 'Delete Product', $details);
-            } else {
-                $error = 'Failed to soft delete product';
-            }
-        }
-    } catch (PDOException $e) {
-        $error = 'Database error: ' . $e->getMessage();
+try {
+    $stmt = $pdo->prepare('SELECT id FROM products WHERE id = ? AND deleted = 0');
+    $stmt->execute([$id]);
+    if (!$stmt->fetch()) {
+        json_response(['success' => false, 'error' => 'Product not found'], 404);
     }
-    
-    // Redirect based on result
-    if ($success) {
-        header('Location: admin-inventory.php?deleted=1');
-    } else {
-        header('Location: admin-inventory.php?error=delete_failed&message=' . urlencode($error));
+
+    $pdo->beginTransaction();
+    $pdo->prepare('UPDATE products SET deleted = 1 WHERE id = ?')->execute([$id]);
+    $pdo->prepare('UPDATE custom_orders SET deleted = 1 WHERE id = ?')->execute([$id]);
+    $pdo->commit();
+} catch (PDOException $e) {
+    if ($pdo->inTransaction()) {
+        $pdo->rollBack();
     }
-    exit();
-} 
+    error_log('delete-product.php database error: ' . $e->getMessage());
+    json_response(['success' => false, 'error' => 'Failed to delete product'], 500);
+}
+
+log_action($pdo, $admin['username'], 'Delete Product', "Soft deleted product ID: {$id}");
+
+json_response(['success' => true]);
