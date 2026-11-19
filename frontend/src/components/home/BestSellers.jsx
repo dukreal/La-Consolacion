@@ -1,7 +1,7 @@
 import { useEffect, useRef, useState } from 'react'
 
-// The featured products, shown as a slider: swipe on phones, or use the ‹ › arrows.
-// On wide screens all cards fit, so the arrows are greyed out.
+// The featured products, shown as a slider: swipe, or tap the dots under the cards.
+// On wide screens all cards fit, so the dots are hidden.
 const bestSellers = [
   { image: '494324954_1183859846336540_5343954234173565708_n.jpg', name: 'Crown Diamond Ring' },
   { image: '494325447_1231333955173886_6890510470019316369_n.jpg', name: 'Gold Teddy Bear Ring' },
@@ -11,10 +11,10 @@ const bestSellers = [
 export default function BestSellers() {
   const trackRef = useRef(null)
   const [active, setActive] = useState(0) // card nearest the left edge (for the dots)
-  const [atStart, setAtStart] = useState(true)
+  const [atStart, setAtStart] = useState(true) // both true = every card fits, no dots needed
   const [atEnd, setAtEnd] = useState(false)
 
-  // Work out which card is showing and whether the arrows can move further
+  // Work out which card is showing and whether there is more to swipe to
   const update = () => {
     const track = trackRef.current
     if (!track) return
@@ -33,13 +33,6 @@ export default function BestSellers() {
     return () => window.removeEventListener('resize', update)
   }, [])
 
-  // Move one card left (-1) or right (+1)
-  const slide = (direction) => {
-    const track = trackRef.current
-    const card = track.firstElementChild
-    track.scrollBy({ left: direction * (card.offsetWidth + 24), behavior: 'smooth' })
-  }
-
   const goTo = (index) => {
     const card = trackRef.current.children[index]
     trackRef.current.scrollTo({ left: card.offsetLeft - trackRef.current.offsetLeft, behavior: 'smooth' })
@@ -49,9 +42,6 @@ export default function BestSellers() {
     <section className="best-sellers-section">
       <h2 className="best-sellers-title">Our Best Sellers</h2>
       <div className="best-sellers-carousel">
-        <button type="button" className="carousel-arrow left" aria-label="Previous" onClick={() => slide(-1)} disabled={atStart}>
-          &#8249;
-        </button>
         <div className="carousel-track" ref={trackRef} onScroll={update}>
           {bestSellers.map((item) => (
             <div className="carousel-card" key={item.image}>
@@ -60,9 +50,6 @@ export default function BestSellers() {
             </div>
           ))}
         </div>
-        <button type="button" className="carousel-arrow right" aria-label="Next" onClick={() => slide(1)} disabled={atEnd}>
-          &#8250;
-        </button>
       </div>
       {/* Dots: which card is showing (only when not all cards fit) */}
       {!(atStart && atEnd) && (
