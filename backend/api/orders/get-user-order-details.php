@@ -52,18 +52,8 @@ try {
         $total += $item['price_at_purchase'] * $item['quantity'];
     }
 
-    // Determine status styling
-    $statusConfig = [
-        'pending' => ['bg' => 'bg-yellow-100', 'text' => 'text-yellow-800', 'dot' => 'bg-yellow-400', 'label' => 'Pending'],
-        'processing' => ['bg' => 'bg-blue-100', 'text' => 'text-blue-800', 'dot' => 'bg-blue-400', 'label' => 'Processing'],
-        'waiting_for_buyer' => ['bg' => 'bg-purple-100', 'text' => 'text-purple-800', 'dot' => 'bg-purple-400', 'label' => 'Waiting for Buyer'],
-        'completed' => ['bg' => 'bg-green-100', 'text' => 'text-green-800', 'dot' => 'bg-green-400', 'label' => 'Completed'],
-        'cancelled' => ['bg' => 'bg-red-100', 'text' => 'text-red-800', 'dot' => 'bg-red-400', 'label' => 'Cancelled'],
-        'confirmed' => ['bg' => 'bg-indigo-100', 'text' => 'text-indigo-800', 'dot' => 'bg-indigo-400', 'label' => 'Confirmed']
-    ];
-
+    // The status color and wording are decided by the website (frontend/src/utils/orderStatus.js)
     $currentStatus = $order['status'] ?? 'pending';
-    $statusStyle = $statusConfig[$currentStatus] ?? $statusConfig['pending'];
 
     // Prepare response
     $response = [
@@ -72,7 +62,6 @@ try {
             'date_ordered' => $order['date_ordered'],
             'date_completed' => $order['date_completed'],
             'status' => $currentStatus,
-            'status_style' => $statusStyle,
             'reference_number' => $order['reference_number'],
             'service' => $order['service']
         ],

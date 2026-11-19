@@ -43,50 +43,12 @@ try {
     // Format orders for display
     $formattedOrders = [];
     foreach ($orders as $order) {
-        $statusClass = '';
-        $statusText = '';
-        
-        switch ($order['status']) {
-            case 'pending':
-                $statusClass = 'bg-yellow-100 text-yellow-800 border-yellow-200';
-                $statusText = 'Pending';
-                break;
-            case 'confirmed':
-                $statusClass = 'bg-blue-100 text-blue-800 border-blue-200';
-                $statusText = 'Confirmed';
-                break;
-            case 'processing':
-                $statusClass = 'bg-purple-100 text-purple-800 border-purple-200';
-                $statusText = 'Processing';
-                break;
-            case 'ready_for_pickup':
-                $statusClass = 'bg-indigo-100 text-indigo-800 border-indigo-200';
-                $statusText = 'Ready for Pickup';
-                break;
-            case 'completed':
-                $statusClass = 'bg-green-100 text-green-800 border-green-200';
-                $statusText = 'Completed';
-                break;
-            case 'cancelled':
-                $statusClass = 'bg-red-100 text-red-800 border-red-200';
-                $statusText = 'Cancelled';
-                break;
-            case 'waiting_for_buyer':
-                $statusClass = 'bg-orange-100 text-orange-800 border-orange-200';
-                $statusText = 'Waiting for Buyer';
-                break;
-            default:
-                $statusClass = 'bg-gray-100 text-gray-800 border-gray-200';
-                $statusText = ucfirst($order['status']);
-        }
-        
+        // The status color and wording are decided by the website (frontend/src/utils/orderStatus.js)
         $formattedOrders[] = [
             'order_id' => $order['order_id'],
             'order_date' => date('M d, Y', strtotime($order['date_ordered'])),
             'total_amount' => number_format($order['total_amount'] ?: 0, 2),
             'status' => $order['status'],
-            'status_text' => $statusText,
-            'status_class' => $statusClass,
             'order_items' => $order['order_items'] ?: 'No items',
             'can_cancel' => in_array($order['status'], ['pending', 'processing', 'confirmed', 'waiting_for_buyer']),
             'payment_id' => $order['payment_id'],
