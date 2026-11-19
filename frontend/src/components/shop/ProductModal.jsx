@@ -15,7 +15,7 @@ function modalDescription(description) {
 }
 
 const addButtonClass =
-  'py-3 px-4 border-2 border-gray-300 text-gray-700 font-medium rounded-xl hover:border-gray-400 hover:bg-gray-50 transition-all duration-300 inter'
+  'py-3 px-3 sm:px-4 whitespace-nowrap text-sm sm:text-base border-2 border-gray-300 text-gray-700 font-medium rounded-xl hover:border-gray-400 hover:bg-gray-50 transition-all duration-300 inter'
 const grey = { backgroundColor: '#9ca3af', color: 'white', borderColor: '#9ca3af' }
 
 export default function ProductModal({ product, onClose, onAddedToCart, onBuyNow }) {
@@ -128,7 +128,7 @@ export default function ProductModal({ product, onClose, onAddedToCart, onBuyNow
           <div className="relative z-50 w-full max-w-5xl mx-auto modal-entrance" onClick={(e) => e.stopPropagation()}>
             {/* Desktop: a fixed height that always fits the screen; the details side scrolls if it needs to.
                 Phones and tablets: picture on top, details below, the whole layer scrolls. */}
-            <div className="bg-white/95 backdrop-blur-xl rounded-3xl luxury-shadow overflow-hidden border border-white/20 lg:h-[min(780px,calc(100dvh-2rem))]">
+            <div className="bg-white/95 backdrop-blur-xl rounded-3xl luxury-shadow overflow-clip border border-white/20 lg:h-[min(780px,calc(100dvh-2rem))]">
               {/* Close Button */}
               <button
                 onClick={onClose}
@@ -157,7 +157,7 @@ export default function ProductModal({ product, onClose, onAddedToCart, onBuyNow
                           alt={product.name}
                           onError={() => setImageFailed(true)}
                           src={`/uploads/products/${product.image}`}
-                          className="w-full aspect-square max-h-[55vh] sm:max-h-[420px] lg:max-h-none lg:aspect-auto lg:h-full object-cover rounded-xl image-glow hover:scale-105 transition-transform duration-700"
+                          className="w-full aspect-square max-h-[55vh] sm:max-h-[420px] lg:max-h-none lg:aspect-auto lg:h-full object-cover rounded-xl image-glow"
                         />
                       )}
                     </div>
@@ -184,14 +184,14 @@ export default function ProductModal({ product, onClose, onAddedToCart, onBuyNow
                     {product.name}
                   </h1>
 
-                  <p id="modalProductDescription" className="inter text-gray-600 text-base mb-6 leading-relaxed">
+                  <p id="modalProductDescription" className="inter text-gray-600 text-[15px] sm:text-base mb-5 sm:mb-6 leading-relaxed">
                     {modalDescription(product.description)}
                   </p>
 
                   {/* Price Section */}
-                  <div className="mb-6">
+                  <div className="mb-5 sm:mb-6">
                     <div className="flex items-baseline gap-2 mb-2">
-                      <span id="modalProductPrice" className="cormorant text-4xl font-bold gold-gradient bg-clip-text text-transparent">
+                      <span id="modalProductPrice" className="cormorant text-3xl sm:text-4xl font-bold gold-gradient bg-clip-text text-transparent">
                         ₱{formatPrice(product.price)}
                       </span>
                       <span className="inter text-lg text-gray-400 font-light">PHP</span>
@@ -206,8 +206,8 @@ export default function ProductModal({ product, onClose, onAddedToCart, onBuyNow
                     <p className="inter text-sm text-gray-500">Pickup only - Visit our store</p>
                   </div>
 
-                  {/* Features */}
-                  <div className="mb-6">
+                  {/* Features (general text, the same for every product): hidden on phones to keep the buttons close */}
+                  <div className="hidden sm:block mb-6">
                     <h3 className="playfair text-lg font-semibold text-gray-900 mb-3">Features</h3>
                     <div className="flex flex-col gap-2 sm:flex-row sm:flex-wrap sm:gap-x-6">
                       <div className="flex items-center gap-3">
@@ -225,8 +225,8 @@ export default function ProductModal({ product, onClose, onAddedToCart, onBuyNow
                     </div>
                   </div>
 
-                  {/* Action Buttons */}
-                  <div className="space-y-3">
+                  {/* Action Buttons: on phones they stay pinned to the bottom of the screen while the details scroll */}
+                  <div className="space-y-3 max-sm:sticky max-sm:bottom-0 max-sm:z-10 max-sm:-mx-6 max-sm:px-6 max-sm:py-3 max-sm:bg-white/95 max-sm:backdrop-blur max-sm:border-t max-sm:border-gray-100">
                     <button
                       id="buyNowBtn"
                       onClick={() => onBuyNow?.(product, () => setBuying(true))}
@@ -262,7 +262,7 @@ export default function ProductModal({ product, onClose, onAddedToCart, onBuyNow
                   </div>
 
                   {/* Trust Indicators */}
-                  <div className="mt-6 pt-6 border-t border-gray-200">
+                  <div className="mt-5 pt-5 sm:mt-6 sm:pt-6 border-t border-gray-200">
                     <div className="flex flex-wrap items-center justify-between gap-3 text-sm inter text-gray-600">
                       <div className="flex items-center gap-2">
                         <svg className="w-5 h-5 text-green-500" fill="currentColor" viewBox="0 0 20 20">

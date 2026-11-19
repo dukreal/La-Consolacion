@@ -20,19 +20,15 @@
             -ms-background: linear-gradient(135deg, #3b82f6, #1d4ed8, #1e40af, #1e3a8a);
         }
         
+        /* Product cards stay in place on hover: only the shadow deepens a little */
         :where(.shop-page) .card-hover {
-            transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
-            -webkit-transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
-            -ms-transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+            transition: box-shadow 0.3s ease;
         }
-        
-        :where(.shop-page) .card-hover:hover {
-            transform: translateY(-12px) scale(1.02);
-            -webkit-transform: translateY(-12px) scale(1.02);
-            -ms-transform: translateY(-12px) scale(1.02);
-            box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.25), 0 0 0 1px rgba(255, 255, 255, 0.1);
-            -webkit-box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.25), 0 0 0 1px rgba(255, 255, 255, 0.1);
-            -ms-box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.25), 0 0 0 1px rgba(255, 255, 255, 0.1);
+
+        @media (hover: hover) {
+            :where(.shop-page) .card-hover:hover {
+                box-shadow: 0 18px 40px -16px rgba(30, 58, 138, 0.28), 0 0 0 1px rgba(255, 255, 255, 0.1);
+            }
         }
         
         :where(.shop-page) .diamond-sparkle {
@@ -588,7 +584,6 @@
 }
 :where(.shop-page) .shop-product-card:hover {
   box-shadow: 0 8px 32px rgba(55, 48, 163, 0.13), 0 2px 8px rgba(0, 0, 0, 0.08);
-  transform: translateY(-6px) scale(1.03);
 }
 :where(.shop-page) .shop-product-image {
   width: 100%;

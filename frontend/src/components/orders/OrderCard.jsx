@@ -35,7 +35,7 @@ export default function OrderCard({ order, onViewDetails, onCancel }) {
         {order.reference_number && (
           <div className="mb-3 p-2 bg-gray-50 rounded-lg">
             <div className="flex items-center justify-between text-xs text-gray-600">
-              <span>Payment: {order.service}</span>
+              <span>Payment: {(order.service || '').toUpperCase()}</span>
               <span>Ref: {order.reference_number}</span>
             </div>
             {/* Custom orders: the customer paid a 30% downpayment of the total above */}
@@ -48,25 +48,22 @@ export default function OrderCard({ order, onViewDetails, onCancel }) {
         )}
 
         {/* Action Buttons */}
-        <div className="flex items-center justify-between">
-          <div className="flex items-center space-x-2">
+        <div className="flex items-center">
+          <div className="flex items-center gap-2 -ml-3">
             <button
               onClick={() => onViewDetails(order.order_id)}
-              className="px-3 py-1 text-green-600 hover:text-green-700 hover:bg-green-50 rounded-lg transition-all duration-200 text-sm font-medium"
+              className="px-3 py-2 text-green-600 hover:text-green-700 hover:bg-green-50 rounded-lg transition-all duration-200 text-sm font-medium"
             >
               View Details
             </button>
             {order.can_cancel && (
               <button
                 onClick={() => onCancel(order.order_id)}
-                className="px-3 py-1 text-red-600 hover:text-red-700 hover:bg-red-50 rounded-lg transition-all duration-200 text-sm font-medium"
+                className="px-3 py-2 text-red-600 hover:text-red-700 hover:bg-red-50 rounded-lg transition-all duration-200 text-sm font-medium"
               >
                 Cancel Order
               </button>
             )}
-          </div>
-          <div className="flex items-center space-x-2">
-            <span className="text-xs text-gray-400">ID: {order.order_id}</span>
           </div>
         </div>
       </div>

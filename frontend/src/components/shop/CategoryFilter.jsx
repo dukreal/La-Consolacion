@@ -15,7 +15,7 @@ const inactiveClass = `filter-btn ${sizeClass} rounded-xl bg-white/60 backdrop-b
 export default function CategoryFilter({ active, onChange }) {
   return (
     // Phones: one row you can swipe sideways (no wrapping into 3 rows). From 640px up: wraps like before.
-    <div className="no-scrollbar -mx-6 flex gap-2 overflow-x-auto px-6 pb-1 sm:mx-0 sm:flex-wrap sm:gap-3 sm:overflow-visible sm:px-0 sm:pb-0">
+    <div className="no-scrollbar -mx-4 flex gap-2 overflow-x-auto px-4 pb-1 sm:mx-0 sm:flex-wrap sm:gap-3 sm:overflow-visible sm:px-0 sm:pb-0">
       {FILTERS.map((filter) => {
         const isActive = filter.value === active
         return (

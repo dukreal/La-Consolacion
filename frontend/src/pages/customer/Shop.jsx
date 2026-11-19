@@ -113,14 +113,14 @@ export default function Shop() {
   return (
     <>
       {/* Header Section */}
-      <div className="relative z-10 pt-10 pb-6 sm:pt-16 sm:pb-12 w-full">
-        <div className="max-w-7xl mx-auto px-6">
+      <div className="relative z-10 pt-8 pb-4 sm:pt-16 sm:pb-12 w-full">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6">
           {/* Title and Description */}
-          <div className="text-center mb-8 sm:mb-16">
-            <h1 className="playfair text-4xl sm:text-5xl md:text-6xl font-bold mb-4 sm:mb-6 leading-tight" style={{ color: '#22306a' }}>
+          <div className="text-center mb-6 sm:mb-16">
+            <h1 className="playfair text-3xl sm:text-5xl md:text-6xl font-bold mb-2 sm:mb-6 leading-tight" style={{ color: '#22306a' }}>
               Luxury Jewelry
             </h1>
-            <p className="inter text-base sm:text-xl text-gray-600 max-w-3xl mx-auto leading-relaxed">
+            <p className="inter text-sm sm:text-xl text-gray-600 max-w-3xl mx-auto leading-relaxed">
               Discover our exquisite collection of handcrafted jewelry pieces, each telling a unique story of
               elegance and sophistication.
             </p>
@@ -128,7 +128,7 @@ export default function Shop() {
 
           {/* Filter/Sort Bar */}
           {/* Phones: category row on top, sort under it. Wider: side by side like before */}
-          <div className="flex flex-col sm:flex-row sm:flex-wrap sm:justify-between sm:items-center mb-2 sm:mb-12 gap-4">
+          <div className="flex flex-col sm:flex-row sm:flex-wrap sm:justify-between sm:items-center mb-2 sm:mb-12 gap-3 sm:gap-4">
             <CategoryFilter active={activeFilter} onChange={handleFilter} />
             <SortSelect value={sort} onChange={handleSort} />
           </div>
