@@ -108,8 +108,8 @@ export default function Profile() {
 
   return (
     <div className="profile-page min-h-screen bg-gradient-to-br from-slate-50 via-blue-50 to-indigo-100">
-      <div className="container mx-auto px-4 py-6 sm:py-10">
-        <div className="max-w-3xl mx-auto">
+      <div className="container mx-auto px-4 py-6 sm:py-10 lg:py-8">
+        <div className="max-w-3xl lg:max-w-4xl mx-auto">
           <div className="profile-card rounded-2xl shadow-xl p-5 sm:p-8">
             {/* Back button, title */}
             <div className="flex justify-between items-start mb-6 pb-5 border-b border-gray-100">
@@ -154,10 +154,16 @@ export default function Profile() {
               </div>
             )}
 
+            {/* Phones and tablets: photo on top, fields below. Desktop: photo on the left, fields on the right,
+                so the whole page fits a laptop screen (browser tabs and 125% scaling) without scrolling. */}
             {saved && (
-              <form onSubmit={handleSubmit} className="space-y-6" noValidate>
+              <form
+                onSubmit={handleSubmit}
+                className="space-y-6 lg:space-y-0 lg:grid lg:grid-cols-[200px_1fr] lg:gap-x-8 lg:gap-y-6"
+                noValidate
+              >
                 {/* Profile photo */}
-                <div className="flex flex-col items-center gap-3 mb-2">
+                <div className="flex flex-col items-center gap-3 mb-2 lg:mb-0 lg:row-span-2 lg:self-center lg:pr-8 lg:border-r lg:border-gray-100 lg:h-full lg:justify-center">
                   <div className="profile-image-container">
                     {avatarFailed && !previewUrl ? (
                       // The avatar could not load (offline, or ui-avatars.com is down): draw the initials ourselves
@@ -236,7 +242,7 @@ export default function Profile() {
                 </div>
 
                 {/* Save */}
-                <div className="flex justify-center pt-2 sm:pt-4">
+                <div className="flex justify-center lg:justify-end lg:col-start-2 pt-2 sm:pt-4 lg:pt-0">
                   <button
                     type="submit"
                     disabled={saving}
