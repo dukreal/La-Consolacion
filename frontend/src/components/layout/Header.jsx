@@ -4,6 +4,16 @@ import { useAuth } from '../../hooks/useAuth'
 
 const navLink =
   'inter text-gray-700 hover:text-blue-600 transition-colors duration-300 font-medium'
+const mobileLink =
+  'block px-6 py-3 inter text-gray-700 font-medium hover:bg-blue-50 hover:text-blue-600 transition-colors duration-200'
+
+// The page links, shown in the bar on wide screens and in the hamburger menu on phones
+const NAV_LINKS = [
+  { to: '/shop', label: 'Shop All' },
+  { to: '/#steps', label: 'Order Custom' },
+  { to: '/#about', label: 'About Us' },
+  { to: '/#contact', label: 'Contact Us' },
+]
 
 // Full class names are listed so Tailwind can find them (it can't see "bg-${color}-50").
 const tints = {
@@ -31,16 +41,22 @@ function MenuLink({ to, icon, label, color = 'blue', extraClass = '', onClick })
 export default function Header({ sticky = false }) {
   const { user, logout } = useAuth()
   const navigate = useNavigate()
-  const [open, setOpen] = useState(false)
+  const [open, setOpen] = useState(false) // profile dropdown
+  const [mobileOpen, setMobileOpen] = useState(false) // hamburger menu (phones)
   const menuRef = useRef(null)
+  const mobileRef = useRef(null)
 
-  // Close the dropdown when clicking outside or pressing Escape
+  // Close the menus when clicking outside them or pressing Escape
   useEffect(() => {
     const onClick = (e) => {
       if (menuRef.current && !menuRef.current.contains(e.target)) setOpen(false)
+      if (mobileRef.current && !mobileRef.current.contains(e.target)) setMobileOpen(false)
     }
     const onKey = (e) => {
-      if (e.key === 'Escape') setOpen(false)
+      if (e.key === 'Escape') {
+        setOpen(false)
+        setMobileOpen(false)
+      }
     }
     document.addEventListener('click', onClick)
     document.addEventListener('keydown', onKey)
@@ -74,16 +90,16 @@ export default function Header({ sticky = false }) {
           <div className="flex items-center space-x-8">
             {/* Navigation */}
             <nav className="hidden md:flex items-center space-x-6">
-              <Link to="/shop" className={navLink}>Shop All</Link>
-              <Link to="/#steps" className={navLink}>Order Custom</Link>
-              <Link to="/#about" className={navLink}>About Us</Link>
-              <Link to="/#contact" className={navLink}>Contact Us</Link>
+              {NAV_LINKS.map((l) => (
+                <Link key={l.to} to={l.to} className={navLink}>{l.label}</Link>
+              ))}
             </nav>
 
             {/* Profile button + dropdown */}
             <div className="relative" ref={menuRef}>
               <button
-                onClick={() => setOpen((o) => !o)}
+                onClick={() => { setOpen((o) => !o); setMobileOpen(false) }}
+                aria-label="Account menu"
                 className="w-10 h-10 rounded-full flex items-center justify-center hover:scale-105 transition-transform cursor-pointer border-2 border-white shadow-md"
                 style={{ background: 'linear-gradient(135deg, #2474b6 0%, #1e5a8a 100%)' }}
               >
@@ -153,10 +169,30 @@ export default function Header({ sticky = false }) {
             </div>
           </div>
 
-          {/* Mobile menu button (same as the original: no action yet) */}
-          <button className="md:hidden p-2 rounded-lg hover:bg-gray-100 transition-colors">
-            <i className="bx bx-menu text-2xl text-gray-700"></i>
-          </button>
+          {/* Hamburger menu (phones only): the same page links as the bar above */}
+          <div className="md:hidden" ref={mobileRef}>
+            <button
+              id="mobileMenuBtn"
+              onClick={() => { setMobileOpen((o) => !o); setOpen(false) }}
+              aria-label={mobileOpen ? 'Close menu' : 'Open menu'}
+              aria-expanded={mobileOpen}
+              className="p-2 ml-2 rounded-lg hover:bg-gray-100 transition-colors"
+            >
+              <i className={`bx ${mobileOpen ? 'bx-x' : 'bx-menu'} text-2xl text-gray-700`}></i>
+            </button>
+            <nav
+              id="mobileMenu"
+              className={`absolute left-0 right-0 top-full bg-white border-t border-gray-100 shadow-lg py-2 origin-top transform transition-all duration-200 ease-out ${
+                mobileOpen ? 'opacity-100 scale-y-100 visible' : 'opacity-0 scale-y-95 invisible pointer-events-none'
+              }`}
+            >
+              {NAV_LINKS.map((l) => (
+                <Link key={l.to} to={l.to} className={mobileLink} onClick={() => setMobileOpen(false)}>
+                  {l.label}
+                </Link>
+              ))}
+            </nav>
+          </div>
         </div>
       </div>
     </header>
