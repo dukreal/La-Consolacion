@@ -7,11 +7,8 @@ export default function AboutStore() {
         {/* Row 1: Crafting */}
         <div className="about-row">
           <div className="about-img-col">
-            <picture>
-              {/* The full picture has wide see-through borders; phones get a cropped copy */}
-              <source media="(max-width: 768px)" srcSet="/images/Create-mobile.png" />
-              <img src="/images/Create.png" alt="Crafting Jewelry" className="about-craft-img" />
-            </picture>
+            {/* Cropped copy: the original Create.png has wide see-through borders */}
+            <img src="/images/Create-cropped.png" alt="Crafting Jewelry" className="about-craft-img" />
           </div>
           <div className="about-text-col">
             <h2 className="about-title">The Heart Behind the Craft</h2>
@@ -43,11 +40,8 @@ export default function AboutStore() {
             </a>
           </div>
           <div className="about-img-col">
-            <picture>
-              {/* The full picture has wide see-through borders; phones get a cropped copy */}
-              <source media="(max-width: 768px)" srcSet="/images/Map-mobile.png" />
-              <img src="/images/Map.png" alt="La Consolacion Jewelry Storefront" className="about-craft-img" />
-            </picture>
+            {/* Cropped copy: the original Map.png has wide see-through borders */}
+            <img src="/images/Map-cropped.png" alt="La Consolacion Jewelry Storefront" className="about-craft-img" />
           </div>
         </div>
       </div>

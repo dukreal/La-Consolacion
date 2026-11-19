@@ -1111,12 +1111,12 @@
 }
 
 /* =====================================================================
-   Phones and small tablets (768px and narrower)
+   Phones (767px and narrower)
    The desktop rules give each part a fixed width; when the parts stack on a
    narrow screen those widths turned into big empty gaps and tiny pictures.
    Everything below uses the full width and simple spacing instead.
    ===================================================================== */
-@media (max-width: 768px) {
+@media (max-width: 767px) {
   /* ---- Hero: the ring picture is the background behind the heading ---- */
   .poster {
     min-height: 560px;
@@ -1320,10 +1320,6 @@
     max-width: 520px;
     min-width: 0;
   }
-  .about-img-col picture {
-    display: block;
-    width: 100%;
-  }
   .about-craft-img {
     width: 100%;
     max-width: none;
@@ -1391,5 +1387,197 @@
   .footer-copyright-modern {
     font-size: 0.85rem;
     margin-top: 18px;
+  }
+}
+
+/* =====================================================================
+   Tablets and desktops (768px and wider)
+   The old desktop rules stacked the sections on tablets but kept their fixed
+   desktop sizes (huge gaps, tiny pictures, text stuck to the edge).
+   Here every section uses the same centered width and two-column grid,
+   and sizes grow smoothly with the screen (clamp = min, preferred, max).
+   ===================================================================== */
+@media (min-width: 768px) {
+  /* ---- Hero: the whole ring picture shows, text on the left half ---- */
+  .poster {
+    aspect-ratio: 1440 / 653; /* same shape as the picture, so nothing is cut off */
+    min-height: 460px;
+    max-height: 960px;
+    padding: 0;
+    background-position: right center;
+  }
+  .banner-container {
+    min-height: 0;
+    max-width: 1360px;
+    padding: 0 clamp(24px, 4vw, 56px);
+  }
+  .banner-content {
+    transform: none;
+    max-width: min(46%, 640px);
+    padding: 0;
+  }
+  .banner-content h1 {
+    font-size: clamp(2.3rem, 3.6vw, 4.2rem);
+    margin-bottom: clamp(0.8rem, 1.4vw, 1.6rem);
+  }
+  .banner-content p {
+    font-size: clamp(1.05rem, 1.25vw, 1.45rem);
+    max-width: 100%;
+    margin-bottom: clamp(1.2rem, 2vw, 2.2rem);
+  }
+
+  /* ---- Best Sellers: cards grow with the screen ---- */
+  .best-sellers-section {
+    padding: clamp(48px, 6vw, 96px) 0 clamp(32px, 4vw, 64px);
+    margin: 0;
+  }
+  .best-sellers-title {
+    font-size: clamp(1.9rem, 2.6vw, 3rem);
+  }
+  .best-sellers-section .carousel-track {
+    gap: clamp(1.25rem, 3vw, 3.5rem);
+    max-width: 100%;
+    padding: 8px clamp(16px, 3vw, 32px) 16px;
+  }
+  .best-sellers-section .carousel-card {
+    width: clamp(200px, 21vw, 340px);
+  }
+  .best-sellers-section .carousel-card img {
+    width: 100%;
+    height: auto;
+    aspect-ratio: 1 / 1;
+  }
+  .carousel-caption {
+    font-size: clamp(1rem, 1.1vw, 1.25rem);
+  }
+
+  /* ---- Picture + text sections side by side (Ready-to-Wear, Custom Journey) ---- */
+  .ready-section,
+  .custom-journey-section {
+    padding: clamp(56px, 7vw, 120px) 0;
+  }
+  .ready-container,
+  .custom-journey-container {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: clamp(32px, 6vw, 112px);
+    align-items: center;
+    max-width: 1360px;
+    padding: 0 clamp(24px, 4vw, 56px);
+  }
+  .ready-image,
+  .ready-content,
+  .custom-journey-content,
+  .custom-journey-image {
+    width: 100%;
+    max-width: none;
+    min-width: 0;
+  }
+  .ready-image img,
+  .custom-journey-image img {
+    width: 100%;
+    max-width: 520px;
+    margin: 0 auto;
+    border-radius: 16px;
+  }
+  .ready-title,
+  .custom-journey-title {
+    font-size: clamp(1.9rem, 2.8vw, 3.2rem);
+  }
+  .ready-desc,
+  .custom-journey-desc {
+    font-size: clamp(1rem, 1.2vw, 1.3rem);
+  }
+
+  /* ---- 3 Simple Steps: always three across ---- */
+  .how-steps-section {
+    padding: clamp(56px, 7vw, 120px) 0;
+  }
+  .how-steps-section .container {
+    max-width: 1360px;
+    padding: 0 clamp(24px, 4vw, 56px);
+  }
+  .how-steps-title {
+    font-size: clamp(1.9rem, 2.6vw, 3rem);
+    margin-bottom: 1.2rem;
+  }
+  .how-steps-desc {
+    font-size: clamp(1rem, 1.2vw, 1.3rem);
+    line-height: 1.8;
+    max-width: 820px;
+  }
+  .how-steps-row {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: clamp(20px, 4vw, 72px);
+    padding: 0;
+    margin-bottom: 0;
+  }
+  .how-step {
+    max-width: none;
+    min-width: 0;
+  }
+  .how-step i {
+    font-size: clamp(2.6rem, 3.4vw, 3.8rem);
+  }
+  .how-step h3 {
+    font-size: clamp(1.05rem, 1.3vw, 1.35rem);
+  }
+  .how-step p {
+    font-size: clamp(0.95rem, 1.1vw, 1.15rem);
+  }
+
+  /* ---- The Heart Behind the Craft + Visit Our Store: picture and text side by side ---- */
+  .about-store-section {
+    padding: clamp(56px, 7vw, 120px) 0 clamp(32px, 4vw, 64px);
+  }
+  .about-store-flex {
+    max-width: 1360px;
+    padding: 0 clamp(24px, 4vw, 56px);
+  }
+  .about-row {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: clamp(32px, 6vw, 112px);
+    align-items: center;
+    width: 100%;
+    margin-bottom: clamp(48px, 6vw, 96px);
+  }
+  .about-img-col,
+  .about-text-col {
+    width: 100%;
+    max-width: none;
+    min-width: 0;
+  }
+  .about-craft-img {
+    width: 100%;
+    max-width: none;
+    height: auto;
+    aspect-ratio: 16 / 10;
+    object-fit: cover;
+    border-radius: 28px;
+  }
+  .about-title,
+  .store-title {
+    font-size: clamp(1.9rem, 2.6vw, 3rem);
+  }
+  .about-desc,
+  .about-text-col p {
+    font-size: clamp(1rem, 1.2vw, 1.25rem);
+  }
+
+  /* ---- Footer: phone | logo | social in one row, links centered under it ---- */
+  .footer-row-modern {
+    flex-direction: row;
+    max-width: 1360px;
+    padding: 0 clamp(24px, 4vw, 56px);
+  }
+  .footer-logo-card {
+    margin: 0 auto;
+  }
+  .footer-nav-modern {
+    flex-direction: row;
+    justify-content: center;
+    gap: clamp(1.5em, 3vw, 2.5em);
   }
 }
