@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react'
 import { useAnimatedModal } from '../../hooks/useAnimatedModal'
 import { useBodyScrollLock } from '../../hooks/useBodyScrollLock'
+import { useEscapeKey } from '../../hooks/useEscapeKey'
 import { getOrderDetails } from '../../services/orderService'
 
 // 1500 -> "₱1,500.00"
@@ -24,11 +25,11 @@ function ProductThumb({ product }) {
     <div className="w-12 h-12 rounded-lg overflow-hidden bg-gray-100 flex-shrink-0">
       {failed ? (
         <div className="w-full h-full bg-gradient-to-br from-violet-400 to-violet-500 flex items-center justify-center">
-          <i className="bx bx-gem text-lg text-white"></i>
+          <i className="bx bx-diamond text-lg text-white"></i>
         </div>
       ) : (
         <img
-          src={`/uploads/products/${product.image}`}
+          src={`/uploads/${product.type === 'custom' ? 'custom' : 'products'}/${product.image}`}
           alt={product.name}
           className="w-full h-full object-cover"
           onError={() => setFailed(true)}
@@ -58,6 +59,7 @@ function PaymentRow({ iconBox, icon, label, children }) {
 // Everything about one order: status, payment, products.
 export default function OrderDetailsModal({ orderId, onClose, onCancel }) {
   const { shown, requestClose } = useAnimatedModal(onClose)
+  useEscapeKey(true, requestClose)
   useBodyScrollLock()
   const [state, setState] = useState({ status: 'loading' }) // loading | ready | error
 
@@ -89,7 +91,7 @@ export default function OrderDetailsModal({ orderId, onClose, onCancel }) {
           className={`bg-white rounded-2xl shadow-2xl max-w-4xl w-full mx-4 h-[90vh] transform transition-all duration-300 pointer-events-auto ${shown ? 'scale-100 opacity-100' : 'scale-95 opacity-0'}`}
         >
           {/* Header */}
-          <div className="relative p-6 bg-gradient-to-r from-green-600 to-green-700 text-white rounded-t-2xl">
+          <div className="relative p-6 bg-gradient-to-r from-green-600 to-green-700 text-white rounded-t-2xl overflow-hidden">
             {/* Decorative elements */}
             <div className="absolute top-0 left-0 w-32 h-32 bg-white/10 rounded-full -translate-y-16 -translate-x-16"></div>
             <div className="absolute bottom-0 right-0 w-24 h-24 bg-white/5 rounded-full translate-y-12 translate-x-12"></div>
