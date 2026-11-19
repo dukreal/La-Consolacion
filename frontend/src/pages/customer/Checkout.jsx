@@ -87,7 +87,7 @@ export default function Checkout() {
             </Link>
           </div>
         ) : step === 1 ? (
-          <div id="step1" className="grid lg:grid-cols-5 gap-5 sm:gap-6 items-start">
+          <div id="step1" className="grid grid-cols-1 lg:grid-cols-5 gap-5 sm:gap-6 items-start">
             {/* E-wallet selection (left) */}
             <div className="lg:col-span-2">
               <EwalletOptions value={service} onChange={setService} />
@@ -129,7 +129,7 @@ export default function Checkout() {
                   <span className="text-lg font-bold text-[#22306a]">Total</span>
                   <p className="text-xs sm:text-sm pay-muted">(fees might be applied)</p>
                 </div>
-                <span id="summaryTotal" className="text-2xl font-bold text-[#22306a] whitespace-nowrap">
+                <span id="summaryTotal" className="text-xl min-[360px]:text-2xl font-bold text-[#22306a] whitespace-nowrap">
                   ₱{formatMoney(downpayment)}
                 </span>
               </div>

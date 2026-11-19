@@ -88,7 +88,7 @@ export default function CustomOrderPayment() {
         )}
 
         {order && !alreadyPaid && step === 1 && (
-          <div id="step1" className="grid lg:grid-cols-5 gap-5 sm:gap-6 items-start">
+          <div id="step1" className="grid grid-cols-1 lg:grid-cols-5 gap-5 sm:gap-6 items-start">
             {/* E-wallet selection (left) */}
             <div className="lg:col-span-2">
               <EwalletOptions value={service} onChange={setService} />
@@ -117,10 +117,10 @@ export default function CustomOrderPayment() {
               </div>
 
               {/* Customer details and description: stacked on phones, side by side on wide screens */}
-              <div className="grid gap-3 sm:grid-cols-2 mt-4 text-sm">
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 mt-4 text-sm">
                 <div className="pay-panel p-3.5">
                   <h4 className="font-semibold text-[#22306a] mb-1.5">Customer Details</h4>
-                  <div className="pay-muted space-y-0.5 break-words">
+                  <div className="pay-muted space-y-0.5 [overflow-wrap:anywhere]">
                     <div>
                       <span className="font-medium text-[#22306a]">Name:</span> {order.customerName}
                     </div>
@@ -131,7 +131,7 @@ export default function CustomOrderPayment() {
                 </div>
                 <div className="pay-panel p-3.5">
                   <h4 className="font-semibold text-[#22306a] mb-1.5">Custom Description</h4>
-                  <div className="pay-muted whitespace-pre-line break-words">{order.description}</div>
+                  <div className="pay-muted whitespace-pre-line [overflow-wrap:anywhere]">{order.description}</div>
                 </div>
               </div>
 
@@ -149,9 +149,9 @@ export default function CustomOrderPayment() {
               <div className="pay-panel flex justify-between items-center gap-4 px-4 py-3.5 mt-4">
                 <div>
                   <span className="text-lg font-bold text-[#22306a]">Amount to Pay</span>
-                  <p className="text-xs sm:text-sm pay-muted whitespace-nowrap">(30% downpayment)</p>
+                  <p className="text-xs sm:text-sm pay-muted">(30% downpayment)</p>
                 </div>
-                <span id="customDownpayment" className="text-2xl font-bold text-[#22306a] whitespace-nowrap">₱{formatMoney(downpayment)}</span>
+                <span id="customDownpayment" className="text-xl min-[360px]:text-2xl font-bold text-[#22306a] whitespace-nowrap">₱{formatMoney(downpayment)}</span>
               </div>
 
               <button id="continueBtn" onClick={() => goToStep(2)} className="pay-btn w-full mt-5">

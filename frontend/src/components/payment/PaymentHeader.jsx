@@ -11,13 +11,13 @@ export default function PaymentHeader({ title, subtitle, step }) {
       </div>
 
       {step && (
-        <ol className="flex items-center gap-2.5 text-sm" aria-label="Payment steps">
+        <ol className="flex items-center gap-2 min-[360px]:gap-2.5 text-[13px] min-[360px]:text-sm" aria-label="Payment steps">
           {STEPS.map((label, index) => {
             const number = index + 1
             const state = number === step ? 'active' : number < step ? 'done' : ''
             return (
-              <li key={label} className="flex items-center gap-2.5" aria-current={number === step ? 'step' : undefined}>
-                {index > 0 && <span className="w-6 sm:w-10 h-px bg-[#d8dce8]" aria-hidden="true" />}
+              <li key={label} className="flex items-center gap-2 min-[360px]:gap-2.5" aria-current={number === step ? 'step' : undefined}>
+                {index > 0 && <span className="w-4 min-[360px]:w-6 sm:w-10 h-px bg-[#d8dce8]" aria-hidden="true" />}
                 <span className={`pay-step-dot ${state}`}>
                   {state === 'done' ? <i className="bx bx-check text-base" aria-hidden="true"></i> : number}
                 </span>

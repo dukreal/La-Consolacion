@@ -27,7 +27,7 @@ export default function PaymentConfirmStep({ amount, onSubmit, onBack, error, su
   }
 
   return (
-    <div className="payment-step2 grid lg:grid-cols-2 gap-5 sm:gap-6 items-stretch">
+    <div className="payment-step2 grid grid-cols-1 lg:grid-cols-2 gap-5 sm:gap-6 items-stretch">
       {/* QR Code and instructions (left) */}
       <div className="pay-card p-6 sm:p-7 flex flex-col items-center justify-center text-center">
         <h2 className="pay-title text-2xl">Scan to Pay</h2>
@@ -104,8 +104,9 @@ export default function PaymentConfirmStep({ amount, onSubmit, onBack, error, su
             </div>
           )}
 
-          {/* Pinned to the bottom of the card on wide screens */}
-          <div className="mt-auto flex gap-3">
+          {/* Pinned to the bottom of the card on wide screens. Small phones (under 380px): stacked,
+              Confirm Payment on top, so the two buttons never make the card wider than the screen. */}
+          <div className="mt-auto flex flex-col-reverse min-[380px]:flex-row gap-3">
             {onBack && (
               <button type="button" onClick={onBack} disabled={submitting} className="pay-btn-outline">
                 <i className="bx bx-arrow-back text-lg" aria-hidden="true"></i>
@@ -115,7 +116,7 @@ export default function PaymentConfirmStep({ amount, onSubmit, onBack, error, su
             <button
               type="submit"
               disabled={submitting || mobile.length !== 11 || reference.trim() === ''}
-              className="pay-btn flex-1 px-4 whitespace-nowrap"
+              className="pay-btn min-[380px]:flex-1 px-4 whitespace-nowrap"
             >
               Confirm Payment
             </button>
