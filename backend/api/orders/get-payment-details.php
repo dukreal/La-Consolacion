@@ -1,38 +1,51 @@
 <?php
-ini_set('display_errors', 1);
-error_reporting(E_ALL);
-require __DIR__ . '/../../config/db.php';
-header('Content-Type: application/json');
+// One payment for the Payment pop-up on the admin Orders page. GET ?id=N (the payment id).
+// Admins only: the old file had no login check, so anyone could read payment screenshots and mobile numbers.
+require_once __DIR__ . '/../../helpers/admin.php';
 
-if (!isset($_GET['id'])) {
-    echo json_encode(['error' => 'No payment ID provided']);
-    exit;
+require_admin();
+
+$payment_id = (int) ($_GET['id'] ?? 0);
+if (!$payment_id) {
+    json_response(['success' => false, 'error' => 'No payment ID provided'], 400);
 }
 
-$payment_id = intval($_GET['id']);
-$stmt = $pdo->prepare('SELECT p.reference_number, p.service, p.uploaded_at, p.image, p.mobile, p.amount, o.id as order_id, o.date_ordered
-    FROM payments p
-    JOIN orders o ON o.payment_id = p.id
-    WHERE p.id = ?');
-$stmt->execute([$payment_id]);
-$payment = $stmt->fetch(PDO::FETCH_ASSOC);
+try {
+    $stmt = $pdo->prepare(
+        'SELECT p.reference_number, p.service, p.uploaded_at, p.image, p.mobile, p.amount, o.id AS order_id, o.date_ordered
+         FROM payments p
+         JOIN orders o ON o.payment_id = p.id
+         WHERE p.id = ?'
+    );
+    $stmt->execute([$payment_id]);
+    $payment = $stmt->fetch(PDO::FETCH_ASSOC);
+    if (!$payment) {
+        json_response(['success' => false, 'error' => 'Payment not found'], 404);
+    }
 
-if ($payment) {
-    // Handle cases where payment data might be incomplete
-    $payment['image_url'] = !empty($payment['image']) ? 'Image/payment-upload/' . $payment['image'] : '';
-    $payment['reference_number'] = $payment['reference_number'] ?? null;
-    $payment['service'] = $payment['service'] ?? null;
-    $payment['uploaded_at'] = $payment['uploaded_at'] ?? null;
-    $payment['mobile'] = $payment['mobile'] ?? null;
-    $payment['amount'] = $payment['amount'] ?? 0;
-    
-    // Fetch order total
-    $order_id = $payment['order_id'];
-    $total_stmt = $pdo->prepare('SELECT SUM(oi.price_at_purchase * oi.quantity) as order_total FROM order_items oi WHERE oi.order_id = ?');
-    $total_stmt->execute([$order_id]);
-    $order_total = $total_stmt->fetchColumn();
-    $payment['order_total'] = $order_total ? floatval($order_total) : 0.0;
-    echo json_encode($payment);
-} else {
-    echo json_encode(['error' => 'Payment not found']);
-} 
+    $stmt = $pdo->prepare('SELECT SUM(price_at_purchase * quantity) FROM order_items WHERE order_id = ?');
+    $stmt->execute([$payment['order_id']]);
+    $order_total = (float) $stmt->fetchColumn();
+} catch (PDOException $e) {
+    error_log('get-payment-details.php database error: ' . $e->getMessage());
+    json_response(['success' => false, 'error' => 'Database error. Please try again.'], 500);
+}
+
+// Walk-in sales store the e-wallet logo name instead of a screenshot (see admin/walk-in.php)
+$is_walk_in = $payment['mobile'] === 'Walk-in';
+$screenshot = !$is_walk_in && $payment['image'] && is_file(__DIR__ . '/../../uploads/payments/' . $payment['image'])
+    ? '/uploads/payments/' . $payment['image'] : null;
+
+json_response([
+    'success'         => true,
+    'orderId'         => (int) $payment['order_id'],
+    'referenceNumber' => $payment['reference_number'],
+    'service'         => $payment['service'],
+    'uploadedAt'      => $payment['uploaded_at'],
+    'dateOrdered'     => $payment['date_ordered'],
+    'mobile'          => $payment['mobile'],
+    'amount'          => (float) $payment['amount'],
+    'orderTotal'      => $order_total,
+    'imageUrl'        => $screenshot,
+    'isWalkIn'        => $is_walk_in,
+]);

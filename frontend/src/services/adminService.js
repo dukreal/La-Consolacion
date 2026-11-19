@@ -145,3 +145,8 @@ export function getOrderDetails(orderId) {
 export function updateOrderStatus(orderId, status) {
   return api('/orders/update-order-status.php', { method: 'POST', form: { order_id: orderId, new_status: status } })
 }
+
+// One payment for the Payment pop-up (screenshot, reference, amounts)
+export function getPaymentDetails(paymentId) {
+  return api(`/orders/get-payment-details.php?id=${paymentId}`)
+}
