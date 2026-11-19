@@ -1371,10 +1371,13 @@
   .footer-social-icon {
     font-size: 1.8em;
   }
+  /* Links in centered rows; each link stays on one line ("Premade Collection" used to split) */
   .footer-nav-modern {
-    display: grid;
-    grid-template-columns: 1fr 1fr;
-    gap: 12px 16px;
+    display: flex;
+    flex-direction: row;
+    flex-wrap: wrap;
+    justify-content: center;
+    gap: 12px 24px;
     margin: 16px auto 0;
     max-width: 340px;
     text-align: center;
@@ -1383,6 +1386,7 @@
   }
   .footer-nav-modern a {
     font-size: 0.98rem;
+    white-space: nowrap;
   }
   .footer-copyright-modern {
     font-size: 0.85rem;
