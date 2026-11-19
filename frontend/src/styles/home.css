@@ -1076,3 +1076,379 @@
   color: #22306a;
 }
 
+
+
+/* =====================================================================
+   Best Sellers slider (all screen sizes)
+   The cards sit in a row that can be swiped or moved with the arrows.
+   ===================================================================== */
+.best-sellers-carousel {
+  position: relative;
+  max-width: 100%;
+}
+.best-sellers-section .carousel-track {
+  flex-direction: row;
+  overflow-x: auto;
+  scroll-snap-type: x mandatory;
+  scroll-behavior: smooth;
+  scrollbar-width: none; /* hide the scrollbar (Firefox) */
+  padding: 8px 4px 16px;
+  max-width: calc(240px * 3 + 3rem * 2 + 8px);
+}
+.best-sellers-section .carousel-track::-webkit-scrollbar {
+  display: none; /* hide the scrollbar (Chrome, Safari) */
+}
+.best-sellers-section .carousel-card {
+  flex: 0 0 auto;
+  scroll-snap-align: start;
+}
+.carousel-arrow:disabled {
+  opacity: 0.25;
+  cursor: default;
+}
+.carousel-dots {
+  display: flex;
+  justify-content: center;
+  gap: 8px;
+  margin-top: 8px;
+}
+.carousel-dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 999px;
+  border: none;
+  padding: 0;
+  background: #c7cde0;
+  cursor: pointer;
+  transition: width 0.25s, background 0.25s;
+}
+.carousel-dot.active {
+  width: 22px;
+  background: #22306a;
+}
+
+/* =====================================================================
+   Phones and small tablets (768px and narrower)
+   The desktop rules give each part a fixed width; when the parts stack on a
+   narrow screen those widths turned into big empty gaps and tiny pictures.
+   Everything below uses the full width and simple spacing instead.
+   ===================================================================== */
+@media (max-width: 768px) {
+  /* ---- Hero: the ring picture is the background behind the heading ---- */
+  .poster {
+    min-height: 560px;
+    padding: 0;
+    align-items: flex-start;
+    background:
+      linear-gradient(180deg, rgba(248, 250, 252, 0.95) 0%, rgba(248, 250, 252, 0.8) 42%, rgba(248, 250, 252, 0) 68%),
+      url("/images/2ndBanner.png") 68% bottom / cover no-repeat;
+  }
+  .banner-container {
+    min-height: 0;
+    padding: 40px 22px 0;
+  }
+  .banner-content {
+    transform: none;
+    max-width: 100%;
+    padding: 0;
+  }
+  .banner-content h1 {
+    font-size: 2.3rem;
+    line-height: 1.15;
+    margin-bottom: 0.9rem;
+  }
+  .banner-content p {
+    max-width: 100%;
+    font-size: 1.05rem;
+    margin-bottom: 1.4rem;
+  }
+
+  /* ---- Best Sellers: one big card at a time, the next one peeking in ---- */
+  .best-sellers-section {
+    padding: 48px 0 32px;
+    margin: 0;
+  }
+  .best-sellers-title {
+    font-size: 1.9rem;
+    margin-bottom: 1.4rem;
+  }
+  .best-sellers-section .carousel-track {
+    gap: 16px;
+    padding: 8px 22px 16px;
+    scroll-padding: 0 22px;
+    max-width: 100%;
+  }
+  .best-sellers-section .carousel-card {
+    width: 74vw;
+    max-width: 320px;
+    padding: 12px 12px 14px;
+  }
+  .best-sellers-section .carousel-card img {
+    width: 100%;
+    height: auto;
+    aspect-ratio: 1 / 1;
+    margin-bottom: 0.6rem;
+  }
+  .carousel-caption {
+    font-size: 1rem;
+  }
+  /* Round arrows on top of the cards' edges */
+  .carousel-arrow {
+    position: absolute;
+    top: 42%;
+    transform: translateY(-50%);
+    z-index: 2;
+    width: 38px;
+    height: 38px;
+    padding: 0;
+    border-radius: 999px;
+    background: rgba(255, 255, 255, 0.92);
+    box-shadow: 0 2px 10px rgba(34, 48, 106, 0.18);
+    font-size: 1.6rem;
+    line-height: 1;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+  .carousel-arrow.left {
+    left: 8px;
+  }
+  .carousel-arrow.right {
+    right: 8px;
+  }
+  .carousel-arrow:disabled {
+    opacity: 0;
+    pointer-events: none;
+  }
+
+  /* ---- Ready-to-Wear: picture on top, text under it ---- */
+  .ready-section {
+    padding: 48px 0;
+  }
+  .ready-container {
+    gap: 24px;
+    padding: 0 22px;
+  }
+  .ready-image,
+  .ready-content {
+    flex: none;
+    width: 100%;
+    max-width: 420px;
+    min-width: 0;
+  }
+  .ready-image img {
+    border-radius: 16px;
+  }
+  .ready-title {
+    font-size: 1.85rem;
+    margin-bottom: 0.8rem;
+  }
+  .ready-desc {
+    font-size: 1rem;
+    line-height: 1.65;
+    margin-bottom: 1.6rem;
+  }
+
+  /* ---- 3 Simple Steps: each step is a card with its icon in a circle ---- */
+  .how-steps-section {
+    padding: 48px 0;
+  }
+  .how-steps-section .container {
+    padding: 0 22px;
+  }
+  .how-steps-title {
+    font-size: 1.85rem;
+    line-height: 1.25;
+    margin-bottom: 1rem;
+    font-weight: 600;
+  }
+  .how-steps-desc {
+    font-size: 1rem;
+    line-height: 1.65;
+    margin-bottom: 1.8rem;
+  }
+  .how-steps-row {
+    flex-direction: column;
+    align-items: stretch;
+    gap: 14px;
+    padding: 0;
+    margin-bottom: 0;
+  }
+  .how-step {
+    flex: none;
+    width: 100%;
+    max-width: 100%;
+    min-width: 0;
+    display: grid;
+    grid-template-columns: 56px 1fr;
+    column-gap: 16px;
+    align-items: center;
+    text-align: left;
+    background: #fff;
+    border-radius: 16px;
+    padding: 16px;
+    box-shadow: 0 4px 16px rgba(34, 48, 106, 0.08);
+  }
+  .how-step i {
+    grid-row: span 2;
+    width: 56px;
+    height: 56px;
+    border-radius: 999px;
+    background: #eaf3fa;
+    font-size: 1.8rem;
+    margin: 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+  .how-step h3 {
+    margin: 0 0 2px;
+    font-size: 1.05rem;
+    font-weight: 600;
+  }
+  .how-step p {
+    font-size: 0.95rem;
+    color: #444;
+    line-height: 1.45;
+  }
+
+  /* ---- Start Your Custom Journey (consultation): picture on top, then text ---- */
+  .custom-journey-section {
+    padding: 48px 0;
+  }
+  .custom-journey-container {
+    flex-direction: column-reverse;
+    gap: 24px;
+    padding: 0 22px;
+  }
+  .custom-journey-content,
+  .custom-journey-image {
+    flex: none;
+    width: 100%;
+    max-width: 420px;
+    min-width: 0;
+  }
+  .custom-journey-image img {
+    border-radius: 16px;
+  }
+  .custom-journey-title {
+    font-size: 1.85rem;
+    margin-bottom: 0.8rem;
+  }
+  .custom-journey-desc {
+    font-size: 1rem;
+    line-height: 1.65;
+    margin-bottom: 0.4rem;
+  }
+
+  /* ---- The Heart Behind the Craft + Visit Our Store ---- */
+  .about-store-section {
+    padding: 48px 0 24px;
+  }
+  .about-store-flex {
+    padding: 0 22px;
+  }
+  .about-row {
+    flex-direction: column;
+    gap: 20px;
+    margin-bottom: 44px;
+    width: 100%;
+  }
+  /* "Visit Our Store" has the text first in the code; show its picture first like the row above */
+  .about-row:nth-child(2) {
+    flex-direction: column-reverse;
+  }
+  .about-img-col,
+  .about-text-col {
+    flex: none;
+    width: 100%;
+    max-width: 520px;
+    min-width: 0;
+  }
+  .about-img-col picture {
+    display: block;
+    width: 100%;
+  }
+  .about-craft-img {
+    width: 100%;
+    max-width: none;
+    height: auto;
+    aspect-ratio: 16 / 10;
+    object-fit: cover;
+    border-radius: 18px;
+  }
+  .about-title,
+  .store-title {
+    font-size: 1.85rem;
+    margin-bottom: 0.8rem;
+  }
+  .about-desc {
+    font-size: 1rem;
+    line-height: 1.7;
+  }
+  .about-text-col p {
+    font-size: 1rem;
+    line-height: 1.6;
+  }
+  /* Address and hours as a small card */
+  .store-name,
+  .store-hours {
+    width: 100%;
+    background: #fff;
+    margin: 0;
+    padding: 12px 16px;
+    box-shadow: 0 4px 16px rgba(34, 48, 106, 0.06);
+  }
+  .store-name {
+    margin-top: 0.6rem;
+    border-radius: 14px 14px 0 0;
+    border-bottom: 1px solid #eef0f6;
+  }
+  .store-hours {
+    border-radius: 0 0 14px 14px;
+    margin-bottom: 1.2rem;
+  }
+  .location-btn {
+    width: 100%;
+    max-width: 320px;
+  }
+
+  /* ---- Footer: logo on top, then contact, social, links in two columns ---- */
+  .footer-bg {
+    border-radius: 28px 28px 0 0;
+    padding: 28px 22px 20px;
+  }
+  .footer-row-modern {
+    flex-direction: column;
+    gap: 14px;
+    padding: 0;
+    margin-bottom: 8px;
+  }
+  .footer-logo-card {
+    order: -1;
+    margin: 0;
+  }
+  .footer-logo-modern {
+    height: 64px;
+  }
+  .footer-social-icon {
+    font-size: 1.8em;
+  }
+  .footer-nav-modern {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 12px 16px;
+    margin: 16px auto 0;
+    max-width: 340px;
+    text-align: center;
+    border-top: 1px solid rgba(34, 48, 106, 0.12);
+    padding-top: 16px;
+  }
+  .footer-nav-modern a {
+    font-size: 0.98rem;
+  }
+  .footer-copyright-modern {
+    font-size: 0.85rem;
+    margin-top: 18px;
+  }
+}
