@@ -79,7 +79,9 @@ $customer_sent = send_mail(
     $c['email'],
     'Your Custom Order at La Consolacion Jewelry',
     "Hello {$c['customer_name']},\n\nThank you for your custom order!\n\nOrder Details:\nDescription: {$c['description']}\nPrice: ₱$price\n\n"
-        . "To complete your order, please proceed to payment using the link below:\n$link\n\nThank you!",
+        . "To complete your order, please proceed to payment using the link below:\n$link\n\n"
+        . "You will be asked to log in first. If you don't have an account yet, click \"Register\" and sign up "
+        . "using this email address ({$c['email']}) so your order is linked to you.\n\nThank you!",
     '/send-order-notification'
 );
 

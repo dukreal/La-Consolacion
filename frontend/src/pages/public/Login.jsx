@@ -1,6 +1,7 @@
 import { useState } from 'react'
 import { Link, useLocation, useNavigate, useSearchParams } from 'react-router-dom'
 import AuthCard from '../../components/common/AuthCard'
+import Notice from '../../components/common/Notice'
 import { useAuth } from '../../hooks/useAuth'
 import { api } from '../../services/api'
 
@@ -24,6 +25,10 @@ export default function Login() {
   const [error, setError] = useState('')
   const [submitting, setSubmitting] = useState(false)
 
+  const from = location.state?.from
+  // Opened the payment link from a custom order email without being logged in
+  const forCustomOrder = /^\/custom-order\/\d+\/payment/.test(from || '')
+
   const code = params.get('error')
   const redirectError = code ? redirectMessages[code] || 'An error occurred. Please try again.' : ''
 
@@ -37,7 +42,6 @@ export default function Login() {
         await refresh() // load the logged-in user into AuthContext
         // Back to the page that asked for a login (for example a custom order link), otherwise
         // the admin dashboard or Home like before
-        const from = location.state?.from
         navigate(from || (data.role === 'admin' ? '/admin' : '/'), { replace: Boolean(from) })
       } else {
         setError(data.error)
@@ -53,6 +57,12 @@ export default function Login() {
 
   return (
     <AuthCard title="Login" subtitle="Welcome back! Please login to your account.">
+      {forCustomOrder && (
+        <Notice type="info">
+          <strong>Log in to pay for your custom order.</strong> No account yet? Register with the email address your
+          order was sent to.
+        </Notice>
+      )}
       <form onSubmit={handleSubmit}>
         <div className="input-group">
           <input
@@ -80,7 +90,7 @@ export default function Login() {
         <button type="submit" disabled={submitting}>Login</button>
         <div className="form-divider"><span>or</span></div>
         <p>
-          Don&apos;t have an account? <Link to="/register">Register here</Link>.
+          Don&apos;t have an account? <Link to="/register" state={from ? { from } : undefined}>Register here</Link>.
         </p>
       </form>
       {message && (

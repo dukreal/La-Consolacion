@@ -193,6 +193,10 @@
   color: #721c24;
   background: #f8d7da;
 }
+.notice-info {
+  color: #0c4a6e;
+  background: #e0f2fe;
+}
 
 @media (max-width: 600px) {
   .form-container {
