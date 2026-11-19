@@ -22,14 +22,15 @@ const tints = {
   red: { box: 'bg-red-50', icon: 'text-red-600' },
 }
 
-// How far to move the profile menu so it stays on screen. It opens right-aligned under the
-// avatar; when that would cut it off on the left (phones), it moves right, keeping 16px from the edges.
+// How far to move the profile menu so it stays on screen. On wide screens it opens right-aligned
+// under the avatar; on phones (under 768px) it lines up with the right edge of the screen, 16px in.
 const MENU_GAP = 16
 function menuOffset(anchor) {
   if (!anchor) return 0
   const box = anchor.getBoundingClientRect()
   const width = Math.min(288, window.innerWidth - MENU_GAP * 2)
-  const right = Math.min(Math.max(box.right, MENU_GAP + width), window.innerWidth - MENU_GAP)
+  const screenRight = window.innerWidth - MENU_GAP
+  const right = window.innerWidth < 768 ? screenRight : Math.min(Math.max(box.right, MENU_GAP + width), screenRight)
   return box.right - right
 }
 
@@ -129,7 +130,7 @@ export default function Header({ sticky = false }) {
                 style={{ background: 'linear-gradient(135deg, #2474b6 0%, #1e5a8a 100%)' }}
               >
                 {profileImg ? (
-                  <img src={profileImg} alt="Profile" className="w-8 h-8 rounded-full object-cover shadow-md" />
+                  <img src={profileImg} alt="Profile" className="w-8 h-8 flex-shrink-0 rounded-full object-cover shadow-md" />
                 ) : (
                   <span className="text-white font-bold text-sm">{initial}</span>
                 )}
@@ -147,7 +148,7 @@ export default function Header({ sticky = false }) {
                   style={{ background: 'linear-gradient(135deg, #2474b6 0%, #1e5a8a 100%)' }}
                 >
                   <div className="flex items-center space-x-3">
-                    <div className="w-10 h-10 rounded-full flex items-center justify-center overflow-hidden">
+                    <div className="w-10 h-10 flex-shrink-0 rounded-full flex items-center justify-center overflow-hidden">
                       {profileImg ? (
                         <img src={profileImg} alt="Profile" className="w-full h-full object-cover" />
                       ) : (
@@ -156,7 +157,7 @@ export default function Header({ sticky = false }) {
                         </div>
                       )}
                     </div>
-                    <div className="flex-1">
+                    <div className="flex-1 min-w-0">
                       <div className="text-sm font-semibold text-white truncate">{profileName}</div>
                       <div className="text-xs text-white/80 truncate mt-0.5">{profileEmail}</div>
                     </div>
