@@ -71,6 +71,11 @@ export default function Shop() {
   const openCart = useCallback(() => setCartOpen(true), [])
   const closeCart = useCallback(() => setCartOpen(false), [])
   const closeProduct = useCallback(() => setSelected(null), [])
+  // After Add to Cart: close the product pop-up and slide the cart in, so only the cart is showing
+  const showCartAfterAdd = useCallback(() => {
+    setSelected(null)
+    setCartOpen(true)
+  }, [])
   useOpenFromUrl('openCart', openCart)
 
   // ...and "Order History" through ?openOrderHistory=true
@@ -177,7 +182,7 @@ export default function Shop() {
         )}
       </div>
 
-      {/* The cart panel comes before the modal on purpose: like the old page, the modal stays on top of it */}
+      {/* The cart panel comes before the modal, so a product opened from the page sits above it */}
       <CartPanel open={cartOpen} onClose={closeCart} onCheckout={checkout.checkoutCart} />
       <OrderHistoryPanel open={ordersOpen} onClose={() => setOrdersOpen(false)} />
 
@@ -185,7 +190,7 @@ export default function Shop() {
         <ProductModal
           product={selected}
           onClose={closeProduct}
-          onAddedToCart={openCart}
+          onAddedToCart={showCartAfterAdd}
           onBuyNow={checkout.buyNow}
         />
       )}
