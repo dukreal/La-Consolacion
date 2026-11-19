@@ -43,7 +43,7 @@ function ProductThumb({ product }) {
 // instead of squeezing the label onto two lines.
 function PaymentRow({ iconBox, icon, label, children }) {
   return (
-    <div className="flex items-center justify-between gap-3 bg-gray-50 border border-gray-200 rounded-lg p-3">
+    <div className="flex items-center justify-between gap-3 bg-gray-50 border border-gray-200 rounded-lg p-3 lg:py-2 lg:[@media(max-height:700px)]:py-1.5">
       <div className="flex items-center gap-2 flex-shrink-0">
         <div className={`w-7 h-7 rounded-md flex items-center justify-center ${iconBox}`}>
           <i className={`bx ${icon} text-base`}></i>
@@ -98,7 +98,7 @@ export default function OrderDetailsModal({ orderId, onClose, onCancel }) {
           className={`flex flex-col bg-white rounded-2xl shadow-2xl w-full max-w-md lg:max-w-4xl max-h-[calc(100dvh-1.5rem)] sm:max-h-[calc(100dvh-2rem)] overflow-hidden transform transition-all duration-300 pointer-events-auto ${shown ? 'scale-100 opacity-100' : 'scale-95 opacity-0'}`}
         >
           {/* Header */}
-          <div className="relative flex-shrink-0 px-5 py-4 sm:p-6 bg-gradient-to-r from-green-600 to-green-700 text-white overflow-hidden">
+          <div className="relative flex-shrink-0 px-5 py-4 sm:px-6 sm:py-5 lg:[@media(max-height:700px)]:py-3 bg-gradient-to-r from-green-600 to-green-700 text-white overflow-hidden">
             {/* Decorative elements */}
             <div className="absolute top-0 left-0 w-32 h-32 bg-white/10 rounded-full -translate-y-16 -translate-x-16"></div>
             <div className="absolute bottom-0 right-0 w-24 h-24 bg-white/5 rounded-full translate-y-12 translate-x-12"></div>
@@ -122,7 +122,7 @@ export default function OrderDetailsModal({ orderId, onClose, onCancel }) {
           </div>
 
           {/* Content */}
-          <div className="flex-1 min-h-0 overflow-y-auto p-4 sm:p-6">
+          <div className="flex-1 min-h-0 overflow-y-auto p-4 sm:p-6 lg:py-5 lg:[@media(max-height:700px)]:py-4">
             {state.status === 'loading' && (
               <div id="orderDetailsLoading" className="text-center py-8">
                 <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-green-600 mx-auto mb-4"></div>
@@ -178,7 +178,7 @@ export default function OrderDetailsModal({ orderId, onClose, onCancel }) {
                   {/* Payment Information (after the products on phones and tablets) */}
                   <div className="order-last lg:order-none bg-white border border-gray-200 rounded-xl p-4">
                     <h3 className="text-base font-semibold text-gray-900 mb-3">Payment Information</h3>
-                    <div id="paymentInfo" className="space-y-2.5">
+                    <div id="paymentInfo" className="space-y-2.5 lg:space-y-2">
                       <PaymentRow iconBox="bg-blue-100 text-blue-600" icon="bx-credit-card" label="Method">
                         <span className="font-medium text-blue-700 text-sm">{(data.payment.service || '').toUpperCase()}</span>
                       </PaymentRow>
@@ -233,13 +233,13 @@ export default function OrderDetailsModal({ orderId, onClose, onCancel }) {
 
           {/* Footer: the cancel button always stays visible at the bottom */}
           {data && data.can_cancel && (
-            <div id="orderActions" className="flex-shrink-0 flex justify-end p-4 sm:px-6 border-t border-gray-200">
+            <div id="orderActions" className="flex-shrink-0 flex justify-end p-4 sm:px-6 lg:py-3 border-t border-gray-200">
               <button
                 onClick={() => {
                   requestClose()
                   onCancel(data.order.id)
                 }}
-                className="w-full sm:w-auto px-6 py-3 bg-red-600 text-white font-medium rounded-xl hover:bg-red-700 transition-all duration-300"
+                className="w-full sm:w-auto px-6 py-3 lg:py-2.5 bg-red-600 text-white font-medium rounded-xl hover:bg-red-700 transition-all duration-300"
               >
                 Cancel Order
               </button>
