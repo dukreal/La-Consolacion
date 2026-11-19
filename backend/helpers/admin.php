@@ -1,6 +1,6 @@
 <?php
 // Admin check for the JSON endpoints used by the React admin pages.
-// Same rules as middleware/admin-check.php (which is for old PHP pages and redirects instead):
+// Same rules as the old middleware/admin-check.php (which redirected instead of answering JSON):
 //   - the user must be logged in and not deleted
 //   - the role is read from the database on every request, so a demoted admin loses access at once
 //   - $min_level 2 means SuperAdmin only (1 = Admin, 2 = SuperAdmin)
