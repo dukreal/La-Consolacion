@@ -1,3 +1,5 @@
+import { formatMoney } from '../../utils/formatMoney'
+
 // One order in the Order History panel.
 export default function OrderCard({ order, onViewDetails, onCancel }) {
   return (
@@ -6,7 +8,14 @@ export default function OrderCard({ order, onViewDetails, onCancel }) {
         {/* Order Header */}
         <div className="flex items-start justify-between mb-3">
           <div>
-            <h4 className="playfair font-semibold text-gray-900 text-sm leading-tight mb-1">Order #{order.order_id}</h4>
+            <h4 className="playfair font-semibold text-gray-900 text-sm leading-tight mb-1">
+              Order #{order.order_id}
+              {order.is_custom && (
+                <span className="ml-2 inline-flex items-center rounded-full border border-blue-200 bg-blue-50 px-2 py-0.5 align-middle inter text-[11px] font-medium text-blue-700">
+                  Custom Order
+                </span>
+              )}
+            </h4>
             <p className="inter text-xs text-gray-500">{order.order_date}</p>
           </div>
           <div className="flex flex-col items-end">
@@ -26,32 +35,35 @@ export default function OrderCard({ order, onViewDetails, onCancel }) {
         {order.reference_number && (
           <div className="mb-3 p-2 bg-gray-50 rounded-lg">
             <div className="flex items-center justify-between text-xs text-gray-600">
-              <span>Payment: {order.service}</span>
+              <span>Payment: {(order.service || '').toUpperCase()}</span>
               <span>Ref: {order.reference_number}</span>
             </div>
+            {/* Custom orders: the customer paid a 30% downpayment of the total above */}
+            {order.is_custom && (
+              <div className="mt-1 text-xs text-gray-600">
+                Downpayment paid: <span className="font-semibold text-gray-800">₱{formatMoney(order.payment_amount)}</span>
+              </div>
+            )}
           </div>
         )}
 
         {/* Action Buttons */}
-        <div className="flex items-center justify-between">
-          <div className="flex items-center space-x-2">
+        <div className="flex items-center">
+          <div className="flex items-center gap-2 -ml-3">
             <button
               onClick={() => onViewDetails(order.order_id)}
-              className="px-3 py-1 text-green-600 hover:text-green-700 hover:bg-green-50 rounded-lg transition-all duration-200 text-sm font-medium"
+              className="px-3 py-2 text-green-600 hover:text-green-700 hover:bg-green-50 rounded-lg transition-all duration-200 text-sm font-medium"
             >
               View Details
             </button>
             {order.can_cancel && (
               <button
                 onClick={() => onCancel(order.order_id)}
-                className="px-3 py-1 text-red-600 hover:text-red-700 hover:bg-red-50 rounded-lg transition-all duration-200 text-sm font-medium"
+                className="px-3 py-2 text-red-600 hover:text-red-700 hover:bg-red-50 rounded-lg transition-all duration-200 text-sm font-medium"
               >
                 Cancel Order
               </button>
             )}
-          </div>
-          <div className="flex items-center space-x-2">
-            <span className="text-xs text-gray-400">ID: {order.order_id}</span>
           </div>
         </div>
       </div>

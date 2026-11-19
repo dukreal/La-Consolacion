@@ -7,7 +7,7 @@ const WALLETS = [
 
 export default function EwalletOptions({ value, onChange }) {
   return (
-    <div className="bg-white rounded-2xl p-8 shadow-sm border border-gray-100">
+    <div className="bg-white rounded-2xl p-8 max-sm:p-6 shadow-sm border border-gray-100">
       <h3 className="text-xl font-bold mb-6 text-gray-800">Choose E-wallet</h3>
       <div className="space-y-4">
         {WALLETS.map((wallet) => (

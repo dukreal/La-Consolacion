@@ -108,21 +108,22 @@ export default function Profile() {
 
   return (
     <div className="profile-page min-h-screen bg-gradient-to-br from-slate-50 via-blue-50 to-indigo-100">
-      <div className="container mx-auto px-4 py-6">
-        <div className="max-w-4xl mx-auto">
-          <div className="profile-card rounded-2xl shadow-xl p-6 lg:p-8">
+      {/* The card sits in the middle of the screen when it fits; taller cards just scroll. (A shared .container rule sets a column layout, so justify-center does the vertical centering.) */}
+      <div className="container mx-auto min-h-screen flex flex-col justify-center px-4 py-6 sm:py-10 lg:py-8">
+        <div className="w-full max-w-3xl lg:max-w-4xl mx-auto">
+          <div className="profile-card rounded-2xl shadow-xl p-5 sm:p-8">
             {/* Back button, title */}
-            <div className="flex justify-between items-start mb-6">
+            <div className="flex justify-between items-start mb-6 pb-5 border-b border-gray-100">
               <button
                 type="button"
                 onClick={goBack}
                 aria-label="Back"
-                className="inline-flex items-center justify-center w-10 h-10 text-gray-700"
+                className="inline-flex items-center justify-center w-10 h-10 flex-shrink-0 rounded-xl text-gray-700 hover:bg-gray-100 transition-colors"
               >
-                <i className="bx bx-arrow-back text-lg"></i>
+                <i className="bx bx-arrow-back text-xl"></i>
               </button>
               <div className="text-center flex-1">
-                <h1 className="text-2xl font-bold text-gray-800 mb-2">Profile Settings</h1>
+                <h1 className="text-xl sm:text-2xl font-bold text-gray-800 mb-1">Profile Settings</h1>
                 <p className="text-gray-600 text-sm">Manage your account information</p>
               </div>
               <div className="w-10"></div>
@@ -154,16 +155,22 @@ export default function Profile() {
               </div>
             )}
 
+            {/* Phones and tablets: photo on top, fields below. Desktop: photo on the left, fields on the right,
+                so the whole page fits a laptop screen (browser tabs and 125% scaling) without scrolling. */}
             {saved && (
-              <form onSubmit={handleSubmit} className="space-y-6" noValidate>
+              <form
+                onSubmit={handleSubmit}
+                className="space-y-6 lg:space-y-0 lg:grid lg:grid-cols-[240px_1fr] lg:gap-x-8 lg:gap-y-6"
+                noValidate
+              >
                 {/* Profile photo */}
-                <div className="flex flex-col items-center gap-4 mb-8">
+                <div className="flex flex-col items-center gap-3 mb-2 lg:mb-0 lg:row-span-2 lg:self-center lg:pr-8 lg:border-r lg:border-gray-100 lg:h-full lg:justify-center">
                   <div className="profile-image-container">
                     {avatarFailed && !previewUrl ? (
                       // The avatar could not load (offline, or ui-avatars.com is down): draw the initials ourselves
                       <div
                         id="avatarFallback"
-                        className="w-24 h-24 lg:w-32 lg:h-32 rounded-full border-4 border-white shadow-xl flex items-center justify-center text-white text-3xl lg:text-4xl font-semibold"
+                        className="w-24 h-24 sm:w-28 sm:h-28 lg:w-36 lg:h-36 rounded-full border-4 border-white shadow-xl flex items-center justify-center text-white text-3xl sm:text-4xl lg:text-5xl font-semibold"
                         style={{ background: '#2474b6' }}
                       >
                         {(saved.firstName || '').slice(0, 2).toUpperCase()}
@@ -173,11 +180,16 @@ export default function Profile() {
                         src={previewUrl || savedPhotoUrl(saved)}
                         alt="Profile Picture"
                         onError={() => setAvatarFailed(true)}
-                        className="w-24 h-24 lg:w-32 lg:h-32 rounded-full object-cover border-4 border-white shadow-xl hover:shadow-2xl transition-all duration-300"
+                        className="w-24 h-24 sm:w-28 sm:h-28 lg:w-36 lg:h-36 rounded-full object-cover border-4 border-white shadow-xl hover:shadow-2xl transition-all duration-300"
                       />
                     )}
                   </div>
-                  <label className="upload-btn inline-flex items-center gap-2 px-4 py-2 text-white rounded-xl cursor-pointer shadow-lg hover:shadow-xl transition-all duration-300">
+                  {/* Saved name and username under the photo (desktop only, fills the photo column) */}
+                  <div className="hidden lg:block text-center w-full min-w-0">
+                    <p className="font-semibold text-gray-800 leading-snug break-words line-clamp-2">{`${saved.firstName || ''} ${saved.lastName || ''}`.trim()}</p>
+                    {saved.username && <p className="text-sm text-gray-500 truncate">@{saved.username}</p>}
+                  </div>
+                  <label className="upload-btn inline-flex items-center justify-center gap-2 whitespace-nowrap px-4 py-2 text-white rounded-xl cursor-pointer shadow-lg hover:shadow-xl transition-all duration-300">
                     <i className="bx bx-camera text-lg"></i>
                     <span className="font-semibold text-sm">Change Photo</span>
                     <input
@@ -189,55 +201,58 @@ export default function Profile() {
                       onChange={(e) => setPhoto(e.target.files?.[0] || null)}
                     />
                   </label>
+                  {/* A new photo is only a preview until the form is saved */}
+                  {photo && <p className="text-xs text-gray-500 text-center">New photo selected. Press Save Changes to keep it.</p>}
                 </div>
 
-                {/* Fields */}
-                <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-                  <div className="space-y-4">
-                    <Field index={0} icon="bx-user" label="First Name">
-                      <input type="text" name="first_name" value={form.firstName} onChange={set('firstName')} className={inputClass} required />
-                    </Field>
-                    <Field index={1} icon="bx-user" label="Last Name">
-                      <input type="text" name="last_name" value={form.lastName} onChange={set('lastName')} className={inputClass} required />
-                    </Field>
-                    <Field index={2} icon="bx-at" label="Username">
-                      <input type="text" name="username" value={form.username} onChange={set('username')} className={inputClass} required />
-                    </Field>
-                  </div>
-                  <div className="space-y-4">
-                    <Field index={3} icon="bx-envelope" label="Email Address">
-                      <input type="email" name="email" value={form.email} onChange={set('email')} className={inputClass} required />
-                    </Field>
-                    <Field index={4} icon="bx-phone" label="Mobile Number">
-                      <input
-                        type="tel"
-                        name="mobile_number"
-                        value={mobile}
-                        onChange={setMobile}
-                        className={inputClass + mobileClass}
-                        maxLength={11}
-                        placeholder="09XXXXXXXXX"
-                      />
-                      {checkedMobile && mobileInvalid && (
-                        <div id="mobileNumberWarning" className="mt-2 p-3 bg-red-50 border border-red-200 rounded-lg">
-                          <div className="flex items-center gap-2">
-                            <i className="bx bx-error-circle text-red-500"></i>
-                            <span className="text-red-700 text-sm font-medium">
-                              Mobile number must be exactly 11 digits (e.g., 09123456789)
-                            </span>
-                          </div>
+                {/* Fields: one column on phones; on wider screens names side by side, then username and
+                    mobile, then the email across the full width (no empty gap in the grid) */}
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-x-6 gap-y-4">
+                  <Field index={0} icon="bx-user" label="First Name">
+                    <input type="text" name="first_name" autoComplete="given-name" value={form.firstName} onChange={set('firstName')} className={inputClass} required />
+                  </Field>
+                  <Field index={1} icon="bx-user" label="Last Name">
+                    <input type="text" name="last_name" autoComplete="family-name" value={form.lastName} onChange={set('lastName')} className={inputClass} required />
+                  </Field>
+                  <Field index={2} icon="bx-at" label="Username">
+                    <input type="text" name="username" autoComplete="username" value={form.username} onChange={set('username')} className={inputClass} required />
+                  </Field>
+                  <Field index={3} icon="bx-phone" label="Mobile Number">
+                    <input
+                      type="tel"
+                      name="mobile_number"
+                      inputMode="numeric"
+                      autoComplete="tel"
+                      value={mobile}
+                      onChange={setMobile}
+                      className={inputClass + mobileClass}
+                      maxLength={11}
+                      placeholder="09XXXXXXXXX"
+                    />
+                    {checkedMobile && mobileInvalid && (
+                      <div id="mobileNumberWarning" className="mt-2 p-3 bg-red-50 border border-red-200 rounded-lg">
+                        <div className="flex items-start gap-2">
+                          <i className="bx bx-error-circle text-red-500 mt-0.5"></i>
+                          <span className="text-red-700 text-sm font-medium">
+                            Mobile number must be exactly 11 digits (e.g., 09123456789)
+                          </span>
                         </div>
-                      )}
+                      </div>
+                    )}
+                  </Field>
+                  <div className="md:col-span-2">
+                    <Field index={4} icon="bx-envelope" label="Email Address">
+                      <input type="email" name="email" autoComplete="email" value={form.email} onChange={set('email')} className={inputClass} required />
                     </Field>
                   </div>
                 </div>
 
                 {/* Save */}
-                <div className="flex justify-center pt-6">
+                <div className="flex justify-center lg:justify-end lg:col-start-2 pt-2 sm:pt-4 lg:pt-0">
                   <button
                     type="submit"
                     disabled={saving}
-                    className="btn-primary inline-flex items-center gap-2 px-8 py-3 text-white font-bold text-base rounded-xl shadow-lg"
+                    className="btn-primary w-full sm:w-auto justify-center inline-flex items-center gap-2 px-8 py-3 text-white font-bold text-base rounded-xl shadow-lg"
                   >
                     <i className="bx bx-save text-lg"></i>
                     {saving ? 'Saving...' : 'Save Changes'}
