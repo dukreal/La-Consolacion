@@ -239,33 +239,34 @@
   }
 }
 
-/* Verify-email page (these styles were inline in the old verify-email.php) */
-.verify-page {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  min-height: 100vh;
-  background: #f7f7f7;
-}
-.verify-container {
-  background: #fff;
-  padding: 2rem 3rem;
-  border-radius: 10px;
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+/* A link that looks like the navy form button (Verify Email: "Go to Login") */
+.form-container a.auth-button-link {
+  display: block;
+  width: 100%;
+  box-sizing: border-box;
   text-align: center;
-}
-.verify-success {
-  color: #27ae60;
-  font-size: 1.2rem;
-}
-.verify-error {
-  color: #c0392b;
-  font-size: 1.2rem;
-}
-.verify-container a {
-  color: #2980b9;
+  background: #22306a;
+  color: #fff;
   text-decoration: none;
+  border-radius: 8px;
+  font-size: 1.08rem;
+  font-weight: 600;
+  padding: 0.7em 0;
+  box-shadow: 0 2px 8px rgba(34, 48, 106, 0.08);
+  transition: background 0.2s;
 }
-.verify-container a:hover {
-  text-decoration: underline;
+.form-container a.auth-button-link:hover {
+  background: #1a2550;
+  color: #fff;
+}
+
+/* Short laptop screens (1366x657 and similar): a little less space around the card so Login fits */
+@media (min-width: 601px) and (max-height: 700px) {
+  .form-bg {
+    padding: 12px 0;
+  }
+  .form-logo {
+    width: 56px;
+    height: 56px;
+  }
 }
