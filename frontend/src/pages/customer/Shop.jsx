@@ -6,6 +6,7 @@ import CategoryFilter from '../../components/shop/CategoryFilter'
 import ProductCard from '../../components/shop/ProductCard'
 import ProductModal from '../../components/shop/ProductModal'
 import ProfileIncompleteModal from '../../components/shop/ProfileIncompleteModal'
+import SiteDialog from '../../components/common/SiteDialog'
 import SortSelect from '../../components/shop/SortSelect'
 import { useCheckout } from '../../hooks/useCheckout'
 import { useOpenFromUrl } from '../../hooks/useOpenFromUrl'
@@ -191,6 +192,13 @@ export default function Shop() {
 
       {checkout.profileModalOpen && (
         <ProfileIncompleteModal onClose={checkout.closeProfileModal} onUpdateProfile={checkout.goToProfile} />
+      )}
+      {checkout.checkoutError && (
+        <SiteDialog
+          title="Couldn't continue to checkout"
+          message="We couldn't check your profile. Please check your connection and try again."
+          onClose={checkout.closeCheckoutError}
+        />
       )}
 
       {checkout.loading && <LoadingOverlay />}

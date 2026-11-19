@@ -2,7 +2,9 @@ import { useEffect, useRef, useState } from 'react'
 import { useBodyScrollLock } from '../../hooks/useBodyScrollLock'
 import { useCart } from '../../hooks/useCart'
 import { useEscapeKey } from '../../hooks/useEscapeKey'
+import { cartErrorMessage } from '../../utils/cartMessages'
 import { formatPrice } from '../../utils/formatPrice'
+import SiteDialog from '../common/SiteDialog'
 
 const DEFAULT_DESCRIPTION =
   'An exquisite piece crafted with precision and elegance. This stunning jewelry features intricate details that capture and reflect light beautifully, creating a celestial sparkle that embodies luxury and sophistication.'
@@ -25,6 +27,7 @@ export default function ProductModal({ product, onClose, onAddedToCart, onBuyNow
   const [status, setStatus] = useState('idle') // 'idle' | 'adding' | 'added'
   const [buying, setBuying] = useState(false) // Buy Now is preparing the order
   const [imageFailed, setImageFailed] = useState(false)
+  const [addError, setAddError] = useState('') // why Add to Cart failed, shown in a pop-up
   const timer = useRef(null)
 
   // Close with Escape, stop the page behind from scrolling (without it shifting sideways)
@@ -53,11 +56,11 @@ export default function ProductModal({ product, onClose, onAddedToCart, onBuyNow
         timer.current = setTimeout(() => setStatus('idle'), 2000)
         onAddedToCart?.()
       } else {
-        alert('Error: ' + data.error)
+        setAddError(cartErrorMessage(data.error))
         setStatus('idle')
       }
     } catch {
-      alert('Error adding to cart')
+      setAddError(cartErrorMessage())
       setStatus('idle')
     }
   }
@@ -284,6 +287,8 @@ export default function ProductModal({ product, onClose, onAddedToCart, onBuyNow
           </div>
         </div>
       </div>
+
+      {addError && <SiteDialog title="Couldn't add to cart" message={addError} onClose={() => setAddError('')} />}
     </div>
   )
 }
