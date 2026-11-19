@@ -5,16 +5,7 @@ import IconModal, { OkButton } from '../../components/admin/IconModal'
 import OrderDetailsModal from '../../components/admin/OrderDetailsModal'
 import PaymentModal from '../../components/admin/PaymentModal'
 import { deleteOrder, getOrders } from '../../services/adminService'
-
-// Colors of the status pill in the table (same as the old $statusMap)
-const STATUS = {
-  pending: { dot: 'bg-yellow-500', style: 'bg-yellow-50 text-yellow-700 border-yellow-200', label: 'Pending' },
-  processing: { dot: 'bg-blue-500', style: 'bg-blue-50 text-blue-700 border-blue-200', label: 'Processing' },
-  waiting_for_buyer: { dot: 'bg-purple-500', style: 'bg-purple-50 text-purple-700 border-purple-200', label: 'Waiting' },
-  completed: { dot: 'bg-green-500', style: 'bg-green-50 text-green-700 border-green-200', label: 'Completed' },
-  cancelled: { dot: 'bg-red-500', style: 'bg-red-50 text-red-700 border-red-200', label: 'Cancelled' },
-}
-const UNPAID = { dot: 'bg-orange-500', style: 'bg-orange-50 text-orange-700 border-orange-200', label: 'Unpaid' }
+import { orderStatus } from '../../utils/orderStatus'
 
 const STAT_CARDS = [
   { key: 'total', label: 'Total Orders', icon: ShoppingCart, colors: 'from-violet-400 via-violet-500 to-violet-600' },
@@ -106,9 +97,10 @@ function CustomerCell({ order }) {
 }
 
 function StatusPill({ order }) {
-  const s = order.paid ? STATUS[order.status] || STATUS.pending : UNPAID
+  // Colors and admin wording from utils/orderStatus.js ("Waiting" is short for Waiting for Buyer)
+  const s = orderStatus(order.status, { admin: true, short: true, unpaid: !order.paid })
   return (
-    <span className={`inline-flex items-center gap-1 px-2 py-1 rounded-md text-xs font-medium border ${s.style}`}>
+    <span className={`inline-flex items-center gap-1 px-2 py-1 rounded-md text-xs font-medium border ${s.badge}`}>
       <span className={`w-1.5 h-1.5 rounded-full ${s.dot}`} />
       {s.label}
     </span>
