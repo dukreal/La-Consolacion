@@ -141,8 +141,9 @@ export default function Shop() {
 
         {!noResults && (
           <div
-            // 2 cards across on phones and small tablets, 3 on iPad Pro and laptops, 4 on wide screens
-            className="grid grid-cols-2 lg:grid-cols-3 2xl:grid-cols-4 gap-3 sm:gap-6 md:gap-8 lg:gap-10"
+            // 2 cards across on phones and small tablets, 3 on iPad Pro and laptops, 4 on wide screens.
+            // content-start: rows keep their own height, so a lone card is not stretched to fill the grid
+            className="grid content-start grid-cols-2 lg:grid-cols-3 2xl:grid-cols-4 gap-3 sm:gap-6 md:gap-8 lg:gap-10"
             id="productsGrid"
             ref={gridRef}
             // Lock instantly; only the release to the new height is animated
