@@ -1,5 +1,6 @@
 import { useState } from 'react'
 import { useAnimatedModal } from '../../hooks/useAnimatedModal'
+import { useEscapeKey } from '../../hooks/useEscapeKey'
 import { useBodyScrollLock } from '../../hooks/useBodyScrollLock'
 import { cancelOrder } from '../../services/orderService'
 
@@ -7,6 +8,7 @@ import { cancelOrder } from '../../services/orderService'
 // onResult({ type, text }) shows the success/error popup; onCancelled() reloads the order list.
 export default function CancelOrderModal({ orderId, onClose, onResult, onCancelled }) {
   const { shown, requestClose } = useAnimatedModal(onClose)
+  useEscapeKey(true, requestClose)
   useBodyScrollLock()
   const [cancelling, setCancelling] = useState(false)
 

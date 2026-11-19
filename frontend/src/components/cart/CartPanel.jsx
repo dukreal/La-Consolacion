@@ -1,5 +1,6 @@
 import { useEffect } from 'react'
 import { useCart } from '../../hooks/useCart'
+import { useEscapeKey } from '../../hooks/useEscapeKey'
 import CartItem from './CartItem'
 
 const checkoutGradient = { background: 'linear-gradient(135deg, #2474b6 0%, #1e5a8a 100%)' }
@@ -17,6 +18,8 @@ export default function CartPanel({ open, onClose, onCheckout }) {
       document.body.style.overflow = 'auto'
     }
   }, [open, loadCart])
+
+  useEscapeKey(open, onClose)
 
   const isEmpty = items.length === 0
 
@@ -110,11 +113,11 @@ export default function CartPanel({ open, onClose, onCheckout }) {
               {/* Trust Indicators */}
               <div className="flex items-center justify-center pt-4 space-x-6 text-xs inter text-blue-600">
                 <div className="flex items-center space-x-1">
-                  <i className="bx bx-shield-check text-blue-500"></i>
+                  <i className="bx bx-check-shield text-blue-500"></i>
                   <span>Secure</span>
                 </div>
                 <div className="flex items-center space-x-1">
-                  <i className="bx bx-truck text-blue-500"></i>
+                  <i className="bx bxs-truck text-blue-500"></i>
                   <span>Free Shipping</span>
                 </div>
               </div>

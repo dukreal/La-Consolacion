@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react'
 import MessageModal from '../common/MessageModal'
 import { useBodyScrollLock } from '../../hooks/useBodyScrollLock'
+import { useEscapeKey } from '../../hooks/useEscapeKey'
 import { getUserOrders } from '../../services/orderService'
 import CancelOrderModal from './CancelOrderModal'
 import OrderCard from './OrderCard'
@@ -18,6 +19,8 @@ export default function OrderHistoryPanel({ open, onClose }) {
   const [message, setMessage] = useState(null) // { type, text }
 
   useBodyScrollLock(open)
+  // Escape closes the panel, unless a pop-up is open on top of it (that one closes first)
+  useEscapeKey(open && !detailsId && !cancelId && !message, onClose)
 
   // Load the orders each time the panel opens (and after an order is cancelled)
   useEffect(() => {
@@ -109,7 +112,7 @@ export default function OrderHistoryPanel({ open, onClose }) {
               {/* Trust Indicators */}
               <div className="flex items-center justify-center pt-4 space-x-6 text-xs inter text-green-600">
                 <div className="flex items-center space-x-1">
-                  <i className="bx bx-shield-check text-green-500"></i>
+                  <i className="bx bx-check-shield text-green-500"></i>
                   <span>Secure</span>
                 </div>
                 <div className="flex items-center space-x-1">
