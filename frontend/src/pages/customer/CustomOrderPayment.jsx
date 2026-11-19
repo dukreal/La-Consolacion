@@ -106,11 +106,13 @@ export default function CustomOrderPayment() {
                         <span className="text-gray-400 text-xs">No Image</span>
                       </div>
                     )}
-                    <div className="flex-1">
+                    <div className="flex-1 min-w-0">
                       <div className="font-semibold text-gray-800">{order.name}</div>
                       <div className="text-sm text-gray-500">Custom Order</div>
+                      {/* Phones: price under the name, so the name is not squeezed into a narrow strip */}
+                      <div className="sm:hidden mt-1 font-semibold text-gray-700">₱{formatMoney(order.price)}</div>
                     </div>
-                    <div className="font-semibold text-gray-700">₱{formatMoney(order.price)}</div>
+                    <div className="hidden sm:block font-semibold text-gray-700">₱{formatMoney(order.price)}</div>
                   </div>
 
                   {/* Customer Details */}

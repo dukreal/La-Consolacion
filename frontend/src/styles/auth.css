@@ -199,9 +199,11 @@
 }
 
 @media (max-width: 600px) {
+  /* The card used to touch the screen edges (98vw wide, almost no inner padding) */
   .form-container {
-    max-width: 98vw;
-    padding: 1.2rem 0.5rem 1.5rem 0.5rem;
+    max-width: calc(100% - 32px);
+    margin: 32px 16px;
+    padding: 1.75rem 1.25rem 1.5rem 1.25rem;
   }
   .form-container h2 {
     font-size: 1.4rem;

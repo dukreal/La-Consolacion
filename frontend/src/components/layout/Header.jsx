@@ -80,7 +80,8 @@ export default function Header({ sticky = false }) {
 
   return (
     <header className={`bg-white shadow-sm border-b border-gray-100 ${sticky ? 'sticky top-0 z-50 ' : 'relative z-50 '}w-full`}>
-      <div className="w-full px-6">
+      {/* Same max width and side spacing as the page sections, so the logo and links line up with the content */}
+      <div className="mx-auto w-full max-w-[1360px] px-[clamp(24px,4vw,56px)]">
         <div className="flex items-center justify-between py-4">
           {/* Logo */}
           <Link to="/">
@@ -106,7 +107,7 @@ export default function Header({ sticky = false }) {
                 {profileImg ? (
                   <img src={profileImg} alt="Profile" className="w-8 h-8 rounded-full object-cover shadow-md" />
                 ) : (
-                  <span className="text-indigo-600 font-bold text-sm">{initial}</span>
+                  <span className="text-white font-bold text-sm">{initial}</span>
                 )}
               </button>
 
