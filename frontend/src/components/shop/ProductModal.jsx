@@ -1,8 +1,10 @@
-import { useEffect, useRef, useState } from 'react'
+import { useEffect, useLayoutEffect, useRef, useState } from 'react'
 import { useBodyScrollLock } from '../../hooks/useBodyScrollLock'
 import { useCart } from '../../hooks/useCart'
 import { useEscapeKey } from '../../hooks/useEscapeKey'
+import { cartErrorMessage } from '../../utils/cartMessages'
 import { formatPrice } from '../../utils/formatPrice'
+import SiteDialog from '../common/SiteDialog'
 
 const DEFAULT_DESCRIPTION =
   'An exquisite piece crafted with precision and elegance. This stunning jewelry features intricate details that capture and reflect light beautifully, creating a celestial sparkle that embodies luxury and sophistication.'
@@ -16,15 +18,33 @@ function modalDescription(description) {
   return text
 }
 
+// Site palette (same as the payment pages): navy #22306a, blue #2474b6, muted text #5b6478
+const iconButton =
+  'w-11 h-11 lg:w-10 lg:h-10 flex-shrink-0 rounded-full border border-[#e4e7ef] bg-white flex items-center justify-center text-[#22306a] hover:border-[#22306a] transition-colors'
 const addButtonClass =
-  'py-3 px-3 sm:px-4 whitespace-nowrap text-sm sm:text-base border-2 border-gray-300 text-gray-700 font-medium rounded-xl hover:border-gray-400 hover:bg-gray-50 transition-all duration-300 inter'
+  'flex-1 h-[50px] lg:h-[52px] px-3 whitespace-nowrap rounded-xl border-[1.5px] border-[#c9cfdf] bg-white text-[#22306a] text-sm sm:text-[15px] font-semibold inter hover:border-[#22306a] hover:bg-[#f5f6fa] transition-colors'
 const grey = { backgroundColor: '#9ca3af', color: 'white', borderColor: '#9ca3af' }
 
+// The product picture, or a gem when the picture is missing
+function ProductImage({ product, failed, onError, className }) {
+  if (failed) {
+    return (
+      <div className={`${className} bg-gradient-to-br from-blue-50 to-indigo-100 flex items-center justify-center`}>
+        <i className="bx bx-diamond text-6xl text-blue-300" aria-hidden="true"></i>
+      </div>
+    )
+  }
+  return <img alt={product.name} onError={onError} src={`/uploads/products/${product.image}`} className={`${className} object-cover`} />
+}
+
+// "Option B – Detail Sheet": picture on the left, the facts in a short table on the right,
+// Add to Cart and Buy Now in a bar pinned to the bottom. Phones: a sheet that slides up from the bottom.
 export default function ProductModal({ product, onClose, onAddedToCart, onBuyNow }) {
   const { addToCart, getQuantity } = useCart()
   const [status, setStatus] = useState('idle') // 'idle' | 'adding' | 'added'
   const [buying, setBuying] = useState(false) // Buy Now is preparing the order
   const [imageFailed, setImageFailed] = useState(false)
+  const [addError, setAddError] = useState('') // why Add to Cart failed, shown in a pop-up
   const timer = useRef(null)
 
   // Close with Escape, stop the page behind from scrolling (without it shifting sideways)
@@ -35,14 +55,44 @@ export default function ProductModal({ product, onClose, onAddedToCart, onBuyNow
   // (It must not live in the effect above: that one re-runs whenever onClose changes.)
   useEffect(() => () => clearTimeout(timer.current), [])
 
+  // Desktop: the details must fit above the button bar without scrolling, whatever the screen height,
+  // browser zoom or text size. If they don't fit, the description is shortened step by step:
+  //   1. 3 lines   2. 2 lines   3. hidden. The buttons are pinned, so they are always visible.
+  // (data-* attributes on the details area; the matching group-data-[...] classes are below)
+  const detailsRef = useRef(null)
+  useLayoutEffect(() => {
+    const el = detailsRef.current
+    if (!el) return
+    const desktop = window.matchMedia('(min-width: 1024px)')
+    const steps = [{}, { clamp: '3' }, { clamp: '2' }, { nodesc: '' }]
+    const apply = (step) => {
+      for (const key of ['clamp', 'nodesc']) {
+        if (key in step) el.setAttribute(`data-${key}`, step[key])
+        else el.removeAttribute(`data-${key}`)
+      }
+    }
+    const fit = () => {
+      if (!desktop.matches) return apply({})
+      for (const step of steps) {
+        apply(step)
+        if (el.scrollHeight <= el.clientHeight + 1) return
+      }
+    }
+    fit()
+    window.addEventListener('resize', fit)
+    document.fonts?.ready.then(fit) // the fonts can arrive after the first check and change the height
+    return () => window.removeEventListener('resize', fit)
+  }, [])
+
   const inCart = getQuantity(product.id)
   const outOfStock = product.stock <= 0
   const maxReached = !outOfStock && inCart >= product.stock
-  const stockBadge = outOfStock
-    ? { text: 'Out of Stock', color: 'from-rose-500 to-red-500' }
+  // Availability: green when there is plenty, amber when only a few are left, red when sold out
+  const availability = outOfStock
+    ? { text: 'Out of stock', color: 'text-red-600' }
     : product.stock <= 3
-      ? { text: `Only ${product.stock} left`, color: 'from-amber-400 to-orange-500' }
-      : { text: `In Stock - ${product.stock} Available`, color: 'from-emerald-400 to-green-500' }
+      ? { text: `Only ${product.stock} left`, color: 'text-amber-700' }
+      : { text: `In stock · ${product.stock} available`, color: 'text-green-700' }
 
   const handleAdd = async () => {
     setStatus('adding')
@@ -53,11 +103,11 @@ export default function ProductModal({ product, onClose, onAddedToCart, onBuyNow
         timer.current = setTimeout(() => setStatus('idle'), 2000)
         onAddedToCart?.()
       } else {
-        alert('Error: ' + data.error)
+        setAddError(cartErrorMessage(data.error))
         setStatus('idle')
       }
     } catch {
-      alert('Error adding to cart')
+      setAddError(cartErrorMessage())
       setStatus('idle')
     }
   }
@@ -69,10 +119,10 @@ export default function ProductModal({ product, onClose, onAddedToCart, onBuyNow
       disabled: true,
       style: { backgroundColor: '#6b7280', color: 'white', borderColor: '#6b7280' },
       content: (
-        <div className="flex items-center justify-center">
-          <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white mr-2"></div>
+        <span className="flex items-center justify-center">
+          <span className="animate-spin rounded-full h-4 w-4 border-b-2 border-white mr-2"></span>
           Adding...
-        </div>
+        </span>
       ),
     }
   } else if (status === 'added') {
@@ -80,12 +130,12 @@ export default function ProductModal({ product, onClose, onAddedToCart, onBuyNow
       disabled: true,
       style: { backgroundColor: '#10b981', color: 'white', borderColor: '#10b981' },
       content: (
-        <div className="flex items-center justify-center">
-          <svg className="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+        <span className="flex items-center justify-center">
+          <svg className="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M5 13l4 4L19 7"></path>
           </svg>
           Added!
-        </div>
+        </span>
       ),
     }
   } else if (outOfStock) {
@@ -101,189 +151,130 @@ export default function ProductModal({ product, onClose, onAddedToCart, onBuyNow
     addButton = { disabled: false, content: `Add to Cart (${inCart}/${product.stock})` }
   }
 
+  // The facts table. Material only when the product has one.
+  const facts = [
+    { label: 'Type', value: product.type, className: 'capitalize text-[#22306a]', hideOnPhone: true },
+    product.material && { label: 'Material', value: product.material, className: 'text-[#22306a]' },
+    { label: 'Availability', value: availability.text, className: availability.color, id: 'modalStockBadge' },
+    { label: 'Pickup', value: 'Pickup only - Visit our store', className: 'text-[#22306a]' },
+  ].filter(Boolean)
+
   return (
     <div id="productModal" className="fixed inset-0 z-50">
-      {/* Floating Background Elements */}
-      <div className="fixed inset-0 overflow-hidden pointer-events-none">
-        <div className="floating-element absolute top-20 left-20 w-4 h-4 gold-gradient rounded-full opacity-20"></div>
-        <div className="floating-element absolute top-40 right-32 w-6 h-6 bg-white rounded-full opacity-30" style={{ animationDelay: '-2s' }}></div>
-        <div className="floating-element absolute bottom-32 left-1/4 w-3 h-3 bg-blue-300 rounded-full opacity-25" style={{ animationDelay: '-4s' }}></div>
-        <div className="floating-element absolute bottom-20 right-20 w-5 h-5 bg-gradient-to-r from-blue-200 to-indigo-200 rounded-full opacity-20" style={{ animationDelay: '-1s' }}></div>
-      </div>
-
       {/* Modal Overlay */}
-      <div className="fixed inset-0 bg-black/50 backdrop-blur-md modal-backdrop z-40" onClick={onClose}></div>
+      <div className="fixed inset-0 bg-[#161c34]/50 backdrop-blur-[2px] modal-backdrop z-40" onClick={onClose}></div>
 
-      {/* Modal. This layer scrolls when the card is taller than the screen, and a click on the
-          dark area around the card closes it. */}
-      <div className="fixed inset-0 z-50 overflow-y-auto" onClick={onClose}>
-        <div className="flex min-h-full items-center justify-center p-4">
-          <div className="relative z-50 w-full max-w-5xl mx-auto modal-entrance" onClick={(e) => e.stopPropagation()}>
-            {/* Desktop: a fixed height that always fits the screen; the details side scrolls if it needs to.
-                Phones and tablets: picture on top, details below, the whole layer scrolls. */}
-            <div className="bg-white/95 backdrop-blur-xl rounded-3xl luxury-shadow overflow-clip border border-white/20 lg:h-[min(780px,calc(100dvh-2rem))]">
-              {/* Close Button */}
-              <button
-                onClick={onClose}
-                aria-label="Close"
-                className="absolute top-4 right-4 lg:top-5 lg:right-5 z-10 w-10 h-10 lg:w-11 lg:h-11 bg-white/80 backdrop-blur-sm rounded-full flex items-center justify-center hover:bg-white transition-all duration-300 group luxury-shadow"
-              >
-                <svg className="w-5 h-5 text-gray-600 group-hover:text-gray-800 transition-colors" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M6 18L18 6M6 6l12 12"></path>
-                </svg>
-              </button>
+      {/* Phones: the sheet sits at the bottom of the screen. Tablets and desktop: centered.
+          A click on the dark area around the card closes it. */}
+      <div className="fixed inset-0 z-50 flex items-end sm:items-center justify-center sm:p-4" onClick={onClose}>
+        <div
+          role="dialog"
+          aria-modal="true"
+          aria-labelledby="modalProductName"
+          onClick={(e) => e.stopPropagation()}
+          className="relative w-full sm:max-w-xl lg:max-w-5xl modal-entrance bg-white overflow-hidden flex flex-col lg:flex-row rounded-t-3xl sm:rounded-3xl shadow-[0_24px_64px_rgba(10,16,40,0.35)] max-h-[calc(100dvh-2.5rem)] sm:max-h-[calc(100dvh-2rem)] lg:h-[min(40rem,calc(100dvh-3rem))]"
+        >
+          {/* Desktop picture (left) */}
+          <div className="hidden lg:block lg:w-[48%] flex-shrink-0 bg-[#f5f6fa] p-5">
+            <ProductImage product={product} failed={imageFailed} onError={() => setImageFailed(true)} className="w-full h-full rounded-2xl" />
+          </div>
 
-              <div className="flex flex-col lg:flex-row gap-0 lg:h-full">
-                {/* Image Section */}
-                <div className="lg:w-1/2 lg:h-full relative bg-gradient-to-br from-blue-50/50 via-white/80 to-indigo-50/50 p-4 sm:p-6 flex flex-col items-center justify-center">
-                  <div className="relative group w-full lg:h-full">
-                    <div className="absolute inset-0 gold-gradient rounded-2xl blur-xl opacity-20 group-hover:opacity-30 transition-opacity duration-500"></div>
-                    <div className="relative bg-white/60 backdrop-blur-sm rounded-2xl p-3 sm:p-4 luxury-shadow border border-white/40 lg:h-full">
-                      {imageFailed ? (
-                        // The picture is missing: show a gem in the same space instead of a broken image
-                        <div className="w-full aspect-square max-h-[55vh] sm:max-h-[420px] lg:max-h-none lg:aspect-auto lg:h-full rounded-xl bg-gradient-to-br from-blue-50 to-indigo-100 flex items-center justify-center">
-                          <i className="bx bx-diamond text-6xl text-blue-300"></i>
-                        </div>
-                      ) : (
-                        <img
-                          id="modalProductImage"
-                          alt={product.name}
-                          onError={() => setImageFailed(true)}
-                          src={`/uploads/products/${product.image}`}
-                          className="w-full aspect-square max-h-[55vh] sm:max-h-[420px] lg:max-h-none lg:aspect-auto lg:h-full object-cover rounded-xl image-glow"
-                        />
-                      )}
-                    </div>
-                  </div>
-                </div>
+          <div className="flex-1 min-w-0 min-h-0 flex flex-col">
+            {/* Phones: the grab handle of the sheet */}
+            <div className="sm:hidden flex justify-center pt-2.5 pb-1" aria-hidden="true">
+              <span className="w-10 h-1 rounded-full bg-[#d8dce8]"></span>
+            </div>
 
-                {/* Content Section */}
-                <div className="lg:w-1/2 lg:h-full lg:overflow-y-auto lg:flex lg:flex-col p-6 sm:p-8 lg:p-10 bg-gradient-to-br from-white/95 to-gray-50/80 backdrop-blur-sm">
-                  {/* Centered top to bottom on desktop when it fits; scrolls from the top when it does not */}
-                  <div className="lg:my-auto">
-                  {/* Category, and the material when the product has one */}
-                  <div className="mb-4 flex flex-wrap gap-2 pr-12">
-                    <span id="modalProductType" className="inline-block px-3 py-1.5 rounded-xl text-xs sm:text-sm font-medium bg-gradient-to-r from-gray-100 to-gray-50 text-gray-700 border border-gray-200/50 inter uppercase tracking-wider">
-                      {product.type}
-                    </span>
-                    {product.material && (
-                      <span id="modalProductMaterial" className="inline-block px-3 py-1.5 rounded-xl text-xs sm:text-sm font-medium bg-amber-50 text-amber-800 border border-amber-200/60 inter uppercase tracking-wider">
-                        {product.material}
-                      </span>
-                    )}
-                  </div>
-
-                  <h1 id="modalProductName" className="playfair text-3xl lg:text-4xl font-semibold text-gray-900 mb-3 leading-tight pr-10">
-                    {product.name}
-                  </h1>
-
-                  <p id="modalProductDescription" className="inter text-gray-600 text-[15px] sm:text-base mb-5 sm:mb-6 leading-relaxed">
-                    {modalDescription(product.description)}
-                  </p>
-
-                  {/* Price Section */}
-                  <div className="mb-5 sm:mb-6">
-                    <div className="flex items-baseline gap-2 mb-2">
-                      <span id="modalProductPrice" className="cormorant text-3xl sm:text-4xl font-bold gold-gradient bg-clip-text text-transparent">
-                        ₱{formatPrice(product.price)}
-                      </span>
-                      <span className="inter text-lg text-gray-400 font-light">PHP</span>
-                    </div>
-                    {/* Stock: green when there is plenty, amber when only a few are left, red when sold out */}
-                    <div className={`inline-flex items-center px-3 py-1 rounded-full text-white shadow-lg mb-2 bg-gradient-to-r ${stockBadge.color}`}>
-                      <div className="w-2 h-2 bg-white rounded-full mr-2 opacity-90"></div>
-                      <span className="text-sm font-medium inter" id="modalStockBadge">
-                        {stockBadge.text}
-                      </span>
-                    </div>
-                    <p className="inter text-sm text-gray-500">Pickup only - Visit our store</p>
-                  </div>
-
-                  {/* Features (general text, the same for every product): hidden on phones to keep the buttons close */}
-                  <div className="hidden sm:block mb-6">
-                    <h3 className="playfair text-lg font-semibold text-gray-900 mb-3">Features</h3>
-                    <div className="flex flex-col gap-2 sm:flex-row sm:flex-wrap sm:gap-x-6">
-                      <div className="flex items-center gap-3">
-                        <div className="w-2 h-2 gold-gradient rounded-full diamond-sparkle"></div>
-                        <span className="inter text-gray-700">Premium Materials</span>
-                      </div>
-                      <div className="flex items-center gap-3">
-                        <div className="w-2 h-2 gold-gradient rounded-full diamond-sparkle" style={{ animationDelay: '-0.3s' }}></div>
-                        <span className="inter text-gray-700">Handcrafted Design</span>
-                      </div>
-                      <div className="flex items-center gap-3">
-                        <div className="w-2 h-2 gold-gradient rounded-full diamond-sparkle" style={{ animationDelay: '-0.6s' }}></div>
-                        <span className="inter text-gray-700">Quality Guaranteed</span>
-                      </div>
-                    </div>
-                  </div>
-
-                  {/* Action Buttons: on phones they stay pinned to the bottom of the screen while the details scroll */}
-                  <div className="space-y-3 max-sm:sticky max-sm:bottom-0 max-sm:z-10 max-sm:-mx-6 max-sm:px-6 max-sm:py-3 max-sm:bg-white/95 max-sm:backdrop-blur max-sm:border-t max-sm:border-gray-100">
-                    <button
-                      id="buyNowBtn"
-                      onClick={() => onBuyNow?.(product, () => setBuying(true))}
-                      disabled={buying || outOfStock}
-                      style={buying || outOfStock ? { backgroundColor: '#9ca3af', backgroundImage: 'none', color: 'white' } : undefined}
-                      className={`w-full py-3.5 px-6 gold-gradient text-white font-semibold rounded-2xl transition-all duration-300 inter text-lg ${
-                        outOfStock ? 'cursor-not-allowed' : 'hover:shadow-2xl hover:-translate-y-1'
-                      }`}
-                    >
-                      {buying ? (
-                        <div className="flex items-center justify-center">
-                          <div className="animate-spin rounded-full h-5 w-5 border-b-2 border-white mr-2"></div>
-                          Processing...
-                        </div>
-                      ) : outOfStock ? (
-                        'Out of Stock'
-                      ) : (
-                        'Buy Now'
-                      )}
-                    </button>
-                    <div className="grid grid-cols-2 gap-3">
-                      <button
-                        id="addToCartBtn"
-                        onClick={handleAdd}
-                        disabled={addButton.disabled}
-                        style={addButton.style}
-                        className={addButtonClass + (addButton.extra || '')}
-                      >
-                        {addButton.content}
-                      </button>
-                      <button className={addButtonClass}>Share</button>
-                    </div>
-                  </div>
-
-                  {/* Trust Indicators */}
-                  <div className="mt-5 pt-5 sm:mt-6 sm:pt-6 border-t border-gray-200">
-                    <div className="flex flex-wrap items-center justify-between gap-3 text-sm inter text-gray-600">
-                      <div className="flex items-center gap-2">
-                        <svg className="w-5 h-5 text-green-500" fill="currentColor" viewBox="0 0 20 20">
-                          <path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clipRule="evenodd"></path>
-                        </svg>
-                        <span>Authentic</span>
-                      </div>
-                      <div className="flex items-center gap-2">
-                        <svg className="w-5 h-5 text-blue-500" fill="currentColor" viewBox="0 0 20 20">
-                          <path fillRule="evenodd" d="M3 4a1 1 0 011-1h12a1 1 0 110 2H4a1 1 0 01-1-1zm0 4a1 1 0 011-1h12a1 1 0 110 2H4a1 1 0 01-1-1zm0 4a1 1 0 011-1h12a1 1 0 110 2H4a1 1 0 01-1-1z" clipRule="evenodd"></path>
-                        </svg>
-                        <span>Certified</span>
-                      </div>
-                      <div className="flex items-center gap-2">
-                        <svg className="w-5 h-5 text-purple-500" fill="currentColor" viewBox="0 0 20 20">
-                          <path fillRule="evenodd" d="M12.395 2.553a1 1 0 00-1.45-.385c-.345.23-.614.558-.822.88-.214.33-.403.713-.57 1.116-.334.804-.614 1.768-.84 2.734a31.365 31.365 0 00-.613 3.58 2.64 2.64 0 01-.945-1.067c-.328-.68-.398-1.534-.398-2.654A1 1 0 005.05 6.05 6.981 6.981 0 003 11a7 7 0 1011.95-4.95c-.592-.591-.98-.985-1.348-1.467-.363-.476-.724-1.063-1.207-2.03zM12.12 15.12A3 3 0 017 13s.879.5 2.5.5c0-1 .5-4 1.25-4.5.5 1 .786 1.293 1.371 1.879A2.99 2.99 0 0113 13a2.99 2.99 0 01-.879 2.121z" clipRule="evenodd"></path>
-                        </svg>
-                        <span>Insured</span>
-                      </div>
-                    </div>
-                  </div>
-                  </div>
-                </div>
+            {/* Details: scroll on phones and tablets; on desktop they fit (see the fit steps above) */}
+            <div ref={detailsRef} className="group flex-1 min-h-0 overflow-y-auto px-4 sm:px-7 lg:px-9 pt-2 sm:pt-6 lg:pt-8 pb-5">
+              <div className="flex items-center gap-2">
+                <span id="modalProductType" className="px-3 py-1 rounded-full bg-[#eef1f8] text-[#22306a] text-[11px] lg:text-xs font-semibold tracking-[0.08em] uppercase inter">
+                  {product.type}
+                </span>
+                <div className="flex-1"></div>
+                <button type="button" aria-label="Share" className={iconButton}>
+                  <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+                    <path d="M4 12v7a1 1 0 0 0 1 1h14a1 1 0 0 0 1-1v-7M16 6l-4-4-4 4M12 2v13"></path>
+                  </svg>
+                </button>
+                <button type="button" onClick={onClose} aria-label="Close" className={iconButton}>
+                  <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" aria-hidden="true">
+                    <path d="M6 6l12 12M18 6L6 18"></path>
+                  </svg>
+                </button>
               </div>
+
+              {/* Phones and tablets: the picture under the buttons */}
+              <ProductImage
+                product={product}
+                failed={imageFailed}
+                onError={() => setImageFailed(true)}
+                className="lg:hidden mt-3 w-full h-60 sm:h-80 rounded-2xl"
+              />
+
+              <h2 id="modalProductName" className="playfair mt-4 text-[25px] sm:text-[28px] lg:text-[2rem] leading-tight font-bold text-[#22306a]">
+                {product.name}
+              </h2>
+              <p id="modalProductPrice" className="cormorant mt-2 lg:mt-3 text-[30px] lg:text-[36px] leading-none font-bold text-[#22306a]">
+                ₱{formatPrice(product.price)}
+              </p>
+
+              <dl className="mt-4 lg:mt-5 border-t border-[#eef0f5] text-[13px] sm:text-sm inter">
+                {facts.map((fact) => (
+                  <div key={fact.label} className={`justify-between gap-4 py-2.5 lg:py-[11px] border-b border-[#eef0f5] ${fact.hideOnPhone ? 'hidden sm:flex' : 'flex'}`}>
+                    <dt className="text-[#5b6478]">{fact.label}</dt>
+                    <dd id={fact.id} className={`font-semibold text-right ${fact.className}`}>{fact.value}</dd>
+                  </div>
+                ))}
+              </dl>
+
+              <p
+                id="modalProductDescription"
+                className="mt-3 lg:mt-4 text-[13px] sm:text-sm leading-relaxed text-[#5b6478] inter group-data-[clamp=3]:line-clamp-3 group-data-[clamp=2]:line-clamp-2 group-data-[nodesc]:hidden"
+              >
+                {modalDescription(product.description)}
+              </p>
+            </div>
+
+            {/* Button bar, pinned to the bottom */}
+            <div className="flex-shrink-0 flex gap-2.5 lg:gap-3 px-4 sm:px-7 lg:px-9 pt-3 pb-5 sm:py-4 lg:py-[18px] border-t border-[#eef0f5] bg-[#fbfcfe] max-lg:shadow-[0_-6px_20px_rgba(10,16,40,0.06)]">
+              <button
+                id="addToCartBtn"
+                type="button"
+                onClick={handleAdd}
+                disabled={addButton.disabled}
+                style={addButton.style}
+                className={addButtonClass + (addButton.extra || '')}
+              >
+                {addButton.content}
+              </button>
+              <button
+                id="buyNowBtn"
+                type="button"
+                onClick={() => onBuyNow?.(product, () => setBuying(true))}
+                disabled={buying || outOfStock}
+                style={buying || outOfStock ? { backgroundColor: '#9ca3af', color: 'white' } : undefined}
+                className={`flex-1 h-[50px] lg:h-[52px] px-3 whitespace-nowrap rounded-xl bg-[#22306a] text-white text-[15px] lg:text-base font-semibold inter transition-[background-color,box-shadow] ${
+                  outOfStock ? 'cursor-not-allowed' : 'hover:bg-[#1a2550] hover:shadow-[0_6px_18px_rgba(34,48,106,0.25)]'
+                }`}
+              >
+                {buying ? (
+                  <span className="flex items-center justify-center">
+                    <span className="animate-spin rounded-full h-5 w-5 border-b-2 border-white mr-2"></span>
+                    Processing...
+                  </span>
+                ) : outOfStock ? (
+                  'Out of Stock'
+                ) : (
+                  'Buy Now'
+                )}
+              </button>
             </div>
           </div>
         </div>
       </div>
+
+      {addError && <SiteDialog title="Couldn't add to cart" message={addError} onClose={() => setAddError('')} />}
     </div>
   )
 }
