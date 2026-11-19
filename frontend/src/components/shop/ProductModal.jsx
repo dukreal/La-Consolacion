@@ -22,6 +22,7 @@ export default function ProductModal({ product, onClose, onAddedToCart, onBuyNow
   const { addToCart, getQuantity } = useCart()
   const [status, setStatus] = useState('idle') // 'idle' | 'adding' | 'added'
   const [buying, setBuying] = useState(false) // Buy Now is preparing the order
+  const [imageFailed, setImageFailed] = useState(false)
   const timer = useRef(null)
 
   // Close with Escape, stop the page behind from scrolling while the modal is open
@@ -44,6 +45,11 @@ export default function ProductModal({ product, onClose, onAddedToCart, onBuyNow
   const inCart = getQuantity(product.id)
   const outOfStock = product.stock <= 0
   const maxReached = !outOfStock && inCart >= product.stock
+  const stockBadge = outOfStock
+    ? { text: 'Out of Stock', color: 'from-rose-500 to-red-500' }
+    : product.stock <= 3
+      ? { text: `Only ${product.stock} left`, color: 'from-amber-400 to-orange-500' }
+      : { text: `In Stock - ${product.stock} Available`, color: 'from-emerald-400 to-green-500' }
 
   const handleAdd = async () => {
     setStatus('adding')
@@ -90,7 +96,7 @@ export default function ProductModal({ product, onClose, onAddedToCart, onBuyNow
       ),
     }
   } else if (outOfStock) {
-    addButton = { disabled: true, style: grey, extra: ' opacity-50 cursor-not-allowed', content: 'Out of Stock' }
+    addButton = { disabled: true, style: grey, extra: ' opacity-50 cursor-not-allowed', content: 'Add to Cart' }
   } else if (maxReached) {
     addButton = {
       disabled: true,
@@ -140,22 +146,38 @@ export default function ProductModal({ product, onClose, onAddedToCart, onBuyNow
                   <div className="relative group w-full lg:h-full">
                     <div className="absolute inset-0 gold-gradient rounded-2xl blur-xl opacity-20 group-hover:opacity-30 transition-opacity duration-500"></div>
                     <div className="relative bg-white/60 backdrop-blur-sm rounded-2xl p-3 sm:p-4 luxury-shadow border border-white/40 lg:h-full">
-                      <img
-                        id="modalProductImage"
-                        alt={product.name}
-                        src={`/uploads/products/${product.image}`}
-                        className="w-full aspect-square max-h-[55vh] sm:max-h-[420px] lg:max-h-none lg:aspect-auto lg:h-full object-cover rounded-xl image-glow hover:scale-105 transition-transform duration-700"
-                      />
+                      {imageFailed ? (
+                        // The picture is missing: show a gem in the same space instead of a broken image
+                        <div className="w-full aspect-square max-h-[55vh] sm:max-h-[420px] lg:max-h-none lg:aspect-auto lg:h-full rounded-xl bg-gradient-to-br from-blue-50 to-indigo-100 flex items-center justify-center">
+                          <i className="bx bx-diamond text-6xl text-blue-300"></i>
+                        </div>
+                      ) : (
+                        <img
+                          id="modalProductImage"
+                          alt={product.name}
+                          onError={() => setImageFailed(true)}
+                          src={`/uploads/products/${product.image}`}
+                          className="w-full aspect-square max-h-[55vh] sm:max-h-[420px] lg:max-h-none lg:aspect-auto lg:h-full object-cover rounded-xl image-glow hover:scale-105 transition-transform duration-700"
+                        />
+                      )}
                     </div>
                   </div>
                 </div>
 
                 {/* Content Section */}
-                <div className="lg:w-1/2 lg:h-full lg:overflow-y-auto p-6 sm:p-8 lg:p-10 bg-gradient-to-br from-white/95 to-gray-50/80 backdrop-blur-sm">
-                  <div className="mb-4">
+                <div className="lg:w-1/2 lg:h-full lg:overflow-y-auto lg:flex lg:flex-col p-6 sm:p-8 lg:p-10 bg-gradient-to-br from-white/95 to-gray-50/80 backdrop-blur-sm">
+                  {/* Centered top to bottom on desktop when it fits; scrolls from the top when it does not */}
+                  <div className="lg:my-auto">
+                  {/* Category, and the material when the product has one */}
+                  <div className="mb-4 flex flex-wrap gap-2 pr-12">
                     <span id="modalProductType" className="inline-block px-3 py-1.5 rounded-xl text-xs sm:text-sm font-medium bg-gradient-to-r from-gray-100 to-gray-50 text-gray-700 border border-gray-200/50 inter uppercase tracking-wider">
                       {product.type}
                     </span>
+                    {product.material && (
+                      <span id="modalProductMaterial" className="inline-block px-3 py-1.5 rounded-xl text-xs sm:text-sm font-medium bg-amber-50 text-amber-800 border border-amber-200/60 inter uppercase tracking-wider">
+                        {product.material}
+                      </span>
+                    )}
                   </div>
 
                   <h1 id="modalProductName" className="playfair text-3xl lg:text-4xl font-semibold text-gray-900 mb-3 leading-tight pr-10">
@@ -174,10 +196,11 @@ export default function ProductModal({ product, onClose, onAddedToCart, onBuyNow
                       </span>
                       <span className="inter text-lg text-gray-400 font-light">PHP</span>
                     </div>
-                    <div className="inline-flex items-center px-3 py-1 rounded-full bg-gradient-to-r from-emerald-400 to-green-500 text-white shadow-lg mb-2">
+                    {/* Stock: green when there is plenty, amber when only a few are left, red when sold out */}
+                    <div className={`inline-flex items-center px-3 py-1 rounded-full text-white shadow-lg mb-2 bg-gradient-to-r ${stockBadge.color}`}>
                       <div className="w-2 h-2 bg-white rounded-full mr-2 opacity-90"></div>
                       <span className="text-sm font-medium inter" id="modalStockBadge">
-                        In Stock - {product.stock} Available
+                        {stockBadge.text}
                       </span>
                     </div>
                     <p className="inter text-sm text-gray-500">Pickup only - Visit our store</p>
@@ -207,15 +230,19 @@ export default function ProductModal({ product, onClose, onAddedToCart, onBuyNow
                     <button
                       id="buyNowBtn"
                       onClick={() => onBuyNow?.(product, () => setBuying(true))}
-                      disabled={buying}
-                      style={buying ? { backgroundColor: '#6b7280', color: 'white' } : undefined}
-                      className="w-full py-3.5 px-6 gold-gradient text-white font-semibold rounded-2xl hover:shadow-2xl hover:-translate-y-1 transition-all duration-300 inter text-lg"
+                      disabled={buying || outOfStock}
+                      style={buying || outOfStock ? { backgroundColor: '#9ca3af', backgroundImage: 'none', color: 'white' } : undefined}
+                      className={`w-full py-3.5 px-6 gold-gradient text-white font-semibold rounded-2xl transition-all duration-300 inter text-lg ${
+                        outOfStock ? 'cursor-not-allowed' : 'hover:shadow-2xl hover:-translate-y-1'
+                      }`}
                     >
                       {buying ? (
                         <div className="flex items-center justify-center">
                           <div className="animate-spin rounded-full h-5 w-5 border-b-2 border-white mr-2"></div>
                           Processing...
                         </div>
+                      ) : outOfStock ? (
+                        'Out of Stock'
                       ) : (
                         'Buy Now'
                       )}
@@ -256,6 +283,7 @@ export default function ProductModal({ product, onClose, onAddedToCart, onBuyNow
                         <span>Insured</span>
                       </div>
                     </div>
+                  </div>
                   </div>
                 </div>
               </div>
