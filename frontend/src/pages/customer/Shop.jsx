@@ -129,7 +129,8 @@ export default function Shop() {
 
         {!noResults && (
           <div
-            className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-2 xl:grid-cols-3 2xl:grid-cols-4 gap-10"
+            // 1 card across on phones, 2 on small tablets, 3 on iPad Pro and laptops, 4 on wide screens
+            className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 2xl:grid-cols-4 gap-6 md:gap-8 lg:gap-10"
             id="productsGrid"
           >
             {visible.map((product, index) => (

@@ -1,10 +1,11 @@
 import { formatPrice } from '../../utils/formatPrice'
 
 // One product in the grid. `animation` is the CSS class that slides/fades the card in or out.
+// The card fills its grid column (it used to be fixed at 256px, which left uneven gaps).
 export default function ProductCard({ product, animation, delay = 0, onOpen }) {
   return (
     <div
-      className={`product-card ${animation} card-hover bg-white/90 backdrop-blur-xl rounded-2xl overflow-hidden luxury-shadow border border-white/30 cursor-pointer w-64`}
+      className={`product-card ${animation} card-hover bg-white/90 backdrop-blur-xl rounded-2xl overflow-hidden luxury-shadow border border-white/30 cursor-pointer w-full`}
       style={delay ? { animationDelay: `${delay}ms`, animationFillMode: 'both' } : undefined}
       onClick={() => onOpen(product)}
     >
@@ -13,7 +14,7 @@ export default function ProductCard({ product, animation, delay = 0, onOpen }) {
         <img
           src={`/uploads/products/${product.image}`}
           alt={product.name}
-          className="w-full h-48 object-cover rounded-xl image-glow hover:scale-105 transition-transform duration-700"
+          className="w-full aspect-square object-cover rounded-xl image-glow hover:scale-105 transition-transform duration-700"
         />
       </div>
 
