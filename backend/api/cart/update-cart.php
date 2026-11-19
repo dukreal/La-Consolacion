@@ -57,7 +57,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 echo json_encode(['success' => true, 'message' => 'Quantity updated']);
             }
         } catch (PDOException $e) {
-            echo json_encode(['success' => false, 'error' => 'Database error: ' . $e->getMessage()]);
+            error_log('update-cart.php database error: ' . $e->getMessage()); // details for the server log only
+            echo json_encode(['success' => false, 'error' => 'Database error. Please try again.']);
         }
         
     } elseif ($action === 'update_quantity') {
@@ -98,7 +99,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 echo json_encode(['success' => false, 'error' => 'Item not found in cart']);
             }
         } catch (PDOException $e) {
-            echo json_encode(['success' => false, 'error' => 'Database error: ' . $e->getMessage()]);
+            error_log('update-cart.php database error: ' . $e->getMessage()); // details for the server log only
+            echo json_encode(['success' => false, 'error' => 'Database error. Please try again.']);
         }
         
     } elseif ($action === 'remove') {
@@ -120,7 +122,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 echo json_encode(['success' => false, 'error' => 'Item not found in cart']);
             }
         } catch (PDOException $e) {
-            echo json_encode(['success' => false, 'error' => 'Database error: ' . $e->getMessage()]);
+            error_log('update-cart.php database error: ' . $e->getMessage()); // details for the server log only
+            echo json_encode(['success' => false, 'error' => 'Database error. Please try again.']);
         }
         
     } else {

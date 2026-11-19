@@ -3,6 +3,7 @@ import { useAnimatedModal } from '../../hooks/useAnimatedModal'
 import { useBodyScrollLock } from '../../hooks/useBodyScrollLock'
 import { useEscapeKey } from '../../hooks/useEscapeKey'
 import { getOrderDetails } from '../../services/orderService'
+import { orderStatus } from '../../utils/orderStatus'
 
 // 1500 -> "₱1,500.00"
 const money = (amount) => `₱${parseFloat(amount).toLocaleString('en-US', { minimumFractionDigits: 2 })}`
@@ -157,10 +158,10 @@ export default function OrderDetailsModal({ orderId, onClose, onCancel }) {
                       <h3 className="text-base font-semibold text-gray-900">Order Status</h3>
                       <div
                         id="orderStatusBadge"
-                        className={`inline-flex items-center px-3 py-1 rounded-full text-sm font-medium ${data.order.status_style.bg} ${data.order.status_style.text}`}
+                        className={`inline-flex items-center px-3 py-1 rounded-full text-sm font-medium border ${orderStatus(data.order.status).badge}`}
                       >
-                        <span className={`w-2 h-2 rounded-full mr-2 ${data.order.status_style.dot}`}></span>
-                        {data.order.status_style.label}
+                        <span className={`w-2 h-2 rounded-full mr-2 ${orderStatus(data.order.status).dot}`}></span>
+                        {orderStatus(data.order.status).label}
                       </div>
                     </div>
                     <div className="grid grid-cols-2 gap-3">

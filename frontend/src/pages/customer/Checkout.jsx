@@ -3,6 +3,7 @@ import { Link, useNavigate } from 'react-router-dom'
 import LoadingOverlay from '../../components/common/LoadingOverlay'
 import EwalletOptions from '../../components/payment/EwalletOptions'
 import PaymentConfirmStep from '../../components/payment/PaymentConfirmStep'
+import PaymentHeader from '../../components/payment/PaymentHeader'
 import { useCart } from '../../hooks/useCart'
 import { submitPayment } from '../../services/paymentService'
 import { clearCheckout, readCheckout } from '../../utils/checkoutStorage'
@@ -61,80 +62,91 @@ export default function Checkout() {
     }
   }
 
+  // Change step and start at the top of the page (on phones the Continue button is far down)
+  const goToStep = (next) => {
+    setStep(next)
+    window.scrollTo(0, 0)
+  }
+
   return (
-    <div className="payment-page bg-white min-h-screen">
-      <div className="max-w-7xl mx-auto px-8 py-16">
-        {/* Header */}
-        <div className="mb-8">
-          <h1 className="text-3xl font-bold text-gray-800 mb-2">Payment Confirmation</h1>
-          <p className="text-gray-600">Complete your order with secure e-wallet payment</p>
-        </div>
+    <div className="payment-page">
+      <div className="max-w-6xl mx-auto px-5 sm:px-8 py-8">
+        <PaymentHeader
+          title="Payment Confirmation"
+          subtitle="Complete your order with secure e-wallet payment"
+          step={items.length === 0 && subtotal === 0 ? undefined : step}
+        />
 
         {items.length === 0 && subtotal === 0 ? (
           // Opened directly, or the order was already paid
-          <div className="bg-white rounded-2xl p-8 shadow-sm border border-gray-100 text-center">
-            <h3 className="text-xl font-bold mb-2 text-gray-800">Nothing to check out</h3>
-            <p className="text-gray-600 mb-6">Add something to your cart or choose Buy Now on a product first.</p>
-            <Link to="/shop" className="inline-block bg-blue-600 text-white py-3 px-6 rounded-xl font-semibold hover:bg-blue-700 transition-colors duration-200">
+          <div className="pay-card p-8 max-sm:p-6 text-center">
+            <h3 className="pay-title text-xl mb-2">Nothing to check out</h3>
+            <p className="pay-muted mb-6">Add something to your cart or choose Buy Now on a product first.</p>
+            <Link to="/shop" className="pay-btn">
               Go to the Shop
             </Link>
           </div>
         ) : step === 1 ? (
-          <div id="step1" className="flex flex-col xl:flex-row gap-8">
+          <div id="step1" className="grid grid-cols-1 lg:grid-cols-5 gap-5 sm:gap-6 items-start">
             {/* E-wallet selection (left) */}
-            <div className="xl:w-2/5 w-full">
+            <div className="lg:col-span-2">
               <EwalletOptions value={service} onChange={setService} />
             </div>
 
             {/* Order Summary (right) */}
-            <div className="xl:w-3/5 w-full">
-              <div className="bg-white rounded-2xl p-8 shadow-sm border border-gray-100">
-                <h3 className="text-xl font-bold mb-6 text-gray-800">Order Summary</h3>
-                <div id="orderSummaryItems" className="mb-6 space-y-4">
-                  {items.map((item, index) => (
-                    <div key={`${item.id}-${index}`} className="flex items-center gap-3 mb-2">
-                      <img src={item.image} alt={item.name} className="w-10 h-10 object-cover rounded border" />
-                      <div className="flex-1">
-                        <div className="font-semibold text-gray-800">{item.name}</div>
-                        <div className="text-xs text-gray-500">Qty: {item.qty}</div>
-                      </div>
-                      <div className="font-semibold text-gray-700">₱{formatMoney(item.price * item.qty)}</div>
+            <div className="lg:col-span-3 pay-card p-6 sm:p-7">
+              <h3 className="pay-title text-xl mb-5">Order Summary</h3>
+              <div id="orderSummaryItems" className="space-y-3">
+                {items.map((item, index) => (
+                  <div key={`${item.id}-${index}`} className="flex items-center gap-3.5">
+                    <img src={item.image} alt={item.name} className="w-12 h-12 flex-shrink-0 object-cover rounded-lg border border-[#e9ecf3]" />
+                    <div className="flex-1 min-w-0">
+                      <div className="font-semibold text-[#22306a] break-words leading-snug">{item.name}</div>
+                      <div className="text-xs pay-muted mt-0.5">Qty: {item.qty}</div>
+                      {/* Phones: price under the name, so the name is not squeezed into a narrow strip */}
+                      <div className="sm:hidden mt-1 font-semibold text-[#22306a]">₱{formatMoney(item.price * item.qty)}</div>
                     </div>
-                  ))}
-                </div>
-                <div className="space-y-4 pt-6 border-t border-gray-200">
-                  <div className="flex justify-between items-center">
-                    <span className="font-medium text-gray-700">Subtotal:</span>
-                    <span id="summarySubtotal" className="font-semibold text-gray-800">
-                      Php {formatMoney(subtotal)}
-                    </span>
+                    <div className="hidden sm:block font-semibold text-[#22306a] whitespace-nowrap">₱{formatMoney(item.price * item.qty)}</div>
                   </div>
-                  <div className="flex justify-between items-center">
-                    <span className="font-medium text-gray-700">Downpayment:</span>
-                    <span className="font-semibold text-blue-600">30%</span>
-                  </div>
-                </div>
-                <div className="flex justify-between items-center pt-4 border-t border-gray-200 mt-4">
-                  <div>
-                    <span className="text-lg font-bold text-gray-800">Total</span>
-                    <p className="text-sm text-gray-500">(fees might be applied)</p>
-                  </div>
-                  <span id="summaryTotal" className="text-2xl font-bold text-blue-600">
-                    Php {formatMoney(downpayment)}
+                ))}
+              </div>
+
+              <div className="space-y-2.5 pt-4 mt-5 border-t border-[#e9ecf3] text-sm sm:text-base">
+                <div className="flex justify-between items-center gap-4">
+                  <span className="pay-muted">Subtotal</span>
+                  <span id="summarySubtotal" className="font-semibold text-[#22306a] whitespace-nowrap">
+                    ₱{formatMoney(subtotal)}
                   </span>
                 </div>
-                <button
-                  id="continueBtn"
-                  onClick={() => setStep(2)}
-                  className="w-full mt-8 bg-blue-600 text-white py-3 px-6 rounded-xl font-semibold hover:bg-blue-700 transition-colors duration-200"
-                >
-                  Continue to Payment
-                </button>
+                <div className="flex justify-between items-center gap-4">
+                  <span className="pay-muted">Downpayment</span>
+                  <span className="font-semibold text-[#2474b6]">30%</span>
+                </div>
               </div>
+
+              <div className="pay-panel flex justify-between items-center gap-4 px-4 py-3.5 mt-4">
+                <div>
+                  <span className="text-lg font-bold text-[#22306a]">Total</span>
+                  <p className="text-xs sm:text-sm pay-muted">(fees might be applied)</p>
+                </div>
+                <span id="summaryTotal" className="text-xl min-[360px]:text-2xl font-bold text-[#22306a] whitespace-nowrap">
+                  ₱{formatMoney(downpayment)}
+                </span>
+              </div>
+
+              <button id="continueBtn" onClick={() => goToStep(2)} className="pay-btn w-full mt-5">
+                Continue to Payment
+              </button>
             </div>
           </div>
         ) : (
-          <PaymentConfirmStep amount={downpayment} onSubmit={handleSubmit} error={error} submitting={submitting} />
+          <PaymentConfirmStep
+            amount={downpayment}
+            onSubmit={handleSubmit}
+            onBack={() => goToStep(1)}
+            error={error}
+            submitting={submitting}
+          />
         )}
       </div>
 

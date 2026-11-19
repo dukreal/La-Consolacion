@@ -1,16 +1,17 @@
 import { useEffect, useRef, useState } from 'react'
 import { Link, useNavigate, useSearchParams } from 'react-router-dom'
 import LoadingOverlay from '../../components/common/LoadingOverlay'
+import { formatMoney } from '../../utils/formatMoney'
 import '../../styles/payment.css'
 
-const COUNTDOWN_SECONDS = 20
+const COUNTDOWN_SECONDS = 30
 
 // The receipt shown after paying (was payment/payment_success.php).
-// It reads amount, mobile and reference from the address, then goes back to Home after 20 seconds.
+// It reads amount, mobile and reference from the address, then goes back to Home after 30 seconds.
 export default function PaymentSuccess() {
   const navigate = useNavigate()
   const [params] = useSearchParams()
-  const amount = parseFloat(params.get('amount') || '0.00').toFixed(2)
+  const amount = formatMoney(parseFloat(params.get('amount')) || 0)
   const mobile = params.get('mobile') || 'N/A'
   const reference = params.get('reference') || 'N/A'
 
@@ -69,100 +70,74 @@ export default function PaymentSuccess() {
     }
   }
 
-  // The circle turns orange for the last 3 seconds, red at the end (same as the old page)
-  const circleColor = secondsLeft <= 0 ? 'bg-red-500' : secondsLeft <= 3 ? 'bg-orange-500' : 'bg-accent-blue'
-
   return (
-    <div className="payment-page bg-white min-h-screen flex items-center justify-center">
+    // One card in the middle of the screen; the countdown and the continue link sit under it
+    <div className="payment-page flex items-center justify-center px-5 py-5">
       {loading && <LoadingOverlay />}
 
-      <div className="max-w-md mx-auto px-4 text-center">
-        {/* Success Icon */}
-        <div className="success-icon mb-8">
-          <div className="w-24 h-24 bg-green-100 rounded-full flex items-center justify-center mx-auto mb-4">
-            <svg className="w-12 h-12 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M5 13l4 4L19 7" />
-            </svg>
-          </div>
-        </div>
-
-        {/* Success Message (this part is saved by "Download Screenshot") */}
+      <div className="w-full max-w-md">
+        {/* The receipt (this part is saved by "Download Screenshot") */}
         <div id="receiptArea" ref={receiptRef}>
-          <div
-            id="successMessage"
-            className="bg-white text-gray-900 p-6 rounded-xl shadow-lg fade-in mb-8 text-center border border-gray-300"
-          >
-            <h1 className="text-3xl font-bold text-gray-900 mb-4">Payment Successful!</h1>
-            <p className="text-lg text-gray-800 mb-2">
+          <div id="successMessage" className="pay-card fade-in px-6 py-7 sm:px-8 text-center">
+            <div className="w-16 h-16 mx-auto rounded-full bg-emerald-50 border border-emerald-100 flex items-center justify-center">
+              <i className="bx bx-check text-4xl text-emerald-600" aria-hidden="true"></i>
+            </div>
+
+            <h1 className="pay-title text-[1.75rem] sm:text-3xl mt-4">Payment Successful!</h1>
+            <p className="pay-muted mt-2">
               Thank you for paying{' '}
-              <span className="font-semibold accent-blue">
+              <span className="font-bold text-[#22306a] whitespace-nowrap">
                 ₱<span id="paidAmount">{amount}</span>
               </span>
             </p>
-            <p className="text-sm text-gray-600 mb-1">
-              <strong>Mobile No:</strong> <span id="paidMobile">{mobile}</span>
-            </p>
-            <p className="text-sm text-gray-600 mb-4">
-              <strong>Reference No:</strong> <span id="paidReference">{reference}</span>
-            </p>
-            <p className="text-sm text-gray-600 mb-4">Your payment has been received and is being processed.</p>
 
-            {/* Screenshot Notice */}
-            <div className="bg-blue-50 border border-blue-200 rounded-lg p-4 mb-4">
-              <p className="text-blue-700 text-sm font-medium">Please take a screenshot of this receipt for your reference.</p>
+            <div className="pay-panel mt-5 px-4 py-3 text-sm text-left space-y-2">
+              <div className="flex justify-between gap-4">
+                <span className="pay-muted">Mobile No:</span>
+                <span id="paidMobile" className="font-semibold text-[#22306a] text-right break-all">{mobile}</span>
+              </div>
+              <div className="flex justify-between gap-4">
+                <span className="pay-muted whitespace-nowrap">Reference No:</span>
+                <span id="paidReference" className="font-semibold text-[#22306a] text-right break-all">{reference}</span>
+              </div>
             </div>
 
-            <button
-              ref={downloadButtonRef}
-              onClick={takeScreenshot}
-              className="screenshot-exclude bg-accent-blue text-white py-2 px-4 rounded-lg hover-accent-blue transition"
-            >
+            <p className="text-sm pay-muted mt-4">Your payment has been received and is being processed.</p>
+
+            {/* Screenshot Notice */}
+            <p className="text-sm font-medium text-[#2474b6] bg-[#eef4fb] rounded-lg px-3 py-2.5 mt-4">
+              Please take a screenshot of this receipt for your reference.
+            </p>
+
+            <button ref={downloadButtonRef} onClick={takeScreenshot} className="screenshot-exclude pay-btn w-full mt-5">
+              <i className="bx bx-download text-lg" aria-hidden="true"></i>
               Download Screenshot
             </button>
           </div>
         </div>
 
-        {/* Countdown Section */}
-        <div className="bg-gray-50 rounded-lg p-6 mb-6">
-          <div className="flex items-center justify-center mb-4">
-            <div className={`countdown-circle w-16 h-16 ${circleColor} rounded-full flex items-center justify-center`}>
-              <span id="countdown" className="text-2xl font-bold text-white">
-                {secondsLeft}
-              </span>
-            </div>
-          </div>
-          <p className="text-gray-600 mb-2">
+        {/* Countdown */}
+        <div className="mt-5 px-1 text-center">
+          <p className="text-sm pay-muted">
             You will be redirected to the shop&apos;s main page in{' '}
-            <span id="countdownText" className="font-semibold accent-blue">
+            <span id="countdownText" className="font-semibold text-[#22306a]">
               {secondsLeft}
             </span>{' '}
             seconds.
           </p>
-          {/* Progress Bar */}
-          <div className="progress-bar">
+          <div className="progress-bar mt-2.5">
             <div id="progressBar" className="progress-fill" style={{ width: `${(secondsLeft / COUNTDOWN_SECONDS) * 100}%` }}></div>
           </div>
-        </div>
 
-        {/* Fallback Link */}
-        <div className="text-center">
-          <p className="text-sm text-gray-500 mb-3">If you&apos;re not redirected automatically,</p>
-          <Link
-            to="/"
-            replace
-            id="manualRedirect"
-            className="inline-flex items-center px-4 py-2 bg-accent-blue hover-accent-blue text-white font-medium rounded-lg transition duration-200"
-          >
-            <svg className="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M13 7l5 5m0 0l-5 5m5-5H6" />
-            </svg>
-            Click here to continue
-          </Link>
-        </div>
+          {/* Fallback Link */}
+          <p className="text-sm pay-muted mt-4">
+            If you&apos;re not redirected automatically,{' '}
+            <Link to="/" replace id="manualRedirect" className="font-semibold text-[#22306a] underline underline-offset-2 hover:text-[#2474b6]">
+              click here to continue
+            </Link>
+          </p>
 
-        {/* Additional Info */}
-        <div className="mt-8 pt-6 border-t border-gray-200">
-          <p className="text-xs text-gray-500">Need help? Contact our support team</p>
+          <p className="text-xs pay-muted mt-3">Need help? Contact our support team</p>
         </div>
       </div>
     </div>

@@ -14,6 +14,7 @@ export function useCheckout({ onCartClose } = {}) {
   const { items } = useCart()
   const [loading, setLoading] = useState(false)
   const [profileModalOpen, setProfileModalOpen] = useState(false)
+  const [checkoutError, setCheckoutError] = useState(false) // the profile check failed (no connection, server error)
 
   // true when the profile has a phone number; otherwise shows the "Complete Your Profile" popup
   const profileIsComplete = async () => {
@@ -40,7 +41,7 @@ export function useCheckout({ onCartClose } = {}) {
       if (!(await profileIsComplete())) return
     } catch (error) {
       console.error('Error checking profile:', error)
-      alert('Error checking profile completion')
+      setCheckoutError(true)
       return
     }
     await goToPayment(() =>
@@ -63,7 +64,7 @@ export function useCheckout({ onCartClose } = {}) {
       if (!(await profileIsComplete())) return
     } catch (error) {
       console.error('Error checking profile:', error)
-      alert('Error checking profile completion')
+      setCheckoutError(true)
       return
     }
     onProcessing?.()
@@ -82,5 +83,7 @@ export function useCheckout({ onCartClose } = {}) {
     navigate('/profile')
   }
 
-  return { loading, profileModalOpen, closeProfileModal, goToProfile, checkoutCart, buyNow }
+  const closeCheckoutError = () => setCheckoutError(false)
+
+  return { loading, profileModalOpen, closeProfileModal, goToProfile, checkoutError, closeCheckoutError, checkoutCart, buyNow }
 }

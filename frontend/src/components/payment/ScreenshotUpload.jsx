@@ -1,7 +1,10 @@
 import { useEffect, useMemo, useRef, useState } from 'react'
 
-// "Upload Payment Screenshot": click or drag a picture, see a preview, remove it with the x.
-export default function ScreenshotUpload({ file, onChange }) {
+const ALLOWED_TYPES = ['image/png', 'image/jpeg', 'image/gif']
+
+// "Upload Payment Screenshot": click or drag a picture. Once one is chosen, the box is replaced by
+// a small preview row with the file name and an x to remove it (so the form stays short).
+export default function ScreenshotUpload({ file, onChange, invalid = false }) {
   const inputRef = useRef(null)
   const [dragging, setDragging] = useState(false)
 
@@ -10,8 +13,9 @@ export default function ScreenshotUpload({ file, onChange }) {
   // ...freed again when the picture changes or the page closes
   useEffect(() => () => previewUrl && URL.revokeObjectURL(previewUrl), [previewUrl])
 
+  // Only the types the server accepts for payment screenshots (payment.php), same as the hint below
   const choose = (picked) => {
-    if (picked && picked.type.startsWith('image/')) onChange(picked)
+    if (picked && ALLOWED_TYPES.includes(picked.type)) onChange(picked)
   }
 
   const remove = () => {
@@ -21,58 +25,66 @@ export default function ScreenshotUpload({ file, onChange }) {
 
   return (
     <div>
-      <label className="block text-sm font-medium text-gray-700 mb-2">Upload Payment Screenshot</label>
-      <div
-        id="fileUpload"
-        className={`file-upload-area rounded-lg p-6 text-center cursor-pointer${dragging ? ' dragover' : ''}`}
-        onClick={() => inputRef.current?.click()}
-        onDragOver={(e) => {
-          e.preventDefault()
-          setDragging(true)
-        }}
-        onDragLeave={() => setDragging(false)}
-        onDrop={(e) => {
-          e.preventDefault()
-          setDragging(false)
-          choose(e.dataTransfer.files?.[0])
-        }}
-      >
-        <input
-          ref={inputRef}
-          type="file"
-          id="fileInput"
-          accept="image/*"
-          className="hidden"
-          onChange={(e) => choose(e.target.files?.[0])}
-        />
-        <svg className="w-12 h-12 text-gray-400 mx-auto mb-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-          <path
-            strokeLinecap="round"
-            strokeLinejoin="round"
-            strokeWidth="2"
-            d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12"
-          ></path>
-        </svg>
-        <p className="text-sm text-gray-600 mb-1">Click to upload or drag and drop</p>
-        <p className="text-xs text-gray-500">PNG, JPG, GIF up to 10MB</p>
-      </div>
+      <span className="pay-label">Upload Payment Screenshot</span>
+      <input
+        ref={inputRef}
+        type="file"
+        id="fileInput"
+        accept={ALLOWED_TYPES.join(',')}
+        className="hidden"
+        onChange={(e) => choose(e.target.files?.[0])}
+      />
 
-      {file && previewUrl && (
-        <div id="filePreview" className="mt-3">
-          <div className="image-preview">
-            <img
-              id="previewImage"
-              src={previewUrl}
-              alt="Payment screenshot preview"
-              className="w-32 h-32 object-cover rounded-lg border"
-            />
-            <button type="button" className="remove-btn" id="removeBtn" onClick={remove} aria-label="Remove screenshot">
-              ×
-            </button>
+      {file && previewUrl ? (
+        <div id="filePreview" className="flex items-center gap-3 p-2.5 pr-3 rounded-[10px] border-[1.5px] border-[#e0e3eb] bg-[#f7f8fc]">
+          <img
+            id="previewImage"
+            src={previewUrl}
+            alt="Payment screenshot preview"
+            className="w-12 h-12 flex-shrink-0 object-cover rounded-lg border border-[#e0e3eb] bg-white"
+          />
+          <div className="flex-1 min-w-0">
+            <p id="fileName" className="text-sm font-medium text-[#22306a] truncate">
+              {file.name}
+            </p>
           </div>
-          <p id="fileName" className="text-sm text-gray-600 mt-1">
-            {file.name}
-          </p>
+          <button
+            type="button"
+            id="removeBtn"
+            onClick={remove}
+            aria-label="Remove screenshot"
+            className="w-8 h-8 flex-shrink-0 rounded-full flex items-center justify-center text-[#5b6478] hover:bg-red-50 hover:text-red-600 transition-colors"
+          >
+            <i className="bx bx-x text-xl" aria-hidden="true"></i>
+          </button>
+        </div>
+      ) : (
+        <div
+          id="fileUpload"
+          role="button"
+          tabIndex={0}
+          className={`file-upload-area px-4 py-5 text-center cursor-pointer${dragging ? ' dragover' : ''}${invalid ? ' !border-red-500' : ''}`}
+          onClick={() => inputRef.current?.click()}
+          onKeyDown={(e) => {
+            if (e.key === 'Enter' || e.key === ' ') {
+              e.preventDefault()
+              inputRef.current?.click()
+            }
+          }}
+          onDragOver={(e) => {
+            e.preventDefault()
+            setDragging(true)
+          }}
+          onDragLeave={() => setDragging(false)}
+          onDrop={(e) => {
+            e.preventDefault()
+            setDragging(false)
+            choose(e.dataTransfer.files?.[0])
+          }}
+        >
+          <i className="bx bx-cloud-upload text-3xl text-[#8a93a8]" aria-hidden="true"></i>
+          <p className="text-sm text-[#22306a] font-medium mt-1">Click to upload or drag and drop</p>
+          <p className="text-xs pay-muted mt-0.5">PNG, JPG, GIF up to 10MB</p>
         </div>
       )}
     </div>

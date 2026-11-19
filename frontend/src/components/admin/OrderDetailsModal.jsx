@@ -1,16 +1,11 @@
 import { Gem, Mail, Phone, User } from 'lucide-react'
 import { useEffect, useState } from 'react'
 import { getOrderDetails, updateOrderStatus } from '../../services/adminService'
+import { ADMIN_STATUS_OPTIONS, orderStatus } from '../../utils/orderStatus'
 import IconModal, { OkButton } from './IconModal'
 
-// Status names and dot colors inside the pop-up (same as the old statusColors)
-const STATUS_LABELS = {
-  pending: { dot: 'bg-yellow-400', label: 'Pending' },
-  processing: { dot: 'bg-blue-400', label: 'Processing' },
-  waiting_for_buyer: { dot: 'bg-purple-400', label: 'Waiting for Buyer' },
-  completed: { dot: 'bg-green-400', label: 'Completed' },
-  cancelled: { dot: 'bg-red-400', label: 'Cancelled' },
-}
+// Status names (admin wording) and dot colors come from utils/orderStatus.js, shared with the customer side
+const statusLabel = (status) => orderStatus(status, { admin: true }).label
 // Completed and Cancelled are final: they need the extra "Confirm Order" step
 const isFinal = (status) => status === 'completed' || status === 'cancelled'
 const peso = (n) => '₱' + Number(n).toLocaleString('en-US', { minimumFractionDigits: 2 })
@@ -93,14 +88,14 @@ export default function OrderDetailsModal({ orderId, onClose, onStatusChange }) 
   }
 
   const handleUpdate = () =>
-    saveStatus(selected, { type: 'success', title: 'Status Updated', message: `Order status changed to ${STATUS_LABELS[selected].label}` })
+    saveStatus(selected, { type: 'success', title: 'Status Updated', message: `Order status changed to ${statusLabel(selected)}` })
 
   const handleConfirm = () => {
     setAskConfirm(false)
     saveStatus(selected, { type: 'success', title: 'Success', message: 'Order confirmed successfully!' })
   }
 
-  const statusInfo = unpaid ? { dot: 'bg-orange-500', label: 'Unpaid' } : STATUS_LABELS[current] || STATUS_LABELS.pending
+  const statusInfo = orderStatus(current, { admin: true, unpaid })
   const customer = data?.customer
 
   return (
@@ -225,8 +220,8 @@ export default function OrderDetailsModal({ orderId, onClose, onStatusChange }) 
                       disabled={!order || unpaid || locked || busy}
                       className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-sky-500 focus:border-sky-500"
                     >
-                      {Object.entries(STATUS_LABELS).map(([value, s]) => (
-                        <option key={value} value={value}>{s.label}</option>
+                      {ADMIN_STATUS_OPTIONS.map((s) => (
+                        <option key={s.value} value={s.value}>{s.label}</option>
                       ))}
                     </select>
                   </div>
@@ -272,7 +267,7 @@ export default function OrderDetailsModal({ orderId, onClose, onStatusChange }) 
           id="confirmPermanentModal"
           type="warning"
           title="Please confirm it"
-          message={`Are you sure you want to mark this order as ${STATUS_LABELS[selected].label.toLowerCase()}? This action is permanent and cannot be undone.`}
+          message={`Are you sure you want to mark this order as ${statusLabel(selected).toLowerCase()}? This action is permanent and cannot be undone.`}
         >
           <button type="button" id="confirmPermanentYesBtn" onClick={handleConfirm} className={`${emerald} ${buttonBase}`}>
             Confirm

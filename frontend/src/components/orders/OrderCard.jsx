@@ -1,7 +1,9 @@
 import { formatMoney } from '../../utils/formatMoney'
+import { orderStatus } from '../../utils/orderStatus'
 
 // One order in the Order History panel.
 export default function OrderCard({ order, onViewDetails, onCancel }) {
+  const status = orderStatus(order.status)
   return (
     <div className="bg-white rounded-xl border border-gray-200 shadow-sm overflow-hidden">
       <div className="p-4">
@@ -20,8 +22,8 @@ export default function OrderCard({ order, onViewDetails, onCancel }) {
           </div>
           <div className="flex flex-col items-end">
             <span className="cormorant font-bold gradient-text text-2xl mb-1">₱{order.total_amount}</span>
-            <span className={`inline-flex items-center px-2 py-1 rounded-full text-xs font-medium border ${order.status_class}`}>
-              {order.status_text}
+            <span className={`inline-flex items-center px-2 py-1 rounded-full text-xs font-medium border ${status.badge}`}>
+              {status.label}
             </span>
           </div>
         </div>

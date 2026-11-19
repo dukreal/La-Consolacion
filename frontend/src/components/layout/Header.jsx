@@ -3,11 +3,12 @@ import { Link, useNavigate } from 'react-router-dom'
 import { useAuth } from '../../hooks/useAuth'
 
 const navLink =
-  'inter text-gray-700 hover:text-blue-600 transition-colors duration-300 font-medium'
+  'inter text-gray-700 hover:text-blue-600 transition-colors duration-300 font-medium whitespace-nowrap'
 const mobileLink =
   'block px-6 py-3 inter text-gray-700 font-medium hover:bg-blue-50 hover:text-blue-600 transition-colors duration-200'
 
-// The page links, shown in the bar on wide screens and in the hamburger menu on phones
+// The page links: in the bar from 1024px up, in the hamburger menu on phones and tablets
+// (at 768px there is not enough room once the page is zoomed in, and the links wrapped onto two lines)
 const NAV_LINKS = [
   { to: '/shop', label: 'Shop All' },
   { to: '/#steps', label: 'Order Custom' },
@@ -105,13 +106,15 @@ export default function Header({ sticky = false }) {
       <div className="mx-auto w-full max-w-[1360px] px-[clamp(24px,4vw,56px)]">
         <div className="flex items-center justify-between py-4">
           {/* Logo */}
-          <Link to="/">
+          {/* flex-shrink-0: the logo keeps its size and never slides under the links */}
+          <Link to="/" className="flex-shrink-0">
             <img src="/images/LCJ.png" alt="LA CONSOLACION Jewelry Logo" className="h-12 w-auto" />
           </Link>
 
-          <div className="flex items-center space-x-8">
+          {/* ml-auto keeps the links and profile button on the right, next to the hamburger on phones and tablets */}
+          <div className="ml-auto flex items-center space-x-8">
             {/* Navigation */}
-            <nav className="hidden md:flex items-center space-x-6">
+            <nav className="hidden lg:flex items-center space-x-6">
               {NAV_LINKS.map((l) => (
                 <Link key={l.to} to={l.to} className={navLink}>{l.label}</Link>
               ))}
@@ -196,8 +199,8 @@ export default function Header({ sticky = false }) {
             </div>
           </div>
 
-          {/* Hamburger menu (phones only): the same page links as the bar above */}
-          <div className="md:hidden" ref={mobileRef}>
+          {/* Hamburger menu (phones and tablets): the same page links as the bar above */}
+          <div className="lg:hidden" ref={mobileRef}>
             <button
               id="mobileMenuBtn"
               onClick={() => { setMobileOpen((o) => !o); setOpen(false) }}

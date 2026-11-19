@@ -1,4 +1,7 @@
+import { useState } from 'react'
 import { useCart } from '../../hooks/useCart'
+import { cartErrorMessage } from '../../utils/cartMessages'
+import SiteDialog from '../common/SiteDialog'
 
 const stepperClass =
   'w-9 h-9 flex items-center justify-center text-gray-600 hover:text-blue-600 hover:bg-white rounded-md transition-all duration-200'
@@ -6,6 +9,8 @@ const stepperClass =
 // One product row inside the cart panel.
 export default function CartItem({ item }) {
   const { setQuantity, removeItem } = useCart()
+  const [askRemove, setAskRemove] = useState(false)
+  const [problem, setProblem] = useState(null) // { title, message } when something went wrong
 
   const atMinimum = item.quantity <= 1
   const atMaximum = item.quantity >= item.stock
@@ -13,19 +18,19 @@ export default function CartItem({ item }) {
   const changeQuantity = async (change) => {
     try {
       const data = await setQuantity(item.product_id, item.quantity + change)
-      if (!data.success) alert('Error updating quantity: ' + data.error)
+      if (!data.success) setProblem({ title: "Couldn't update quantity", message: cartErrorMessage(data.error) })
     } catch {
-      alert('Error updating quantity')
+      setProblem({ title: "Couldn't update quantity", message: cartErrorMessage() })
     }
   }
 
+  // Runs after "Remove" is chosen in the "Remove this item?" pop-up
   const handleRemove = async () => {
-    if (!confirm('Remove this item from cart?')) return
     try {
       const data = await removeItem(item.product_id)
-      if (!data.success) alert('Error removing item: ' + data.error)
+      if (!data.success) setProblem({ title: "Couldn't remove item", message: 'Something went wrong. Please try again.' })
     } catch {
-      alert('Error removing item')
+      setProblem({ title: "Couldn't remove item", message: 'Something went wrong. Please try again.' })
     }
   }
 
@@ -47,7 +52,7 @@ export default function CartItem({ item }) {
             <p className="cormorant font-bold gradient-text text-lg leading-tight mt-1">₱{item.price.toLocaleString('en-US')}</p>
           </div>
           <button
-            onClick={handleRemove}
+            onClick={() => setAskRemove(true)}
             aria-label={`Remove ${item.name}`}
             className="w-9 h-9 -mr-1 -mt-1 flex-shrink-0 flex items-center justify-center text-gray-400 hover:text-red-600 hover:bg-red-50 rounded-lg transition-colors duration-200"
           >
@@ -84,6 +89,24 @@ export default function CartItem({ item }) {
           </div>
         </div>
       </div>
+
+      {askRemove && (
+        <SiteDialog
+          variant="danger"
+          icon="bx-trash"
+          title="Remove this item?"
+          message={
+            <>
+              <strong className="font-semibold text-[#22306a]">{item.name}</strong> will be removed from your cart.
+            </>
+          }
+          cancelLabel="Keep it"
+          confirmLabel="Remove"
+          onConfirm={handleRemove}
+          onClose={() => setAskRemove(false)}
+        />
+      )}
+      {problem && <SiteDialog title={problem.title} message={problem.message} onClose={() => setProblem(null)} />}
     </div>
   )
 }
