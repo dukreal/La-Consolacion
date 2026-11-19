@@ -135,3 +135,13 @@ export async function getOrders() {
 export function deleteOrder(id) {
   return api('/orders/delete-order.php', { method: 'POST', form: { id } })
 }
+
+// One order for the Details pop-up: { order, customer, products, total }
+export function getOrderDetails(orderId) {
+  return api(`/orders/get-order-details.php?order_id=${orderId}`)
+}
+
+// Changes an order's status. Returns { success, status, emailSent } or { success: false, error }
+export function updateOrderStatus(orderId, status) {
+  return api('/orders/update-order-status.php', { method: 'POST', form: { order_id: orderId, new_status: status } })
+}

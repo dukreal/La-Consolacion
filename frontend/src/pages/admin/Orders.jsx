@@ -2,6 +2,7 @@ import { CheckCircle, Clock, Gem, Package, PlusCircle, Settings, ShoppingBag, Sh
 import { useCallback, useEffect, useState } from 'react'
 import { Link, useLocation, useNavigate } from 'react-router-dom'
 import IconModal, { OkButton } from '../../components/admin/IconModal'
+import OrderDetailsModal from '../../components/admin/OrderDetailsModal'
 import { deleteOrder, getOrders } from '../../services/adminService'
 
 // Colors of the status pill in the table (same as the old $statusMap)
@@ -153,6 +154,7 @@ export default function Orders() {
   const [toDelete, setToDelete] = useState(null) // order id waiting for "Delete Order?" answer
   const [deleting, setDeleting] = useState(false)
   const [alert, setAlert] = useState(null) // { type, title, message }
+  const [detailsId, setDetailsId] = useState(null) // order shown in the Details pop-up
 
   const load = useCallback(() => {
     return getOrders()
@@ -168,6 +170,11 @@ export default function Orders() {
   }, [location, navigate])
 
   const closeWalkinToast = useCallback(() => setWalkinToast(false), [])
+
+  // A status changed in the Details pop-up: update that row and the stat cards without reloading
+  const handleStatusChange = useCallback((id, status) => {
+    setData((d) => ({ ...d, orders: d.orders.map((o) => (o.id === id ? { ...o, status } : o)) }))
+  }, [])
 
   const handleDelete = async () => {
     setDeleting(true)
@@ -271,8 +278,8 @@ export default function Orders() {
                     <td className="px-6 py-4 w-32 text-center status-cell"><StatusPill order={order} /></td>
                     <td className="px-6 py-4 w-32 text-center">
                       <div className="flex items-center justify-center gap-2">
-                        {/* Details and Payment open pop-ups that come in the next parts (P6b, P6c) */}
-                        <button type="button" className="view-order-details-btn bg-gray-100 hover:bg-gray-200 text-gray-700 px-3 py-1 rounded-lg text-xs font-medium transition-colors duration-200">
+                        {/* Payment opens a pop-up that comes in the next part (P6c) */}
+                        <button type="button" onClick={() => setDetailsId(order.id)} className="view-order-details-btn bg-gray-100 hover:bg-gray-200 text-gray-700 px-3 py-1 rounded-lg text-xs font-medium transition-colors duration-200">
                           Details
                         </button>
                         {order.paid ? (
@@ -302,6 +309,10 @@ export default function Orders() {
           </div>
         )}
       </div>
+
+      {detailsId && (
+        <OrderDetailsModal orderId={detailsId} onClose={() => setDetailsId(null)} onStatusChange={handleStatusChange} />
+      )}
 
       {toDelete && (
         <IconModal
