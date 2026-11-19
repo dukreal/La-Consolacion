@@ -105,7 +105,7 @@ if (!$mail_sent) {
     json_response([
         'success' => false,
         'accountCreated' => true,
-        'errors' => ['Warning: Verification email could not be sent. Please contact support or try again later.'],
+        'errors' => ['Your account was created, but we couldn\'t send the verification email. Go to Login and choose "Resend verification email".'],
     ]);
 }
 
