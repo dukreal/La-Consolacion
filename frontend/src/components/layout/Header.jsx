@@ -22,6 +22,17 @@ const tints = {
   red: { box: 'bg-red-50', icon: 'text-red-600' },
 }
 
+// How far to move the profile menu so it stays on screen. It opens right-aligned under the
+// avatar; when that would cut it off on the left (phones), it moves right, keeping 16px from the edges.
+const MENU_GAP = 16
+function menuOffset(anchor) {
+  if (!anchor) return 0
+  const box = anchor.getBoundingClientRect()
+  const width = Math.min(288, window.innerWidth - MENU_GAP * 2)
+  const right = Math.min(Math.max(box.right, MENU_GAP + width), window.innerWidth - MENU_GAP)
+  return box.right - right
+}
+
 function MenuLink({ to, icon, label, color = 'blue', extraClass = '', onClick }) {
   return (
     <Link
@@ -43,6 +54,7 @@ export default function Header({ sticky = false }) {
   const navigate = useNavigate()
   const [open, setOpen] = useState(false) // profile dropdown
   const [mobileOpen, setMobileOpen] = useState(false) // hamburger menu (phones)
+  const [menuShift, setMenuShift] = useState(0) // see menuOffset()
   const menuRef = useRef(null)
   const mobileRef = useRef(null)
 
@@ -65,6 +77,14 @@ export default function Header({ sticky = false }) {
       document.removeEventListener('keydown', onKey)
     }
   }, [])
+
+  // Keep the open profile menu on screen when the window is resized or rotated
+  useEffect(() => {
+    if (!open) return
+    const onResize = () => setMenuShift(menuOffset(menuRef.current))
+    window.addEventListener('resize', onResize)
+    return () => window.removeEventListener('resize', onResize)
+  }, [open])
 
   const profileName = user ? user.username || user.firstName || 'User' : 'Guest'
   const profileEmail = user ? user.email : 'Not logged in'
@@ -99,7 +119,11 @@ export default function Header({ sticky = false }) {
             {/* Profile button + dropdown */}
             <div className="relative" ref={menuRef}>
               <button
-                onClick={() => { setOpen((o) => !o); setMobileOpen(false) }}
+                onClick={() => {
+                  setMenuShift(menuOffset(menuRef.current))
+                  setOpen((o) => !o)
+                  setMobileOpen(false)
+                }}
                 aria-label="Account menu"
                 className="w-10 h-10 rounded-full flex items-center justify-center hover:scale-105 transition-transform cursor-pointer border-2 border-white shadow-md"
                 style={{ background: 'linear-gradient(135deg, #2474b6 0%, #1e5a8a 100%)' }}
@@ -112,7 +136,8 @@ export default function Header({ sticky = false }) {
               </button>
 
               <div
-                className={`absolute right-0 mt-3 w-72 bg-white rounded-2xl shadow-2xl border border-gray-100 py-2 z-50 transform transition-all duration-300 ease-out backdrop-blur-sm ${
+                style={{ right: menuShift, width: 'min(18rem, calc(100vw - 32px))' }}
+                className={`absolute mt-3 max-h-[calc(100vh-96px)] overflow-y-auto bg-white rounded-2xl shadow-2xl border border-gray-100 py-2 z-50 transform transition-all duration-300 ease-out backdrop-blur-sm ${
                   open ? 'opacity-100 scale-100 visible' : 'opacity-0 scale-95 invisible pointer-events-none'
                 }`}
               >

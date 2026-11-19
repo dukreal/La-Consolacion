@@ -24,6 +24,7 @@ try {
                 SEPARATOR ', '
             ) as order_items,
             SUM(oi.quantity * oi.price_at_purchase) as total_amount,
+            MAX(p.type = 'custom') as is_custom,
             pay.reference_number,
             pay.service,
             pay.amount as payment_amount
@@ -92,7 +93,9 @@ try {
             'date_completed' => $order['date_completed'],
             'reference_number' => $order['reference_number'],
             'service' => $order['service'],
-            'payment_amount' => $order['payment_amount']
+            'payment_amount' => $order['payment_amount'],
+            // Custom orders are paid with a 30% downpayment, so the card shows both amounts
+            'is_custom' => (bool) $order['is_custom']
         ];
     }
     

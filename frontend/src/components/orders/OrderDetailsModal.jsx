@@ -211,6 +211,9 @@ export default function OrderDetailsModal({ orderId, onClose, onCancel }) {
                               <ProductThumb product={product} />
                               <div className="flex-1 min-w-0">
                                 <h4 className="font-semibold text-gray-900 text-sm truncate">{product.name}</h4>
+                                {product.type === 'custom' && (
+                                  <span className="mt-0.5 inline-block rounded-full border border-blue-200 bg-blue-50 px-2 py-0.5 text-[11px] font-medium text-blue-700">Custom Order</span>
+                                )}
                                 <div className="flex items-center justify-between mt-1">
                                   <div className="text-xs text-gray-500">
                                     <span className="font-medium">Qty: {product.quantity}</span>
