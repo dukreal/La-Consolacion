@@ -1,7 +1,6 @@
 import { Route, Routes } from 'react-router-dom'
 import AdminLayout from './components/admin/AdminLayout'
 import AdminRoute from './components/admin/AdminRoute'
-import ComingSoon from './components/common/ComingSoon'
 import ProtectedRoute from './components/common/ProtectedRoute'
 import PublicLayout from './components/layout/PublicLayout'
 import AddCustomOrder from './pages/admin/AddCustomOrder'
@@ -10,6 +9,7 @@ import EditCustomOrder from './pages/admin/EditCustomOrder'
 import EditProduct from './pages/admin/EditProduct'
 import Inventory from './pages/admin/Inventory'
 import Logs from './pages/admin/Logs'
+import Orders from './pages/admin/Orders'
 import Overview from './pages/admin/Overview'
 import Users from './pages/admin/Users'
 import WalkIn from './pages/admin/WalkIn'
@@ -49,7 +49,7 @@ export default function App() {
       <Route element={<AdminRoute />}>
         <Route element={<AdminLayout />}>
           <Route path="/admin" element={<Overview />} />
-          <Route path="/admin/orders" element={<ComingSoon title="Orders" />} />
+          <Route path="/admin/orders" element={<Orders />} />
           <Route path="/admin/walk-in" element={<WalkIn />} />
           <Route path="/admin/inventory" element={<Inventory />} />
           <Route path="/admin/inventory/add" element={<AddProduct />} />

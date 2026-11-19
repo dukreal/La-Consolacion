@@ -123,3 +123,15 @@ export function recordWalkInSale({ productId, quantity, method, reference }) {
     form: { product_id: productId, quantity, payment_method: method, reference_number: reference },
   })
 }
+
+// All orders for the Orders page: { orders, adminLevel }
+export async function getOrders() {
+  const data = await api('/admin/orders.php')
+  if (!data.success) throw new Error(data.message || data.error || 'Could not load orders')
+  return data
+}
+
+// Hides an order (SuperAdmin only). Returns { success } or { success: false, error }
+export function deleteOrder(id) {
+  return api('/orders/delete-order.php', { method: 'POST', form: { id } })
+}
