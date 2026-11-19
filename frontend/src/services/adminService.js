@@ -75,3 +75,35 @@ export function updateProduct(id, fields, image) {
   form.append('id', id)
   return api('/products/edit-product.php', { method: 'POST', form })
 }
+
+// Builds the form the Add / Edit Custom Order pages send (field names PHP reads)
+function customForm(fields, image) {
+  const form = new FormData()
+  form.append('customerName', fields.customerName)
+  form.append('customerEmail', fields.email)
+  form.append('productName', fields.productName)
+  form.append('customPrice', fields.price)
+  form.append('stock', fields.stock)
+  form.append('customDescription', fields.description)
+  if (image) form.append('customImage', image)
+  return form
+}
+
+// Adds a custom order and emails the customer (SuperAdmin only).
+// Returns { success, id, email, emailSent } or { success: false, error }
+export function addCustomOrder(fields, image) {
+  return api('/products/add-custom.php', { method: 'POST', form: customForm(fields, image) })
+}
+
+// One custom order for the Edit Custom Order page: { order }
+export function getCustomOrderForEdit(id) {
+  return api(`/products/edit-custom.php?id=${id}`)
+}
+
+// Saves the Edit Custom Order form
+export function updateCustomOrder(id, fields, image) {
+  const form = customForm(fields, image)
+  form.append('customStatus', fields.status)
+  form.append('id', id)
+  return api('/products/edit-custom.php', { method: 'POST', form })
+}

@@ -40,3 +40,36 @@ function check_stock(string $stock): void
         json_response(['success' => false, 'error' => 'Stock must be a positive number.'], 422);
     }
 }
+
+const CUSTOM_STATUSES = ['pending', 'processing', 'completed', 'cancelled'];
+
+// Fields of the Add Custom Order / Edit Custom Order forms (same rules and messages as the old pages).
+// Returns ['customer_name', 'email', 'product_name', 'price', 'stock', 'description'] or answers with an error.
+function read_custom_fields(): array
+{
+    $fields = [
+        'customer_name' => trim($_POST['customerName'] ?? ''),
+        'email'         => trim($_POST['customerEmail'] ?? ''),
+        'product_name'  => trim($_POST['productName'] ?? ''),
+        'price'         => trim($_POST['customPrice'] ?? ''),
+        'stock'         => trim($_POST['stock'] ?? '1'),
+        'description'   => trim($_POST['customDescription'] ?? ''),
+    ];
+
+    foreach (['customer_name', 'email', 'product_name', 'price', 'description'] as $key) {
+        if ($fields[$key] === '') {
+            json_response(['success' => false, 'error' => 'All fields except image are required.'], 422);
+        }
+    }
+    if (!filter_var($fields['email'], FILTER_VALIDATE_EMAIL)) {
+        json_response(['success' => false, 'error' => 'Invalid email address.'], 422);
+    }
+    if (!is_numeric($fields['price']) || $fields['price'] < 0) {
+        json_response(['success' => false, 'error' => 'Price must be a positive number.'], 422);
+    }
+    check_stock($fields['stock']);
+
+    $fields['price'] = (float) $fields['price'];
+    $fields['stock'] = (int) $fields['stock'];
+    return $fields;
+}

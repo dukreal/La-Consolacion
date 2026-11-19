@@ -2,10 +2,11 @@
 // Sends an email through the Node mailer (mailer/server.js).
 // Returns true if the mailer accepted the request, false if it failed.
 // When it fails, the reason is written to the PHP error log (see the PHP terminal).
-function send_mail(string $to, string $subject, string $text): bool
+// $route: '/send-reset' (password and verify emails) or '/send-order-notification' (order emails).
+function send_mail(string $to, string $subject, string $text, string $route = '/send-reset'): bool
 {
     $config = require __DIR__ . '/../config/app.php';
-    $url = $config['mailer_url'] . '/send-reset';
+    $url = $config['mailer_url'] . $route;
 
     $context = stream_context_create(['http' => [
         'method'        => 'POST',
