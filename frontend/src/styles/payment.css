@@ -1,73 +1,219 @@
-/* Styles for the payment pages (checkout and custom order payment).
-   Ported from the <style> block of the old payment.html and payment-form.php.
-   Wrapped in .payment-page so they cannot affect other pages. */
+/* Styles for the payment pages: Checkout, Custom Order Payment and Payment Success.
+   Same look as the rest of the site (Login, Profile): soft blue-grey background, white rounded cards,
+   Playfair Display headings and navy buttons. Everything is wrapped in .payment-page so it cannot
+   affect other pages. */
 
-.payment-page .accent-blue {
-  color: #2d5979;
+.payment-page {
+  min-height: 100vh;
+  background: linear-gradient(120deg, #f5f6fa 60%, #eaf3fa 100%);
+  font-family: 'Inter', sans-serif;
+  color: #22306a;
 }
-.payment-page .bg-accent-blue {
-  background-color: #2d5979;
+
+/* ---- Text ---- */
+.payment-page .pay-title {
+  font-family: 'Playfair Display', serif;
+  font-weight: 700;
+  color: #22306a;
+  line-height: 1.15;
 }
-.payment-page .border-accent-blue {
-  border-color: #2d5979;
+.payment-page .pay-muted {
+  color: #5b6478;
 }
-.payment-page .file-upload-area {
-  border: 2px dashed #2d5979;
-  transition: all 0.3s ease;
-  background: #fafbfc;
+
+/* ---- Cards ---- */
+.payment-page .pay-card {
+  background: #fff;
+  border-radius: 18px;
+  border: 1px solid #eef0f5;
+  box-shadow: 0 8px 32px rgba(34, 48, 106, 0.08);
 }
-.payment-page .file-upload-area:hover {
-  background-color: rgba(45, 89, 121, 0.05);
-  border-color: #234a66;
+/* Light panel inside a card (totals, receipt details) */
+.payment-page .pay-panel {
+  background: #f5f6fa;
+  border: 1px solid #e9ecf3;
+  border-radius: 12px;
 }
-.payment-page .file-upload-area.dragover {
-  background-color: rgba(45, 89, 121, 0.1);
-  border-color: #234a66;
-}
-.payment-page .image-preview {
-  position: relative;
-  display: inline-block;
-}
-.payment-page .remove-btn {
-  position: absolute;
-  top: -8px;
-  right: -8px;
-  background: #ef4444;
-  color: white;
-  border-radius: 50%;
-  width: 24px;
-  height: 24px;
-  display: flex;
+
+/* ---- Buttons ---- */
+.payment-page .pay-btn {
+  display: inline-flex;
   align-items: center;
   justify-content: center;
-  cursor: pointer;
-  font-size: 14px;
-  line-height: 1;
-  border: none;
-  transition: background-color 0.2s;
+  gap: 0.5rem;
+  background: #22306a;
+  color: #fff;
+  border-radius: 10px;
+  font-weight: 600;
+  padding: 0.8rem 1.5rem;
+  box-shadow: 0 2px 8px rgba(34, 48, 106, 0.12);
+  transition: background-color 0.2s, box-shadow 0.2s;
 }
-.payment-page .remove-btn:hover {
-  background: #dc2626;
+.payment-page .pay-btn:hover:not(:disabled) {
+  background: #1a2550;
+  box-shadow: 0 4px 14px rgba(34, 48, 106, 0.2);
 }
-.payment-page .modern-card {
+.payment-page .pay-btn:disabled {
+  opacity: 0.45;
+  cursor: not-allowed;
+}
+.payment-page .pay-btn-outline {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.4rem;
   background: #fff;
-  border-radius: 1.25rem;
-  box-shadow: 0 4px 24px 0 rgba(34, 42, 69, 0.08);
-  border: 1px solid #f3f4f6;
+  color: #22306a;
+  border: 1.5px solid #d8dce8;
+  border-radius: 10px;
+  font-weight: 600;
+  padding: 0.75rem 1rem;
+  white-space: nowrap;
+  transition: border-color 0.2s, background-color 0.2s;
+}
+.payment-page .pay-btn-outline:hover {
+  border-color: #22306a;
+  background: #f5f6fa;
 }
 
-/* Ensure both cards are the same height on desktop */
-@media (min-width: 768px) {
-  .payment-page .payment-step2 {
-    align-items: stretch;
-    min-height: 520px;
-  }
-  .payment-page .modern-card {
-    height: 100%;
-  }
+/* ---- Form fields (same as the Login page) ---- */
+.payment-page .pay-label {
+  display: block;
+  font-size: 0.875rem;
+  font-weight: 600;
+  color: #22306a;
+  margin-bottom: 0.4rem;
+}
+.payment-page .pay-input {
+  width: 100%;
+  padding: 0.7rem 1rem;
+  border: 1.5px solid #e0e3eb;
+  border-radius: 8px;
+  background: #f7f8fc;
+  color: #22306a;
+  font-size: 1rem;
+  outline: none;
+  transition: border-color 0.2s, background-color 0.2s;
+}
+.payment-page .pay-input::placeholder {
+  color: #9aa1b2;
+}
+.payment-page .pay-input:focus {
+  border-color: #22306a;
+  background: #fff;
+}
+.payment-page .pay-input.invalid {
+  border-color: #dc2626;
 }
 
-/* Loading screen animations (LoadingOverlay uses these class names) */
+/* ---- Step label ("1 Choose e-wallet — 2 Pay") ---- */
+.payment-page .pay-step-dot {
+  width: 1.6rem;
+  height: 1.6rem;
+  border-radius: 9999px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 0.8rem;
+  font-weight: 700;
+  flex-shrink: 0;
+  background: #e6e9f2;
+  color: #5b6478;
+}
+.payment-page .pay-step-dot.active {
+  background: #22306a;
+  color: #fff;
+}
+.payment-page .pay-step-dot.done {
+  background: #2474b6;
+  color: #fff;
+}
+
+/* ---- E-wallet choice ---- */
+.payment-page .pay-wallet {
+  border: 1.5px solid #e0e3eb;
+  background: #fff;
+  transition: border-color 0.2s, background-color 0.2s, box-shadow 0.2s;
+}
+.payment-page .pay-wallet:hover {
+  border-color: #b8c0d6;
+}
+.payment-page .pay-wallet.selected {
+  border-color: #22306a;
+  background: #f5f6fa;
+  box-shadow: 0 0 0 3px rgba(34, 48, 106, 0.06);
+}
+.payment-page .pay-radio {
+  width: 1.25rem;
+  height: 1.25rem;
+  border-radius: 9999px;
+  border: 2px solid #c5cbdb;
+  flex-shrink: 0;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+}
+.payment-page .pay-wallet.selected .pay-radio {
+  border-color: #22306a;
+}
+.payment-page .pay-wallet.selected .pay-radio::after {
+  content: '';
+  width: 0.6rem;
+  height: 0.6rem;
+  border-radius: 9999px;
+  background: #22306a;
+}
+
+/* ---- QR code frame ---- */
+.payment-page .pay-qr {
+  border: 2px dashed #c5cbdb;
+  border-radius: 14px;
+  background: #f7f8fc;
+}
+
+/* ---- Screenshot upload ---- */
+.payment-page .file-upload-area {
+  border: 2px dashed #c5cbdb;
+  background: #f7f8fc;
+  border-radius: 10px;
+  transition: border-color 0.2s, background-color 0.2s;
+}
+.payment-page .file-upload-area:hover,
+.payment-page .file-upload-area.dragover {
+  border-color: #22306a;
+  background: #eef1f8;
+}
+
+/* ---- Payment Success countdown bar ---- */
+.payment-page .progress-bar {
+  width: 100%;
+  height: 4px;
+  background-color: #e3e6ef;
+  border-radius: 2px;
+  overflow: hidden;
+}
+.payment-page .progress-fill {
+  height: 100%;
+  background-color: #22306a;
+  transition: width 1s linear;
+}
+
+/* Gentle fade for the success card (no bouncing or scaling) */
+@keyframes payFadeUp {
+  from {
+    opacity: 0;
+    transform: translateY(8px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+.payment-page .fade-in {
+  animation: payFadeUp 0.5s ease-out;
+}
+
+/* ---- Loading screen animations (LoadingOverlay uses these class names) ---- */
 @keyframes paySpin {
   to {
     transform: rotate(360deg);
@@ -100,64 +246,4 @@
 }
 .payment-page .animate-fade-in {
   animation: payFadeIn 0.8s ease-out;
-}
-
-/* ---- Payment success page (from the <style> block of the old payment_success.php) ---- */
-.payment-page .hover-accent-blue:hover {
-  background-color: #234a66;
-}
-.payment-page .success-icon {
-  animation: payScaleIn 0.8s ease-out;
-}
-@keyframes payScaleIn {
-  0% {
-    transform: scale(0);
-    opacity: 0;
-  }
-  50% {
-    transform: scale(1.1);
-    opacity: 0.8;
-  }
-  100% {
-    transform: scale(1);
-    opacity: 1;
-  }
-}
-.payment-page .countdown-circle {
-  animation: payCountdownPulse 1s ease-in-out infinite;
-}
-@keyframes payCountdownPulse {
-  0%,
-  100% {
-    transform: scale(1);
-  }
-  50% {
-    transform: scale(1.05);
-  }
-}
-.payment-page .fade-in {
-  animation: paySuccessFadeIn 0.6s ease-out;
-}
-@keyframes paySuccessFadeIn {
-  from {
-    opacity: 0;
-    transform: translateY(20px);
-  }
-  to {
-    opacity: 1;
-    transform: translateY(0);
-  }
-}
-.payment-page .progress-bar {
-  width: 100%;
-  height: 4px;
-  background-color: #e5e7eb;
-  border-radius: 2px;
-  overflow: hidden;
-  margin-top: 1rem;
-}
-.payment-page .progress-fill {
-  height: 100%;
-  background-color: #2d5979;
-  transition: width 1s linear;
 }

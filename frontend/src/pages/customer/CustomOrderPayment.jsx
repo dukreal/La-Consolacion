@@ -3,6 +3,7 @@ import { Link, useNavigate, useParams } from 'react-router-dom'
 import LoadingOverlay from '../../components/common/LoadingOverlay'
 import EwalletOptions from '../../components/payment/EwalletOptions'
 import PaymentConfirmStep from '../../components/payment/PaymentConfirmStep'
+import PaymentHeader from '../../components/payment/PaymentHeader'
 import { useCustomOrder } from '../../hooks/useCustomOrder'
 import { submitPayment } from '../../services/paymentService'
 import { formatMoney } from '../../utils/formatMoney'
@@ -57,117 +58,117 @@ export default function CustomOrderPayment() {
 
   const alreadyPaid = order && order.stock <= 0
 
-  return (
-    <div className="payment-page bg-white min-h-screen">
-      <div className="max-w-7xl mx-auto px-5 sm:px-8 py-10 xl:py-12">
-        {/* Header */}
-        <div className="mb-6 sm:mb-8">
-          <h1 className="text-2xl sm:text-3xl font-bold text-gray-800 mb-2">Custom Order Payment</h1>
-          <p className="text-gray-600">Complete your custom order with secure e-wallet payment</p>
-        </div>
+  // Change step and start at the top of the page (on phones the Continue button is far down)
+  const goToStep = (next) => {
+    setStep(next)
+    window.scrollTo(0, 0)
+  }
 
-        {loading && <p className="text-gray-500">Loading...</p>}
+  return (
+    <div className="payment-page">
+      <div className="max-w-6xl mx-auto px-5 sm:px-8 py-8">
+        <PaymentHeader
+          title="Custom Order Payment"
+          subtitle="Complete your custom order with secure e-wallet payment"
+          step={order && !alreadyPaid ? step : undefined}
+        />
+
+        {loading && <p className="pay-muted">Loading...</p>}
 
         {(loadError || alreadyPaid) && (
-          <div id="customOrderNotice" className="bg-white rounded-2xl p-8 shadow-sm border border-gray-100 text-center">
-            <h3 className="text-xl font-bold mb-2 text-gray-800">
-              {loadError || 'This custom order has already been paid.'}
-            </h3>
-            <p className="text-gray-600 mb-6">
+          <div id="customOrderNotice" className="pay-card p-8 max-sm:p-6 text-center">
+            <h3 className="pay-title text-xl mb-2">{loadError || 'This custom order has already been paid.'}</h3>
+            <p className="pay-muted mb-6">
               {loadError ? 'Please check the link in your email.' : 'You can follow it in your Order History.'}
             </p>
-            <Link
-              to="/shop"
-              className="inline-block bg-blue-600 text-white py-3 px-6 rounded-xl font-semibold hover:bg-blue-700 transition-colors duration-200"
-            >
+            <Link to="/shop" className="pay-btn">
               Go to the Shop
             </Link>
           </div>
         )}
 
         {order && !alreadyPaid && step === 1 && (
-          <div id="step1" className="flex flex-col xl:flex-row xl:items-start gap-6 sm:gap-8">
+          <div id="step1" className="grid lg:grid-cols-5 gap-5 sm:gap-6 items-start">
             {/* E-wallet selection (left) */}
-            <div className="xl:w-2/5 w-full">
+            <div className="lg:col-span-2">
               <EwalletOptions value={service} onChange={setService} />
             </div>
 
-            {/* Custom Order Summary (right). Same card, spacing and row style as "Choose E-wallet". */}
-            <div className="xl:w-3/5 w-full">
-              <div className="bg-white rounded-2xl p-8 max-sm:p-6 shadow-sm border border-gray-100">
-                <h3 className="text-xl font-bold mb-6 text-gray-800">Custom Order Summary</h3>
+            {/* Custom Order Summary (right) */}
+            <div className="lg:col-span-3 pay-card p-6 sm:p-7">
+              <h3 className="pay-title text-xl mb-5">Custom Order Summary</h3>
 
-                <div className="space-y-4">
-                  {/* The item, as a bordered row like the e-wallet options */}
-                  <div className="flex items-center gap-4 p-4 rounded-xl border border-gray-200">
-                    {order.image ? (
-                      <img src={`/uploads/custom/${order.image}`} alt={order.name} className="w-14 h-14 flex-shrink-0 object-cover rounded-lg border" />
-                    ) : (
-                      <div className="w-14 h-14 flex-shrink-0 bg-gray-100 rounded-lg border flex items-center justify-center">
-                        <span className="text-gray-400 text-xs">No Image</span>
-                      </div>
-                    )}
-                    <div className="flex-1 min-w-0">
-                      <div className="font-semibold text-gray-800 break-words">{order.name}</div>
-                      <div className="text-sm text-gray-500">Custom Order</div>
-                      {/* Phones: price under the name, so the name is not squeezed into a narrow strip */}
-                      <div className="sm:hidden mt-1 font-semibold text-gray-700">₱{formatMoney(order.price)}</div>
-                    </div>
-                    <div className="hidden sm:block font-semibold text-gray-700 whitespace-nowrap">₱{formatMoney(order.price)}</div>
+              {/* The item */}
+              <div className="flex items-center gap-3.5">
+                {order.image ? (
+                  <img src={`/uploads/custom/${order.image}`} alt={order.name} className="w-14 h-14 flex-shrink-0 object-cover rounded-lg border border-[#e9ecf3]" />
+                ) : (
+                  <div className="w-14 h-14 flex-shrink-0 bg-[#f5f6fa] rounded-lg border border-[#e9ecf3] flex items-center justify-center">
+                    <span className="pay-muted text-xs">No Image</span>
                   </div>
-
-                  {/* Customer details and description: stacked on phones, side by side on wide screens */}
-                  <div className="grid gap-4 lg:grid-cols-2">
-                    <div className="bg-gray-50 p-4 rounded-xl">
-                      <h4 className="font-semibold text-gray-700 mb-2">Customer Details</h4>
-                      <div className="text-sm text-gray-600 space-y-1 break-words">
-                        <div>
-                          <strong>Name:</strong> {order.customerName}
-                        </div>
-                        <div>
-                          <strong>Email:</strong> {order.email}
-                        </div>
-                      </div>
-                    </div>
-
-                    <div className="bg-blue-50 p-4 rounded-xl">
-                      <h4 className="font-semibold text-blue-700 mb-2">Custom Description</h4>
-                      <div className="text-sm text-blue-600 whitespace-pre-line break-words">{order.description}</div>
-                    </div>
-                  </div>
+                )}
+                <div className="flex-1 min-w-0">
+                  <div className="font-semibold text-[#22306a] break-words leading-snug">{order.name}</div>
+                  <div className="text-xs pay-muted mt-0.5">Custom Order</div>
+                  {/* Phones: price under the name, so the name is not squeezed into a narrow strip */}
+                  <div className="sm:hidden mt-1 font-semibold text-[#22306a]">₱{formatMoney(order.price)}</div>
                 </div>
-
-                <div className="space-y-3 pt-5 mt-6 border-t border-gray-200">
-                  <div className="flex justify-between items-center gap-4">
-                    <span className="font-medium text-gray-700">Total Amount</span>
-                    <span id="customTotal" className="font-semibold text-gray-800">₱{formatMoney(order.price)}</span>
-                  </div>
-                  <div className="flex justify-between items-center gap-4">
-                    <span className="font-medium text-gray-700">Downpayment</span>
-                    <span className="font-semibold text-blue-600">30%</span>
-                  </div>
-                </div>
-                <div className="flex justify-between items-center gap-4 pt-4 border-t border-gray-200 mt-4">
-                  <div>
-                    <span className="text-lg font-bold text-gray-800">Amount to Pay</span>
-                    <p className="text-sm text-gray-500 whitespace-nowrap">(30% downpayment)</p>
-                  </div>
-                  <span id="customDownpayment" className="text-2xl font-bold text-blue-600 whitespace-nowrap">₱{formatMoney(downpayment)}</span>
-                </div>
-                <button
-                  id="continueBtn"
-                  onClick={() => setStep(2)}
-                  className="w-full mt-6 bg-blue-600 text-white py-3 px-6 rounded-xl font-semibold hover:bg-blue-700 transition-colors duration-200"
-                >
-                  Continue to Payment
-                </button>
+                <div className="hidden sm:block font-semibold text-[#22306a] whitespace-nowrap">₱{formatMoney(order.price)}</div>
               </div>
+
+              {/* Customer details and description: stacked on phones, side by side on wide screens */}
+              <div className="grid gap-3 sm:grid-cols-2 mt-4 text-sm">
+                <div className="pay-panel p-3.5">
+                  <h4 className="font-semibold text-[#22306a] mb-1.5">Customer Details</h4>
+                  <div className="pay-muted space-y-0.5 break-words">
+                    <div>
+                      <span className="font-medium text-[#22306a]">Name:</span> {order.customerName}
+                    </div>
+                    <div>
+                      <span className="font-medium text-[#22306a]">Email:</span> {order.email}
+                    </div>
+                  </div>
+                </div>
+                <div className="pay-panel p-3.5">
+                  <h4 className="font-semibold text-[#22306a] mb-1.5">Custom Description</h4>
+                  <div className="pay-muted whitespace-pre-line break-words">{order.description}</div>
+                </div>
+              </div>
+
+              <div className="space-y-2.5 pt-4 mt-4 border-t border-[#e9ecf3] text-sm sm:text-base">
+                <div className="flex justify-between items-center gap-4">
+                  <span className="pay-muted">Total Amount</span>
+                  <span id="customTotal" className="font-semibold text-[#22306a] whitespace-nowrap">₱{formatMoney(order.price)}</span>
+                </div>
+                <div className="flex justify-between items-center gap-4">
+                  <span className="pay-muted">Downpayment</span>
+                  <span className="font-semibold text-[#2474b6]">30%</span>
+                </div>
+              </div>
+
+              <div className="pay-panel flex justify-between items-center gap-4 px-4 py-3.5 mt-4">
+                <div>
+                  <span className="text-lg font-bold text-[#22306a]">Amount to Pay</span>
+                  <p className="text-xs sm:text-sm pay-muted whitespace-nowrap">(30% downpayment)</p>
+                </div>
+                <span id="customDownpayment" className="text-2xl font-bold text-[#22306a] whitespace-nowrap">₱{formatMoney(downpayment)}</span>
+              </div>
+
+              <button id="continueBtn" onClick={() => goToStep(2)} className="pay-btn w-full mt-5">
+                Continue to Payment
+              </button>
             </div>
           </div>
         )}
 
         {order && !alreadyPaid && step === 2 && (
-          <PaymentConfirmStep amount={downpayment} onSubmit={handleSubmit} error={error} submitting={submitting} />
+          <PaymentConfirmStep
+            amount={downpayment}
+            onSubmit={handleSubmit}
+            onBack={() => goToStep(1)}
+            error={error}
+            submitting={submitting}
+          />
         )}
       </div>
 

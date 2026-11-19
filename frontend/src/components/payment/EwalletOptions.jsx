@@ -7,23 +7,27 @@ const WALLETS = [
 
 export default function EwalletOptions({ value, onChange }) {
   return (
-    <div className="bg-white rounded-2xl p-8 max-sm:p-6 shadow-sm border border-gray-100">
-      <h3 className="text-xl font-bold mb-6 text-gray-800">Choose E-wallet</h3>
-      <div className="space-y-4">
-        {WALLETS.map((wallet) => (
-          <button
-            type="button"
-            key={wallet.value}
-            data-value={wallet.value}
-            onClick={() => onChange(wallet.value)}
-            className={`ewallet-option w-full flex items-center gap-4 cursor-pointer p-4 rounded-xl border hover:border-blue-400 hover:bg-blue-50 transition-all duration-200 ${
-              value === wallet.value ? 'border-blue-400 bg-blue-50' : 'border-gray-200'
-            }`}
-          >
-            <img src={wallet.logo} alt={wallet.label} className="w-10 h-10 object-contain" />
-            <span className="font-medium text-gray-700">{wallet.label}</span>
-          </button>
-        ))}
+    <div className="pay-card p-6 sm:p-7">
+      <h3 className="pay-title text-xl mb-5">Choose E-wallet</h3>
+      <div className="space-y-3" role="radiogroup" aria-label="E-wallet">
+        {WALLETS.map((wallet) => {
+          const selected = value === wallet.value
+          return (
+            <button
+              type="button"
+              key={wallet.value}
+              data-value={wallet.value}
+              role="radio"
+              aria-checked={selected}
+              onClick={() => onChange(wallet.value)}
+              className={`ewallet-option pay-wallet w-full flex items-center gap-4 px-4 py-3 rounded-xl cursor-pointer text-left ${selected ? 'selected' : ''}`}
+            >
+              <img src={wallet.logo} alt="" className="w-10 h-10 flex-shrink-0 object-contain rounded-lg" />
+              <span className="flex-1 font-semibold text-[#22306a]">{wallet.label}</span>
+              <span className="pay-radio" aria-hidden="true"></span>
+            </button>
+          )
+        })}
       </div>
     </div>
   )
