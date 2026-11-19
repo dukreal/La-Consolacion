@@ -33,9 +33,10 @@ try {
         ]);
     }
 } catch (Exception $e) {
+    error_log('check-profile-completion.php database error: ' . $e->getMessage()); // details for the server log only
     echo json_encode([
         'success' => false,
-        'error' => 'Database error: ' . $e->getMessage()
+        'error' => 'Database error. Please try again.'
     ]);
 }
 ?> 
