@@ -108,8 +108,9 @@ export default function Profile() {
 
   return (
     <div className="profile-page min-h-screen bg-gradient-to-br from-slate-50 via-blue-50 to-indigo-100">
-      <div className="container mx-auto px-4 py-6 sm:py-10 lg:py-8">
-        <div className="max-w-3xl lg:max-w-4xl mx-auto">
+      {/* The card sits in the middle of the screen when it fits; taller cards just scroll. (A shared .container rule sets a column layout, so justify-center does the vertical centering.) */}
+      <div className="container mx-auto min-h-screen flex flex-col justify-center px-4 py-6 sm:py-10 lg:py-8">
+        <div className="w-full max-w-3xl lg:max-w-4xl mx-auto">
           <div className="profile-card rounded-2xl shadow-xl p-5 sm:p-8">
             {/* Back button, title */}
             <div className="flex justify-between items-start mb-6 pb-5 border-b border-gray-100">
@@ -159,7 +160,7 @@ export default function Profile() {
             {saved && (
               <form
                 onSubmit={handleSubmit}
-                className="space-y-6 lg:space-y-0 lg:grid lg:grid-cols-[200px_1fr] lg:gap-x-8 lg:gap-y-6"
+                className="space-y-6 lg:space-y-0 lg:grid lg:grid-cols-[220px_1fr] lg:gap-x-8 lg:gap-y-6"
                 noValidate
               >
                 {/* Profile photo */}
@@ -169,7 +170,7 @@ export default function Profile() {
                       // The avatar could not load (offline, or ui-avatars.com is down): draw the initials ourselves
                       <div
                         id="avatarFallback"
-                        className="w-24 h-24 sm:w-28 sm:h-28 rounded-full border-4 border-white shadow-xl flex items-center justify-center text-white text-3xl sm:text-4xl font-semibold"
+                        className="w-24 h-24 sm:w-28 sm:h-28 lg:w-36 lg:h-36 rounded-full border-4 border-white shadow-xl flex items-center justify-center text-white text-3xl sm:text-4xl lg:text-5xl font-semibold"
                         style={{ background: '#2474b6' }}
                       >
                         {(saved.firstName || '').slice(0, 2).toUpperCase()}
@@ -179,9 +180,14 @@ export default function Profile() {
                         src={previewUrl || savedPhotoUrl(saved)}
                         alt="Profile Picture"
                         onError={() => setAvatarFailed(true)}
-                        className="w-24 h-24 sm:w-28 sm:h-28 rounded-full object-cover border-4 border-white shadow-xl hover:shadow-2xl transition-all duration-300"
+                        className="w-24 h-24 sm:w-28 sm:h-28 lg:w-36 lg:h-36 rounded-full object-cover border-4 border-white shadow-xl hover:shadow-2xl transition-all duration-300"
                       />
                     )}
+                  </div>
+                  {/* Saved name and username under the photo (desktop only, fills the photo column) */}
+                  <div className="hidden lg:block text-center w-full min-w-0">
+                    <p className="font-semibold text-gray-800 truncate">{`${saved.firstName || ''} ${saved.lastName || ''}`.trim()}</p>
+                    {saved.username && <p className="text-sm text-gray-500 truncate">@{saved.username}</p>}
                   </div>
                   <label className="upload-btn inline-flex items-center gap-2 px-4 py-2 text-white rounded-xl cursor-pointer shadow-lg hover:shadow-xl transition-all duration-300">
                     <i className="bx bx-camera text-lg"></i>
