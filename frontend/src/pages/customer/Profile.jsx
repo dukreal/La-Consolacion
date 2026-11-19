@@ -160,7 +160,7 @@ export default function Profile() {
             {saved && (
               <form
                 onSubmit={handleSubmit}
-                className="space-y-6 lg:space-y-0 lg:grid lg:grid-cols-[220px_1fr] lg:gap-x-8 lg:gap-y-6"
+                className="space-y-6 lg:space-y-0 lg:grid lg:grid-cols-[240px_1fr] lg:gap-x-8 lg:gap-y-6"
                 noValidate
               >
                 {/* Profile photo */}
@@ -186,10 +186,10 @@ export default function Profile() {
                   </div>
                   {/* Saved name and username under the photo (desktop only, fills the photo column) */}
                   <div className="hidden lg:block text-center w-full min-w-0">
-                    <p className="font-semibold text-gray-800 truncate">{`${saved.firstName || ''} ${saved.lastName || ''}`.trim()}</p>
+                    <p className="font-semibold text-gray-800 leading-snug break-words line-clamp-2">{`${saved.firstName || ''} ${saved.lastName || ''}`.trim()}</p>
                     {saved.username && <p className="text-sm text-gray-500 truncate">@{saved.username}</p>}
                   </div>
-                  <label className="upload-btn inline-flex items-center gap-2 px-4 py-2 text-white rounded-xl cursor-pointer shadow-lg hover:shadow-xl transition-all duration-300">
+                  <label className="upload-btn inline-flex items-center justify-center gap-2 whitespace-nowrap px-4 py-2 text-white rounded-xl cursor-pointer shadow-lg hover:shadow-xl transition-all duration-300">
                     <i className="bx bx-camera text-lg"></i>
                     <span className="font-semibold text-sm">Change Photo</span>
                     <input

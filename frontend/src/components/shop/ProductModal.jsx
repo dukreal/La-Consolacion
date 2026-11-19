@@ -119,54 +119,57 @@ export default function ProductModal({ product, onClose, onAddedToCart, onBuyNow
           dark area around the card closes it. */}
       <div className="fixed inset-0 z-50 overflow-y-auto" onClick={onClose}>
         <div className="flex min-h-full items-center justify-center p-4">
-          <div className="relative z-50 w-full max-w-6xl mx-auto modal-entrance" onClick={(e) => e.stopPropagation()}>
-            <div className="bg-white/95 backdrop-blur-xl rounded-3xl luxury-shadow overflow-hidden border border-white/20">
+          <div className="relative z-50 w-full max-w-5xl mx-auto modal-entrance" onClick={(e) => e.stopPropagation()}>
+            {/* Desktop: a fixed height that always fits the screen; the details side scrolls if it needs to.
+                Phones and tablets: picture on top, details below, the whole layer scrolls. */}
+            <div className="bg-white/95 backdrop-blur-xl rounded-3xl luxury-shadow overflow-hidden border border-white/20 lg:h-[min(780px,calc(100dvh-2rem))]">
               {/* Close Button */}
               <button
                 onClick={onClose}
-                className="absolute top-6 right-6 z-10 w-12 h-12 bg-white/80 backdrop-blur-sm rounded-full flex items-center justify-center hover:bg-white transition-all duration-300 group luxury-shadow"
+                aria-label="Close"
+                className="absolute top-4 right-4 lg:top-5 lg:right-5 z-10 w-10 h-10 lg:w-11 lg:h-11 bg-white/80 backdrop-blur-sm rounded-full flex items-center justify-center hover:bg-white transition-all duration-300 group luxury-shadow"
               >
-                <svg className="w-6 h-6 text-gray-600 group-hover:text-gray-800 transition-colors" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <svg className="w-5 h-5 text-gray-600 group-hover:text-gray-800 transition-colors" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M6 18L18 6M6 6l12 12"></path>
                 </svg>
               </button>
 
-              <div className="flex flex-col lg:flex-row gap-0">
+              <div className="flex flex-col lg:flex-row gap-0 lg:h-full">
                 {/* Image Section */}
-                <div className="lg:w-1/2 relative bg-gradient-to-br from-blue-50/50 via-white/80 to-indigo-50/50 p-6 flex flex-col items-center justify-center">
-                  <div className="relative group mb-6">
+                <div className="lg:w-1/2 lg:h-full relative bg-gradient-to-br from-blue-50/50 via-white/80 to-indigo-50/50 p-4 sm:p-6 flex flex-col items-center justify-center">
+                  <div className="relative group w-full lg:h-full">
                     <div className="absolute inset-0 gold-gradient rounded-2xl blur-xl opacity-20 group-hover:opacity-30 transition-opacity duration-500"></div>
-                    <div className="relative bg-white/60 backdrop-blur-sm rounded-2xl p-8 luxury-shadow border border-white/40">
+                    <div className="relative bg-white/60 backdrop-blur-sm rounded-2xl p-3 sm:p-4 luxury-shadow border border-white/40 lg:h-full">
                       <img
                         id="modalProductImage"
                         alt={product.name}
                         src={`/uploads/products/${product.image}`}
-                        className="w-full h-[500px] object-cover rounded-xl image-glow hover:scale-105 transition-transform duration-700"
+                        className="w-full aspect-square max-h-[55vh] sm:max-h-[420px] lg:max-h-none lg:aspect-auto lg:h-full object-cover rounded-xl image-glow hover:scale-105 transition-transform duration-700"
                       />
                     </div>
                   </div>
                 </div>
 
                 {/* Content Section */}
-                <div className="lg:w-1/2 p-8 lg:p-12 bg-gradient-to-br from-white/95 to-gray-50/80 backdrop-blur-sm">
-                  <div className="mb-6">
-                    <span id="modalProductType" className="inline-block px-4 py-2 rounded-xl text-sm font-medium bg-gradient-to-r from-gray-100 to-gray-50 text-gray-700 border border-gray-200/50 inter uppercase tracking-wider">
+                <div className="lg:w-1/2 lg:h-full lg:overflow-y-auto p-6 sm:p-8 lg:p-10 bg-gradient-to-br from-white/95 to-gray-50/80 backdrop-blur-sm">
+                  <div className="mb-4">
+                    <span id="modalProductType" className="inline-block px-3 py-1.5 rounded-xl text-xs sm:text-sm font-medium bg-gradient-to-r from-gray-100 to-gray-50 text-gray-700 border border-gray-200/50 inter uppercase tracking-wider">
                       {product.type}
                     </span>
                   </div>
 
-                  <h1 id="modalProductName" className="playfair text-4xl lg:text-5xl font-semibold text-gray-900 mb-4 leading-tight">
+                  <h1 id="modalProductName" className="playfair text-3xl lg:text-4xl font-semibold text-gray-900 mb-3 leading-tight pr-10">
                     {product.name}
                   </h1>
 
-                  <p id="modalProductDescription" className="inter text-gray-600 text-lg mb-8 leading-relaxed">
+                  <p id="modalProductDescription" className="inter text-gray-600 text-base mb-6 leading-relaxed">
                     {modalDescription(product.description)}
                   </p>
 
                   {/* Price Section */}
-                  <div className="mb-8">
+                  <div className="mb-6">
                     <div className="flex items-baseline gap-2 mb-2">
-                      <span id="modalProductPrice" className="cormorant text-5xl font-bold gold-gradient bg-clip-text text-transparent">
+                      <span id="modalProductPrice" className="cormorant text-4xl font-bold gold-gradient bg-clip-text text-transparent">
                         ₱{formatPrice(product.price)}
                       </span>
                       <span className="inter text-lg text-gray-400 font-light">PHP</span>
@@ -181,9 +184,9 @@ export default function ProductModal({ product, onClose, onAddedToCart, onBuyNow
                   </div>
 
                   {/* Features */}
-                  <div className="mb-8">
-                    <h3 className="playfair text-xl font-semibold text-gray-900 mb-4">Features</h3>
-                    <div className="space-y-3">
+                  <div className="mb-6">
+                    <h3 className="playfair text-lg font-semibold text-gray-900 mb-3">Features</h3>
+                    <div className="flex flex-col gap-2 sm:flex-row sm:flex-wrap sm:gap-x-6">
                       <div className="flex items-center gap-3">
                         <div className="w-2 h-2 gold-gradient rounded-full diamond-sparkle"></div>
                         <span className="inter text-gray-700">Premium Materials</span>
@@ -200,13 +203,13 @@ export default function ProductModal({ product, onClose, onAddedToCart, onBuyNow
                   </div>
 
                   {/* Action Buttons */}
-                  <div className="space-y-4">
+                  <div className="space-y-3">
                     <button
                       id="buyNowBtn"
                       onClick={() => onBuyNow?.(product, () => setBuying(true))}
                       disabled={buying}
                       style={buying ? { backgroundColor: '#6b7280', color: 'white' } : undefined}
-                      className="w-full py-4 px-6 gold-gradient text-white font-semibold rounded-2xl hover:shadow-2xl hover:-translate-y-1 transition-all duration-300 inter text-lg"
+                      className="w-full py-3.5 px-6 gold-gradient text-white font-semibold rounded-2xl hover:shadow-2xl hover:-translate-y-1 transition-all duration-300 inter text-lg"
                     >
                       {buying ? (
                         <div className="flex items-center justify-center">
@@ -217,7 +220,7 @@ export default function ProductModal({ product, onClose, onAddedToCart, onBuyNow
                         'Buy Now'
                       )}
                     </button>
-                    <div className="grid grid-cols-2 gap-4">
+                    <div className="grid grid-cols-2 gap-3">
                       <button
                         id="addToCartBtn"
                         onClick={handleAdd}
@@ -232,8 +235,8 @@ export default function ProductModal({ product, onClose, onAddedToCart, onBuyNow
                   </div>
 
                   {/* Trust Indicators */}
-                  <div className="mt-8 pt-8 border-t border-gray-200">
-                    <div className="flex items-center justify-between text-sm inter text-gray-600">
+                  <div className="mt-6 pt-6 border-t border-gray-200">
+                    <div className="flex flex-wrap items-center justify-between gap-3 text-sm inter text-gray-600">
                       <div className="flex items-center gap-2">
                         <svg className="w-5 h-5 text-green-500" fill="currentColor" viewBox="0 0 20 20">
                           <path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clipRule="evenodd"></path>
