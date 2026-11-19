@@ -1,0 +1,11 @@
+node_modules/
+.env
+_backup/
+frontend/dist/
+
+# Files people upload while using the site (test pictures, payment screenshots, profile photos)
+backend/uploads/payments/*
+backend/uploads/profile/*
+backend/uploads/products/*
+backend/uploads/custom/*
+!backend/uploads/**/.gitkeep
