@@ -1173,3 +1173,47 @@
   background: #9ca3af !important;
 }
 
+
+/* Hides the scrollbar of the swipeable category row on phones (it still scrolls) */
+.no-scrollbar {
+  scrollbar-width: none;
+}
+.no-scrollbar::-webkit-scrollbar {
+  display: none;
+}
+
+/* Smooth card swap when choosing a category or sort (replaces the sideways slide).
+   "backwards" = the card is hidden while it waits for its turn, and after the animation
+   the normal styles apply again (so the hover lift keeps working). */
+:where(.shop-page) .card-enter {
+  animation: cardEnter 0.45s cubic-bezier(0.22, 1, 0.36, 1) backwards;
+}
+:where(.shop-page) .card-leave {
+  animation: cardLeave 0.2s ease-in forwards;
+}
+@keyframes cardEnter {
+  from {
+    opacity: 0;
+    transform: translateY(14px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+@keyframes cardLeave {
+  from {
+    opacity: 1;
+  }
+  to {
+    opacity: 0;
+    transform: translateY(-6px);
+  }
+}
+/* People who turned on "reduce motion" on their device get an instant swap */
+@media (prefers-reduced-motion: reduce) {
+  :where(.shop-page) .card-enter,
+  :where(.shop-page) .card-leave {
+    animation-duration: 1ms;
+  }
+}
