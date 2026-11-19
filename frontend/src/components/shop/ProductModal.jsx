@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from 'react'
+import { useEffect, useLayoutEffect, useRef, useState } from 'react'
 import { useBodyScrollLock } from '../../hooks/useBodyScrollLock'
 import { useCart } from '../../hooks/useCart'
 import { useEscapeKey } from '../../hooks/useEscapeKey'
@@ -37,6 +37,41 @@ export default function ProductModal({ product, onClose, onAddedToCart, onBuyNow
   // Stop the "Added!" reset timer only when the modal really goes away.
   // (It must not live in the effect above: that one re-runs whenever onClose changes.)
   useEffect(() => () => clearTimeout(timer.current), [])
+
+  // Desktop: the details must fit the pop-up without scrolling, whatever the screen height, browser zoom
+  // or text size. If they don't fit, these steps are applied one by one until they do:
+  //   1. hide Features   2. description in 3 lines   3. hide Authentic/Certified/Insured   4. description in 2 lines
+  // (data-* attributes on the details column; the matching group-data-[...] classes are below)
+  const detailsRef = useRef(null)
+  useLayoutEffect(() => {
+    const el = detailsRef.current
+    if (!el) return
+    const desktop = window.matchMedia('(min-width: 1024px)')
+    const steps = [
+      {},
+      { nofeatures: '' },
+      { nofeatures: '', clamp: '3' },
+      { nofeatures: '', clamp: '3', notrust: '' },
+      { nofeatures: '', clamp: '2', notrust: '' },
+    ]
+    const apply = (step) => {
+      for (const key of ['nofeatures', 'clamp', 'notrust']) {
+        if (key in step) el.setAttribute(`data-${key}`, step[key])
+        else el.removeAttribute(`data-${key}`)
+      }
+    }
+    const fit = () => {
+      if (!desktop.matches) return apply({})
+      for (const step of steps) {
+        apply(step)
+        if (el.scrollHeight <= el.clientHeight + 1) return
+      }
+    }
+    fit()
+    window.addEventListener('resize', fit)
+    document.fonts?.ready.then(fit) // the fonts can arrive after the first check and change the height
+    return () => window.removeEventListener('resize', fit)
+  }, [])
 
   const inCart = getQuantity(product.id)
   const outOfStock = product.stock <= 0
@@ -122,10 +157,9 @@ export default function ProductModal({ product, onClose, onAddedToCart, onBuyNow
       <div className="fixed inset-0 z-50 overflow-y-auto" onClick={onClose}>
         <div className="flex min-h-full items-center justify-center p-4">
           <div className="relative z-50 w-full max-w-5xl mx-auto modal-entrance" onClick={(e) => e.stopPropagation()}>
-            {/* Desktop: a fixed height that fits the screen (up to 760px), sized so the details fit without scrolling
-                on laptop screens (1366x657 and up, including 125% Windows scaling). The details side still scrolls
-                if a screen is shorter than that. Phones and tablets: picture on top, details below, the whole layer scrolls. */}
-            <div className="bg-white/95 backdrop-blur-xl rounded-3xl luxury-shadow overflow-clip border border-white/20 lg:h-[min(760px,calc(100dvh-3rem))]">
+            {/* Desktop: a fixed height that fits the screen (up to 47.5rem). If the details still don't fit
+                (short screen, zoom, larger text), the fit steps above trim them so nothing needs scrolling. Phones and tablets: picture on top, details below, the whole layer scrolls. */}
+            <div className="bg-white/95 backdrop-blur-xl rounded-3xl luxury-shadow overflow-clip border border-white/20 lg:h-[min(47.5rem,calc(100dvh-3rem))]">
               {/* Close Button */}
               <button
                 onClick={onClose}
@@ -162,7 +196,7 @@ export default function ProductModal({ product, onClose, onAddedToCart, onBuyNow
                 </div>
 
                 {/* Content Section */}
-                <div className="lg:w-1/2 lg:h-full lg:overflow-y-auto lg:flex lg:flex-col p-6 sm:p-8 lg:px-9 lg:py-7 bg-gradient-to-br from-white/95 to-gray-50/80 backdrop-blur-sm">
+                <div ref={detailsRef} className="group lg:w-1/2 lg:h-full lg:overflow-y-auto lg:flex lg:flex-col p-6 sm:p-8 lg:px-9 lg:py-7 bg-gradient-to-br from-white/95 to-gray-50/80 backdrop-blur-sm">
                   {/* Centered top to bottom on desktop when it fits; scrolls from the top when it does not */}
                   <div className="lg:my-auto">
                   {/* Category, and the material when the product has one */}
@@ -181,7 +215,7 @@ export default function ProductModal({ product, onClose, onAddedToCart, onBuyNow
                     {product.name}
                   </h1>
 
-                  <p id="modalProductDescription" className="inter text-gray-600 text-[15px] sm:text-base lg:text-[15px] mb-5 sm:mb-6 lg:mb-4 leading-relaxed [@media(min-width:1024px)_and_(max-height:719px)]:line-clamp-3">
+                  <p id="modalProductDescription" className="inter text-gray-600 text-[15px] sm:text-base lg:text-[15px] mb-5 sm:mb-6 lg:mb-4 leading-relaxed [@media(min-width:1024px)_and_(max-height:719px)]:line-clamp-3 group-data-[clamp=3]:line-clamp-3 group-data-[clamp=2]:line-clamp-2">
                     {modalDescription(product.description)}
                   </p>
 
@@ -205,7 +239,7 @@ export default function ProductModal({ product, onClose, onAddedToCart, onBuyNow
 
                   {/* Features (general text, the same for every product): hidden on phones to keep the buttons close,
                       and on desktop screens under 800px tall (most laptops) so the buttons never need scrolling */}
-                  <div className="hidden sm:block mb-6 lg:mb-5 [@media(min-width:1024px)_and_(max-height:799px)]:hidden">
+                  <div className="hidden sm:block mb-6 lg:mb-5 [@media(min-width:1024px)_and_(max-height:799px)]:hidden group-data-[nofeatures]:hidden">
                     <h3 className="playfair text-lg lg:text-base font-semibold text-gray-900 mb-3 lg:mb-2">Features</h3>
                     <div className="flex flex-col gap-2 sm:flex-row sm:flex-wrap sm:gap-x-6 lg:gap-y-1.5 lg:text-[15px]">
                       <div className="flex items-center gap-3">
@@ -260,7 +294,7 @@ export default function ProductModal({ product, onClose, onAddedToCart, onBuyNow
                   </div>
 
                   {/* Trust Indicators */}
-                  <div className="mt-5 pt-5 sm:mt-6 sm:pt-6 lg:mt-4 lg:pt-4 border-t border-gray-200">
+                  <div className="mt-5 pt-5 sm:mt-6 sm:pt-6 lg:mt-4 lg:pt-4 border-t border-gray-200 group-data-[notrust]:hidden">
                     <div className="flex flex-wrap items-center justify-between gap-3 text-sm inter text-gray-600">
                       <div className="flex items-center gap-2">
                         <svg className="w-5 h-5 text-green-500" fill="currentColor" viewBox="0 0 20 20">
