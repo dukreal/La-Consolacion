@@ -1,8 +1,10 @@
-import { useEffect, useRef, useState } from 'react'
+import { useEffect, useLayoutEffect, useRef, useState } from 'react'
 import { useBodyScrollLock } from '../../hooks/useBodyScrollLock'
 import { useCart } from '../../hooks/useCart'
 import { useEscapeKey } from '../../hooks/useEscapeKey'
+import { cartErrorMessage } from '../../utils/cartMessages'
 import { formatPrice } from '../../utils/formatPrice'
+import SiteDialog from '../common/SiteDialog'
 
 const DEFAULT_DESCRIPTION =
   'An exquisite piece crafted with precision and elegance. This stunning jewelry features intricate details that capture and reflect light beautifully, creating a celestial sparkle that embodies luxury and sophistication.'
@@ -17,7 +19,7 @@ function modalDescription(description) {
 }
 
 const addButtonClass =
-  'py-3 px-3 sm:px-4 whitespace-nowrap text-sm sm:text-base border-2 border-gray-300 text-gray-700 font-medium rounded-xl hover:border-gray-400 hover:bg-gray-50 transition-all duration-300 inter'
+  'py-3 lg:py-2.5 px-3 sm:px-4 whitespace-nowrap text-sm sm:text-base lg:text-[15px] border-2 border-gray-300 text-gray-700 font-medium rounded-xl hover:border-gray-400 hover:bg-gray-50 transition-all duration-300 inter'
 const grey = { backgroundColor: '#9ca3af', color: 'white', borderColor: '#9ca3af' }
 
 export default function ProductModal({ product, onClose, onAddedToCart, onBuyNow }) {
@@ -25,6 +27,7 @@ export default function ProductModal({ product, onClose, onAddedToCart, onBuyNow
   const [status, setStatus] = useState('idle') // 'idle' | 'adding' | 'added'
   const [buying, setBuying] = useState(false) // Buy Now is preparing the order
   const [imageFailed, setImageFailed] = useState(false)
+  const [addError, setAddError] = useState('') // why Add to Cart failed, shown in a pop-up
   const timer = useRef(null)
 
   // Close with Escape, stop the page behind from scrolling (without it shifting sideways)
@@ -34,6 +37,41 @@ export default function ProductModal({ product, onClose, onAddedToCart, onBuyNow
   // Stop the "Added!" reset timer only when the modal really goes away.
   // (It must not live in the effect above: that one re-runs whenever onClose changes.)
   useEffect(() => () => clearTimeout(timer.current), [])
+
+  // Desktop: the details must fit the pop-up without scrolling, whatever the screen height, browser zoom
+  // or text size. If they don't fit, these steps are applied one by one until they do:
+  //   1. hide Features   2. description in 3 lines   3. hide Authentic/Certified/Insured   4. description in 2 lines
+  // (data-* attributes on the details column; the matching group-data-[...] classes are below)
+  const detailsRef = useRef(null)
+  useLayoutEffect(() => {
+    const el = detailsRef.current
+    if (!el) return
+    const desktop = window.matchMedia('(min-width: 1024px)')
+    const steps = [
+      {},
+      { nofeatures: '' },
+      { nofeatures: '', clamp: '3' },
+      { nofeatures: '', clamp: '3', notrust: '' },
+      { nofeatures: '', clamp: '2', notrust: '' },
+    ]
+    const apply = (step) => {
+      for (const key of ['nofeatures', 'clamp', 'notrust']) {
+        if (key in step) el.setAttribute(`data-${key}`, step[key])
+        else el.removeAttribute(`data-${key}`)
+      }
+    }
+    const fit = () => {
+      if (!desktop.matches) return apply({})
+      for (const step of steps) {
+        apply(step)
+        if (el.scrollHeight <= el.clientHeight + 1) return
+      }
+    }
+    fit()
+    window.addEventListener('resize', fit)
+    document.fonts?.ready.then(fit) // the fonts can arrive after the first check and change the height
+    return () => window.removeEventListener('resize', fit)
+  }, [])
 
   const inCart = getQuantity(product.id)
   const outOfStock = product.stock <= 0
@@ -53,11 +91,11 @@ export default function ProductModal({ product, onClose, onAddedToCart, onBuyNow
         timer.current = setTimeout(() => setStatus('idle'), 2000)
         onAddedToCart?.()
       } else {
-        alert('Error: ' + data.error)
+        setAddError(cartErrorMessage(data.error))
         setStatus('idle')
       }
     } catch {
-      alert('Error adding to cart')
+      setAddError(cartErrorMessage())
       setStatus('idle')
     }
   }
@@ -119,9 +157,9 @@ export default function ProductModal({ product, onClose, onAddedToCart, onBuyNow
       <div className="fixed inset-0 z-50 overflow-y-auto" onClick={onClose}>
         <div className="flex min-h-full items-center justify-center p-4">
           <div className="relative z-50 w-full max-w-5xl mx-auto modal-entrance" onClick={(e) => e.stopPropagation()}>
-            {/* Desktop: a fixed height that always fits the screen; the details side scrolls if it needs to.
-                Phones and tablets: picture on top, details below, the whole layer scrolls. */}
-            <div className="bg-white/95 backdrop-blur-xl rounded-3xl luxury-shadow overflow-clip border border-white/20 lg:h-[min(780px,calc(100dvh-2rem))]">
+            {/* Desktop: a fixed height that fits the screen (up to 47.5rem). If the details still don't fit
+                (short screen, zoom, larger text), the fit steps above trim them so nothing needs scrolling. Phones and tablets: picture on top, details below, the whole layer scrolls. */}
+            <div className="bg-white/95 backdrop-blur-xl rounded-3xl luxury-shadow overflow-clip border border-white/20 lg:h-[min(47.5rem,calc(100dvh-3rem))]">
               {/* Close Button */}
               <button
                 onClick={onClose}
@@ -135,10 +173,10 @@ export default function ProductModal({ product, onClose, onAddedToCart, onBuyNow
 
               <div className="flex flex-col lg:flex-row gap-0 lg:h-full">
                 {/* Image Section */}
-                <div className="lg:w-1/2 lg:h-full relative bg-gradient-to-br from-blue-50/50 via-white/80 to-indigo-50/50 p-4 sm:p-6 flex flex-col items-center justify-center">
+                <div className="lg:w-1/2 lg:h-full relative bg-gradient-to-br from-blue-50/50 via-white/80 to-indigo-50/50 p-4 sm:p-6 lg:p-5 flex flex-col items-center justify-center">
                   <div className="relative group w-full lg:h-full">
                     <div className="absolute inset-0 gold-gradient rounded-2xl blur-xl opacity-20 group-hover:opacity-30 transition-opacity duration-500"></div>
-                    <div className="relative bg-white/60 backdrop-blur-sm rounded-2xl p-3 sm:p-4 luxury-shadow border border-white/40 lg:h-full">
+                    <div className="relative bg-white/60 backdrop-blur-sm rounded-2xl p-3 sm:p-4 lg:p-3 luxury-shadow border border-white/40 lg:h-full">
                       {imageFailed ? (
                         // The picture is missing: show a gem in the same space instead of a broken image
                         <div className="w-full aspect-square max-h-[55vh] sm:max-h-[420px] lg:max-h-none lg:aspect-auto lg:h-full rounded-xl bg-gradient-to-br from-blue-50 to-indigo-100 flex items-center justify-center">
@@ -158,33 +196,33 @@ export default function ProductModal({ product, onClose, onAddedToCart, onBuyNow
                 </div>
 
                 {/* Content Section */}
-                <div className="lg:w-1/2 lg:h-full lg:overflow-y-auto lg:flex lg:flex-col p-6 sm:p-8 lg:p-10 bg-gradient-to-br from-white/95 to-gray-50/80 backdrop-blur-sm">
+                <div ref={detailsRef} className="group lg:w-1/2 lg:h-full lg:overflow-y-auto lg:flex lg:flex-col p-6 sm:p-8 lg:px-9 lg:py-7 bg-gradient-to-br from-white/95 to-gray-50/80 backdrop-blur-sm">
                   {/* Centered top to bottom on desktop when it fits; scrolls from the top when it does not */}
                   <div className="lg:my-auto">
                   {/* Category, and the material when the product has one */}
-                  <div className="mb-4 flex flex-wrap gap-2 pr-12">
-                    <span id="modalProductType" className="inline-block px-3 py-1.5 rounded-xl text-xs sm:text-sm font-medium bg-gradient-to-r from-gray-100 to-gray-50 text-gray-700 border border-gray-200/50 inter uppercase tracking-wider">
+                  <div className="mb-4 lg:mb-3 flex flex-wrap gap-2 pr-12">
+                    <span id="modalProductType" className="inline-block px-3 py-1.5 lg:py-1 rounded-xl text-xs sm:text-sm lg:text-xs font-medium bg-gradient-to-r from-gray-100 to-gray-50 text-gray-700 border border-gray-200/50 inter uppercase tracking-wider">
                       {product.type}
                     </span>
                     {product.material && (
-                      <span id="modalProductMaterial" className="inline-block px-3 py-1.5 rounded-xl text-xs sm:text-sm font-medium bg-amber-50 text-amber-800 border border-amber-200/60 inter uppercase tracking-wider">
+                      <span id="modalProductMaterial" className="inline-block px-3 py-1.5 lg:py-1 rounded-xl text-xs sm:text-sm lg:text-xs font-medium bg-amber-50 text-amber-800 border border-amber-200/60 inter uppercase tracking-wider">
                         {product.material}
                       </span>
                     )}
                   </div>
 
-                  <h1 id="modalProductName" className="playfair text-3xl lg:text-4xl font-semibold text-gray-900 mb-3 leading-tight pr-10">
+                  <h1 id="modalProductName" className="playfair text-3xl lg:text-[2rem] font-semibold text-gray-900 mb-3 lg:mb-2 leading-tight pr-10">
                     {product.name}
                   </h1>
 
-                  <p id="modalProductDescription" className="inter text-gray-600 text-[15px] sm:text-base mb-5 sm:mb-6 leading-relaxed">
+                  <p id="modalProductDescription" className="inter text-gray-600 text-[15px] sm:text-base lg:text-[15px] mb-5 sm:mb-6 lg:mb-4 leading-relaxed [@media(min-width:1024px)_and_(max-height:719px)]:line-clamp-3 group-data-[clamp=3]:line-clamp-3 group-data-[clamp=2]:line-clamp-2">
                     {modalDescription(product.description)}
                   </p>
 
                   {/* Price Section */}
-                  <div className="mb-5 sm:mb-6">
-                    <div className="flex items-baseline gap-2 mb-2">
-                      <span id="modalProductPrice" className="cormorant text-3xl sm:text-4xl font-bold gold-gradient bg-clip-text text-transparent">
+                  <div className="mb-5 sm:mb-6 lg:mb-4">
+                    <div className="flex items-baseline gap-2 mb-2 lg:mb-1.5">
+                      <span id="modalProductPrice" className="cormorant text-3xl sm:text-4xl lg:text-[2rem] font-bold gold-gradient bg-clip-text text-transparent">
                         ₱{formatPrice(product.price)}
                       </span>
                       <span className="inter text-lg text-gray-400 font-light">PHP</span>
@@ -199,10 +237,11 @@ export default function ProductModal({ product, onClose, onAddedToCart, onBuyNow
                     <p className="inter text-sm text-gray-500">Pickup only - Visit our store</p>
                   </div>
 
-                  {/* Features (general text, the same for every product): hidden on phones to keep the buttons close */}
-                  <div className="hidden sm:block mb-6">
-                    <h3 className="playfair text-lg font-semibold text-gray-900 mb-3">Features</h3>
-                    <div className="flex flex-col gap-2 sm:flex-row sm:flex-wrap sm:gap-x-6">
+                  {/* Features (general text, the same for every product): hidden on phones to keep the buttons close,
+                      and on desktop screens under 800px tall (most laptops) so the buttons never need scrolling */}
+                  <div className="hidden sm:block mb-6 lg:mb-5 [@media(min-width:1024px)_and_(max-height:799px)]:hidden group-data-[nofeatures]:hidden">
+                    <h3 className="playfair text-lg lg:text-base font-semibold text-gray-900 mb-3 lg:mb-2">Features</h3>
+                    <div className="flex flex-col gap-2 sm:flex-row sm:flex-wrap sm:gap-x-6 lg:gap-y-1.5 lg:text-[15px]">
                       <div className="flex items-center gap-3">
                         <div className="w-2 h-2 gold-gradient rounded-full diamond-sparkle"></div>
                         <span className="inter text-gray-700">Premium Materials</span>
@@ -225,7 +264,7 @@ export default function ProductModal({ product, onClose, onAddedToCart, onBuyNow
                       onClick={() => onBuyNow?.(product, () => setBuying(true))}
                       disabled={buying || outOfStock}
                       style={buying || outOfStock ? { backgroundColor: '#9ca3af', backgroundImage: 'none', color: 'white' } : undefined}
-                      className={`w-full py-3.5 px-6 gold-gradient text-white font-semibold rounded-2xl transition-all duration-300 inter text-lg ${
+                      className={`w-full py-3.5 lg:py-3 px-6 gold-gradient text-white font-semibold rounded-2xl transition-all duration-300 inter text-lg lg:text-base ${
                         outOfStock ? 'cursor-not-allowed' : 'hover:shadow-2xl hover:-translate-y-1'
                       }`}
                     >
@@ -255,7 +294,7 @@ export default function ProductModal({ product, onClose, onAddedToCart, onBuyNow
                   </div>
 
                   {/* Trust Indicators */}
-                  <div className="mt-5 pt-5 sm:mt-6 sm:pt-6 border-t border-gray-200">
+                  <div className="mt-5 pt-5 sm:mt-6 sm:pt-6 lg:mt-4 lg:pt-4 border-t border-gray-200 group-data-[notrust]:hidden">
                     <div className="flex flex-wrap items-center justify-between gap-3 text-sm inter text-gray-600">
                       <div className="flex items-center gap-2">
                         <svg className="w-5 h-5 text-green-500" fill="currentColor" viewBox="0 0 20 20">
@@ -284,6 +323,8 @@ export default function ProductModal({ product, onClose, onAddedToCart, onBuyNow
           </div>
         </div>
       </div>
+
+      {addError && <SiteDialog title="Couldn't add to cart" message={addError} onClose={() => setAddError('')} />}
     </div>
   )
 }

@@ -81,7 +81,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         ]);
         
     } catch (PDOException $e) {
-        echo json_encode(['success' => false, 'error' => 'Database error: ' . $e->getMessage()]);
+        error_log('add-to-cart.php database error: ' . $e->getMessage()); // details for the server log only
+        echo json_encode(['success' => false, 'error' => 'Database error. Please try again.']);
     }
 } else {
     echo json_encode(['success' => false, 'error' => 'Invalid request method']);

@@ -98,6 +98,7 @@ try {
 
 } catch (PDOException $e) {
     http_response_code(500);
-    echo json_encode(['error' => 'Database error: ' . $e->getMessage()]);
+    error_log('get-user-order-details.php database error: ' . $e->getMessage()); // details for the server log only
+    echo json_encode(['error' => 'Database error. Please try again.']);
 }
 ?> 

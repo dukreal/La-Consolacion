@@ -68,6 +68,7 @@ try {
     ]);
     
 } catch (PDOException $e) {
-    echo json_encode(['success' => false, 'error' => 'Database error: ' . $e->getMessage()]);
+    error_log('get-user-orders.php database error: ' . $e->getMessage()); // details for the server log only
+    echo json_encode(['success' => false, 'error' => 'Database error. Please try again.']);
 }
 ?> 
