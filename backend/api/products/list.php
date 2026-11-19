@@ -11,7 +11,7 @@ if (!isset($_SESSION['user_id'])) {
 
 try {
     // Premade products only (custom orders are not sold here), newest first
-    $stmt = $pdo->prepare("SELECT id, name, type, price, stock, image, description FROM products WHERE deleted = 0 AND type != 'custom' ORDER BY id DESC");
+    $stmt = $pdo->prepare("SELECT id, name, type, price, stock, image, description, material FROM products WHERE deleted = 0 AND type != 'custom' ORDER BY id DESC");
     $stmt->execute();
 
     // Send real numbers (PHP would otherwise send "1500.00" as text)
@@ -24,6 +24,7 @@ try {
             'stock'       => (int) $p['stock'],
             'image'       => $p['image'],
             'description' => $p['description'] ?? '',
+            'material'    => $p['material'] ?? '',
         ];
     }, $stmt->fetchAll());
 

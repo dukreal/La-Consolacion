@@ -34,11 +34,14 @@ export default function Shop() {
   const [sort, setSort] = useState('featured')
   const [leaving, setLeaving] = useState(false) // cards are sliding out
   const [run, setRun] = useState(0) // changes to replay the slide-in animation
-  const [cardAnimation, setCardAnimation] = useState({ name: 'fade-in', delay: 0 })
+  const [cardAnimation, setCardAnimation] = useState({ name: 'card-enter', delay: 40 })
+  const [lockHeight, setLockHeight] = useState(0) // keeps the grid's height while cards swap, so the page does not jump
   const [selected, setSelected] = useState(null) // the product shown in the modal
   const [cartOpen, setCartOpen] = useState(false)
   const [ordersOpen, setOrdersOpen] = useState(false)
   const filterTimer = useRef(null)
+  const releaseTimer = useRef(null)
+  const gridRef = useRef(null)
 
   // Load the products once
   useEffect(() => {
@@ -58,7 +61,10 @@ export default function Shop() {
     }
   }, [])
 
-  useEffect(() => () => clearTimeout(filterTimer.current), [])
+  useEffect(() => () => {
+    clearTimeout(filterTimer.current)
+    clearTimeout(releaseTimer.current)
+  }, [])
 
   // The header's "My Cart" link opens the panel through ?openCart=true
   const openCart = useCallback(() => setCartOpen(true), [])
@@ -73,23 +79,28 @@ export default function Shop() {
   // Buy Now and Proceed to Checkout
   const checkout = useCheckout({ onCartClose: closeCart })
 
-  // Same animation as the old page: cards slide out, then the matching ones slide in one by one
+  // Changing the category: the cards fade out, then the matching ones fade in with a small rise.
+  // The grid keeps its height during the swap and then eases to the new height (no jumping).
   const handleFilter = (filter) => {
+    if (filter === activeFilter) return
     setActiveFilter(filter)
     setSort('featured') // the old page reset the sort whenever a filter was chosen
+    setLockHeight(gridRef.current?.offsetHeight ?? 0)
     setLeaving(true)
     clearTimeout(filterTimer.current)
+    clearTimeout(releaseTimer.current)
     filterTimer.current = setTimeout(() => {
       setShownFilter(filter)
       setLeaving(false)
-      setCardAnimation({ name: 'slide-in-left', delay: 50 })
+      setCardAnimation({ name: 'card-enter', delay: 40 })
       setRun((n) => n + 1)
-    }, 350)
+      releaseTimer.current = setTimeout(() => setLockHeight(0), 450)
+    }, 200)
   }
 
   const handleSort = (value) => {
     setSort(value)
-    setCardAnimation({ name: 'slide-in-left', delay: 30 })
+    setCardAnimation({ name: 'card-enter', delay: 30 })
     setRun((n) => n + 1)
   }
 
@@ -102,21 +113,22 @@ export default function Shop() {
   return (
     <>
       {/* Header Section */}
-      <div className="relative z-10 pt-16 pb-12 w-full">
-        <div className="max-w-7xl mx-auto px-6">
+      <div className="relative z-10 pt-8 pb-4 sm:pt-16 sm:pb-12 w-full">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6">
           {/* Title and Description */}
-          <div className="text-center mb-16">
-            <h1 className="playfair text-5xl md:text-6xl font-bold mb-6 leading-tight" style={{ color: '#22306a' }}>
+          <div className="text-center mb-6 sm:mb-16">
+            <h1 className="playfair text-3xl sm:text-5xl md:text-6xl font-bold mb-2 sm:mb-6 leading-tight" style={{ color: '#22306a' }}>
               Luxury Jewelry
             </h1>
-            <p className="inter text-xl text-gray-600 max-w-3xl mx-auto leading-relaxed">
+            <p className="inter text-sm sm:text-xl text-gray-600 max-w-3xl mx-auto leading-relaxed">
               Discover our exquisite collection of handcrafted jewelry pieces, each telling a unique story of
               elegance and sophistication.
             </p>
           </div>
 
           {/* Filter/Sort Bar */}
-          <div className="flex flex-wrap justify-between items-center mb-12 gap-4">
+          {/* Phones: category row on top, sort under it. Wider: side by side like before */}
+          <div className="flex flex-col sm:flex-row sm:flex-wrap sm:justify-between sm:items-center mb-2 sm:mb-12 gap-3 sm:gap-4">
             <CategoryFilter active={activeFilter} onChange={handleFilter} />
             <SortSelect value={sort} onChange={handleSort} />
           </div>
@@ -129,15 +141,20 @@ export default function Shop() {
 
         {!noResults && (
           <div
-            className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-2 xl:grid-cols-3 2xl:grid-cols-4 gap-10"
+            // 2 cards across on phones and small tablets, 3 on iPad Pro and laptops, 4 on wide screens.
+            // content-start: rows keep their own height, so a lone card is not stretched to fill the grid
+            className="grid content-start grid-cols-2 lg:grid-cols-3 2xl:grid-cols-4 gap-3 sm:gap-6 md:gap-8 lg:gap-10"
             id="productsGrid"
+            ref={gridRef}
+            // Lock instantly; only the release to the new height is animated
+            style={{ minHeight: lockHeight, transition: lockHeight ? 'none' : 'min-height 0.4s ease' }}
           >
             {visible.map((product, index) => (
               <ProductCard
                 key={`${run}-${product.id}`}
                 product={product}
-                animation={leaving ? 'slide-out' : cardAnimation.name}
-                delay={leaving ? 0 : index * cardAnimation.delay}
+                animation={leaving ? 'card-leave' : cardAnimation.name}
+                delay={leaving ? 0 : Math.min(index, 8) * cardAnimation.delay} // stagger, but never more than 8 steps
                 onOpen={setSelected}
               />
             ))}

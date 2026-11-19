@@ -34,19 +34,20 @@ try {
         exit();
     }
     
-    // Check if order can be cancelled
+    // Already cancelled (checked first, so the customer gets the clearer message)
+    if ($order['status'] === 'cancelled') {
+        echo json_encode(['success' => false, 'error' => 'This order is already cancelled.']);
+        exit();
+    }
+
+    // Orders that are ready for pickup or completed can no longer be cancelled
     $cancellableStatuses = ['pending', 'processing', 'confirmed', 'waiting_for_buyer'];
     if (!in_array($order['status'], $cancellableStatuses)) {
-        echo json_encode(['success' => false, 'error' => 'Order cannot be cancelled in its current status (' . $order['status'] . ')']);
+        $statusText = str_replace('_', ' ', $order['status']);
+        echo json_encode(['success' => false, 'error' => 'This order can no longer be cancelled because it is already ' . $statusText . '.']);
         exit();
     }
-    
-    // Check if order is already cancelled
-    if ($order['status'] === 'cancelled') {
-        echo json_encode(['success' => false, 'error' => 'Order is already cancelled']);
-        exit();
-    }
-    
+
     // Start transaction
     $pdo->beginTransaction();
     
@@ -74,7 +75,7 @@ try {
     
     // Check if order has items
     if (empty($orderItems)) {
-        echo json_encode(['success' => false, 'error' => 'Order has no items to restore']);
+        echo json_encode(['success' => false, 'error' => 'This order could not be cancelled. Please contact the shop.']);
         exit();
     }
     
@@ -98,7 +99,7 @@ try {
     
     echo json_encode([
         'success' => true, 
-        'message' => 'Order #' . $order_id . ' cancelled successfully. Stock has been restored.',
+        'message' => 'Order #' . $order_id . ' has been cancelled.',
         'order_id' => $order_id,
         'items_restored' => count($orderItems)
     ]);
@@ -108,6 +109,7 @@ try {
     if ($pdo->inTransaction()) {
         $pdo->rollBack();
     }
-    echo json_encode(['success' => false, 'error' => 'Database error: ' . $e->getMessage()]);
+    error_log('cancel-order.php database error: ' . $e->getMessage());
+    echo json_encode(['success' => false, 'error' => 'Something went wrong. Please try again.']);
 }
 ?> 

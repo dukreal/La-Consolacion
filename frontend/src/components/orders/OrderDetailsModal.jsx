@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react'
 import { useAnimatedModal } from '../../hooks/useAnimatedModal'
 import { useBodyScrollLock } from '../../hooks/useBodyScrollLock'
+import { useEscapeKey } from '../../hooks/useEscapeKey'
 import { getOrderDetails } from '../../services/orderService'
 
 // 1500 -> "₱1,500.00"
@@ -24,11 +25,11 @@ function ProductThumb({ product }) {
     <div className="w-12 h-12 rounded-lg overflow-hidden bg-gray-100 flex-shrink-0">
       {failed ? (
         <div className="w-full h-full bg-gradient-to-br from-violet-400 to-violet-500 flex items-center justify-center">
-          <i className="bx bx-gem text-lg text-white"></i>
+          <i className="bx bx-diamond text-lg text-white"></i>
         </div>
       ) : (
         <img
-          src={`/uploads/products/${product.image}`}
+          src={`/uploads/${product.type === 'custom' ? 'custom' : 'products'}/${product.image}`}
           alt={product.name}
           className="w-full h-full object-cover"
           onError={() => setFailed(true)}
@@ -38,19 +39,18 @@ function ProductThumb({ product }) {
   )
 }
 
-// One line of the "Payment Information" box
+// One line of the "Payment Information" box. The value wraps under itself on narrow screens
+// instead of squeezing the label onto two lines.
 function PaymentRow({ iconBox, icon, label, children }) {
   return (
-    <div className="bg-gray-50 border border-gray-200 rounded-lg p-3">
-      <div className="flex items-center justify-between">
-        <div className="flex items-center space-x-2">
-          <div className={`w-6 h-6 rounded flex items-center justify-center ${iconBox}`}>
-            <i className={`bx ${icon} text-sm`}></i>
-          </div>
-          <span className="text-sm font-medium text-gray-900">{label}</span>
+    <div className="flex items-center justify-between gap-3 bg-gray-50 border border-gray-200 rounded-lg p-3 lg:py-2 lg:[@media(max-height:700px)]:py-1.5">
+      <div className="flex items-center gap-2 flex-shrink-0">
+        <div className={`w-7 h-7 rounded-md flex items-center justify-center ${iconBox}`}>
+          <i className={`bx ${icon} text-base`}></i>
         </div>
-        {children}
+        <span className="text-sm font-medium text-gray-900 whitespace-nowrap">{label}</span>
       </div>
+      <div className="min-w-0 text-right break-words">{children}</div>
     </div>
   )
 }
@@ -58,6 +58,7 @@ function PaymentRow({ iconBox, icon, label, children }) {
 // Everything about one order: status, payment, products.
 export default function OrderDetailsModal({ orderId, onClose, onCancel }) {
   const { shown, requestClose } = useAnimatedModal(onClose)
+  useEscapeKey(true, requestClose)
   useBodyScrollLock()
   const [state, setState] = useState({ status: 'loading' }) // loading | ready | error
 
@@ -77,39 +78,51 @@ export default function OrderDetailsModal({ orderId, onClose, onCancel }) {
 
   const data = state.status === 'ready' ? state.data : null
 
+  const isCustom = data ? data.products.some((p) => p.type === 'custom') : false
+  const itemCount = data ? data.products.reduce((sum, p) => sum + Number(p.quantity), 0) : 0
+  // Custom orders are paid with a 30% downpayment; the rest is paid at pickup
+  const balance = data ? Math.max(0, Number(data.total) - Number(data.payment.amount || 0)) : 0
+
   return (
     <div id="orderDetailsModal" className="fixed inset-0 z-[9999]">
       {/* Modal Backdrop */}
       <div className="fixed inset-0 bg-black/50 backdrop-blur-sm" onClick={requestClose}></div>
 
-      {/* Modal Content */}
-      <div className="fixed inset-0 flex items-center justify-center p-4 pointer-events-none">
+      {/* Modal Content: as tall as its content, never taller than the screen (the middle part scrolls) */}
+      <div className="fixed inset-0 flex items-center justify-center p-3 sm:p-4 pointer-events-none">
         <div
           id="orderDetailsModalContent"
-          className={`bg-white rounded-2xl shadow-2xl max-w-4xl w-full mx-4 h-[90vh] transform transition-all duration-300 pointer-events-auto ${shown ? 'scale-100 opacity-100' : 'scale-95 opacity-0'}`}
+          role="dialog"
+          aria-modal="true"
+          aria-labelledby="orderDetailsTitle"
+          className={`flex flex-col bg-white rounded-2xl shadow-2xl w-full max-w-md lg:max-w-4xl max-h-[calc(100dvh-1.5rem)] sm:max-h-[calc(100dvh-2rem)] overflow-hidden transform transition-all duration-300 pointer-events-auto ${shown ? 'scale-100 opacity-100' : 'scale-95 opacity-0'}`}
         >
           {/* Header */}
-          <div className="relative p-6 bg-gradient-to-r from-green-600 to-green-700 text-white rounded-t-2xl">
+          <div className="relative flex-shrink-0 px-5 py-4 sm:px-6 sm:py-5 lg:[@media(max-height:700px)]:py-3 bg-gradient-to-r from-green-600 to-green-700 text-white overflow-hidden">
             {/* Decorative elements */}
             <div className="absolute top-0 left-0 w-32 h-32 bg-white/10 rounded-full -translate-y-16 -translate-x-16"></div>
             <div className="absolute bottom-0 right-0 w-24 h-24 bg-white/5 rounded-full translate-y-12 translate-x-12"></div>
-            <div className="relative flex items-center justify-between">
-              <div>
-                <h2 id="orderDetailsTitle" className="playfair text-2xl font-semibold mb-1">
+            <div className="relative flex items-center justify-between gap-3">
+              <div className="min-w-0">
+                <h2 id="orderDetailsTitle" className="playfair text-xl sm:text-2xl font-semibold mb-1">
                   {data ? `Order #${data.order.id}` : 'Order Details'}
                 </h2>
                 <p id="orderDetailsDate" className="inter text-sm text-white/80">
                   {data ? `Ordered on ${formatDate(data.order.date_ordered)}` : 'Loading...'}
                 </p>
               </div>
-              <button onClick={requestClose} className="p-3 hover:bg-white/20 rounded-xl transition-all duration-300 hover:scale-110">
-                <i className="bx bx-x text-4xl"></i>
+              <button
+                onClick={requestClose}
+                aria-label="Close"
+                className="flex-shrink-0 p-2 hover:bg-white/20 rounded-xl transition-all duration-300"
+              >
+                <i className="bx bx-x text-3xl sm:text-4xl"></i>
               </button>
             </div>
           </div>
 
           {/* Content */}
-          <div className="flex-1 p-6">
+          <div className="flex-1 min-h-0 overflow-y-auto p-4 sm:p-6 lg:py-5 lg:[@media(max-height:700px)]:py-4">
             {state.status === 'loading' && (
               <div id="orderDetailsLoading" className="text-center py-8">
                 <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-green-600 mx-auto mb-4"></div>
@@ -134,102 +147,104 @@ export default function OrderDetailsModal({ orderId, onClose, onCancel }) {
             )}
 
             {data && (
-              <div id="orderDetailsContent">
-                <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-                  {/* Left Column */}
-                  <div className="space-y-4">
-                    {/* Order Status */}
-                    <div className="bg-white border border-gray-200 rounded-xl p-4">
-                      <div className="flex items-center justify-between mb-3">
-                        <h3 className="text-base font-semibold text-gray-900">Order Status</h3>
-                        <div
-                          id="orderStatusBadge"
-                          className={`inline-flex items-center px-3 py-1 rounded-full text-sm font-medium ${data.order.status_style.bg} ${data.order.status_style.text}`}
-                        >
-                          <span className={`w-2 h-2 rounded-full mr-2 ${data.order.status_style.dot}`}></span>
-                          {data.order.status_style.label}
-                        </div>
-                      </div>
-                      <div className="grid grid-cols-2 gap-3">
-                        <div>
-                          <p className="text-xs text-gray-600">Order ID</p>
-                          <p id="orderId" className="font-semibold text-gray-900 text-sm">{data.order.id}</p>
-                        </div>
-                        <div>
-                          <p className="text-xs text-gray-600">Total Amount</p>
-                          <p id="orderTotal" className="font-semibold text-gray-900 text-sm">{money(data.total)}</p>
-                        </div>
+              /* Phones and tablets: status, products, payment (one column).
+                 Desktop: status and payment on the left, products on the right. */
+              <div id="orderDetailsContent" className="grid grid-cols-1 lg:grid-cols-2 gap-4 lg:gap-6 lg:items-start">
+                <div className="contents lg:block lg:space-y-4">
+                  {/* Order Status */}
+                  <div className="bg-white border border-gray-200 rounded-xl p-4">
+                    <div className="flex flex-wrap items-center justify-between gap-2 mb-3">
+                      <h3 className="text-base font-semibold text-gray-900">Order Status</h3>
+                      <div
+                        id="orderStatusBadge"
+                        className={`inline-flex items-center px-3 py-1 rounded-full text-sm font-medium ${data.order.status_style.bg} ${data.order.status_style.text}`}
+                      >
+                        <span className={`w-2 h-2 rounded-full mr-2 ${data.order.status_style.dot}`}></span>
+                        {data.order.status_style.label}
                       </div>
                     </div>
-
-                    {/* Payment Information */}
-                    <div className="bg-white border border-gray-200 rounded-xl p-4">
-                      <h3 className="text-base font-semibold text-gray-900 mb-3">Payment Information</h3>
-                      <div id="paymentInfo" className="space-y-3">
-                        <PaymentRow iconBox="bg-blue-100 text-blue-600" icon="bx-credit-card" label="Payment Method">
-                          <span className="font-medium text-blue-700 text-sm">{(data.payment.service || '').toUpperCase()}</span>
-                        </PaymentRow>
-                        <PaymentRow iconBox="bg-green-100 text-green-600" icon="bx-hash" label="Reference Number">
-                          <span className="font-mono text-xs text-green-700 bg-green-50 px-2 py-1 rounded">{data.payment.reference_number}</span>
-                        </PaymentRow>
-                        <PaymentRow iconBox="bg-purple-100 text-purple-600" icon="bx-money" label="Amount Paid">
-                          <span className="font-bold text-purple-700 text-sm">{money(data.payment.amount)}</span>
-                        </PaymentRow>
-                        <PaymentRow iconBox="bg-amber-100 text-amber-600" icon="bx-calendar" label="Payment Date">
-                          <span className="text-gray-900 text-sm">{data.payment.uploaded_at}</span>
-                        </PaymentRow>
+                    <div className="grid grid-cols-2 gap-3">
+                      <div>
+                        <p className="text-xs text-gray-600">Items</p>
+                        <p id="orderItemCount" className="font-semibold text-gray-900 text-sm">{itemCount}</p>
                       </div>
-                    </div>
-
-                    {/* Action Buttons */}
-                    <div id="orderActions" className="flex justify-end space-x-3 pt-4">
-                      {data.can_cancel && (
-                        <button
-                          onClick={() => {
-                            requestClose()
-                            onCancel(data.order.id)
-                          }}
-                          className="px-6 py-3 bg-red-600 text-white font-medium rounded-xl hover:bg-red-700 transition-all duration-300"
-                        >
-                          Cancel Order
-                        </button>
-                      )}
+                      <div>
+                        <p className="text-xs text-gray-600">Total Amount</p>
+                        <p id="orderTotal" className="font-semibold text-gray-900 text-sm">{money(data.total)}</p>
+                      </div>
                     </div>
                   </div>
 
-                  {/* Right Column */}
-                  <div className="space-y-4">
-                    {/* Products */}
-                    <div className="bg-white border border-gray-200 rounded-xl p-4">
-                      <h3 className="text-base font-semibold text-gray-900 mb-3">Products</h3>
-                      <div id="orderProducts" className="space-y-3 max-h-96 overflow-y-auto">
-                        {data.products.map((product) => (
-                          <div key={product.id} className="bg-gray-50 border border-gray-200 rounded-lg p-3">
-                            <div className="flex items-center space-x-3">
-                              <ProductThumb product={product} />
-                              <div className="flex-1 min-w-0">
-                                <h4 className="font-semibold text-gray-900 text-sm truncate">{product.name}</h4>
-                                <div className="flex items-center justify-between mt-1">
-                                  <div className="text-xs text-gray-500">
-                                    <span className="font-medium">Qty: {product.quantity}</span>
-                                    <span className="mx-1">•</span>
-                                    <span className="font-medium">{money(product.price)}</span>
-                                  </div>
-                                  <div className="text-right">
-                                    <p className="font-bold text-gray-900 text-sm">{money(product.total)}</p>
-                                  </div>
-                                </div>
+                  {/* Payment Information (after the products on phones and tablets) */}
+                  <div className="order-last lg:order-none bg-white border border-gray-200 rounded-xl p-4">
+                    <h3 className="text-base font-semibold text-gray-900 mb-3">Payment Information</h3>
+                    <div id="paymentInfo" className="space-y-2.5 lg:space-y-2">
+                      <PaymentRow iconBox="bg-blue-100 text-blue-600" icon="bx-credit-card" label="Method">
+                        <span className="font-medium text-blue-700 text-sm">{(data.payment.service || '').toUpperCase()}</span>
+                      </PaymentRow>
+                      <PaymentRow iconBox="bg-green-100 text-green-600" icon="bx-hash" label="Reference No.">
+                        <span className="font-mono text-xs text-green-700 bg-green-50 px-2 py-1 rounded break-all">{data.payment.reference_number}</span>
+                      </PaymentRow>
+                      <PaymentRow iconBox="bg-purple-100 text-purple-600" icon="bx-money" label={isCustom ? 'Downpayment' : 'Amount Paid'}>
+                        <span className="font-bold text-purple-700 text-sm">{money(data.payment.amount)}</span>
+                      </PaymentRow>
+                      {isCustom && balance > 0 && (
+                        <PaymentRow iconBox="bg-orange-100 text-orange-600" icon="bx-wallet" label="Balance">
+                          <span className="font-bold text-orange-700 text-sm">{money(balance)}</span>
+                        </PaymentRow>
+                      )}
+                      <PaymentRow iconBox="bg-amber-100 text-amber-600" icon="bx-calendar" label="Paid On">
+                        <span className="text-gray-900 text-sm">{data.payment.uploaded_at ? formatDate(data.payment.uploaded_at) : '-'}</span>
+                      </PaymentRow>
+                    </div>
+                  </div>
+                </div>
+
+                {/* Products */}
+                <div className="bg-white border border-gray-200 rounded-xl p-4">
+                  <h3 className="text-base font-semibold text-gray-900 mb-3">Products</h3>
+                  <div id="orderProducts" className="space-y-3 lg:max-h-[50vh] lg:overflow-y-auto">
+                    {data.products.map((product) => (
+                      <div key={product.id} className="bg-gray-50 border border-gray-200 rounded-lg p-3">
+                        <div className="flex items-center gap-3">
+                          <ProductThumb product={product} />
+                          <div className="flex-1 min-w-0">
+                            <h4 className="font-semibold text-gray-900 text-sm truncate">{product.name}</h4>
+                            {product.type === 'custom' && (
+                              <span className="mt-0.5 inline-block rounded-full border border-blue-200 bg-blue-50 px-2 py-0.5 text-[11px] font-medium text-blue-700">Custom Order</span>
+                            )}
+                            <div className="flex items-center justify-between gap-2 mt-1">
+                              <div className="text-xs text-gray-500">
+                                <span className="font-medium">Qty: {product.quantity}</span>
+                                <span className="mx-1">•</span>
+                                <span className="font-medium">{money(product.price)}</span>
                               </div>
+                              <p className="font-bold text-gray-900 text-sm whitespace-nowrap">{money(product.total)}</p>
                             </div>
                           </div>
-                        ))}
+                        </div>
                       </div>
-                    </div>
+                    ))}
                   </div>
                 </div>
               </div>
             )}
           </div>
+
+          {/* Footer: the cancel button always stays visible at the bottom */}
+          {data && data.can_cancel && (
+            <div id="orderActions" className="flex-shrink-0 flex justify-end p-4 sm:px-6 lg:py-3 border-t border-gray-200">
+              <button
+                onClick={() => {
+                  requestClose()
+                  onCancel(data.order.id)
+                }}
+                className="w-full sm:w-auto px-6 py-3 lg:py-2.5 bg-red-600 text-white font-medium rounded-xl hover:bg-red-700 transition-all duration-300"
+              >
+                Cancel Order
+              </button>
+            </div>
+          )}
         </div>
       </div>
     </div>

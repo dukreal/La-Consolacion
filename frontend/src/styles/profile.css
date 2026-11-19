@@ -51,7 +51,7 @@
   transition: all 0.3s ease;
 }
 .profile-page .upload-btn:hover {
-  transform: scale(1.1);
+  transform: translateY(-1px);
   box-shadow: 0 8px 20px rgba(36, 116, 182, 0.4);
 }
 /* Mobile number validation */

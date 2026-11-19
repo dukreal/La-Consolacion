@@ -7,3 +7,16 @@
     font-family: 'Inter', sans-serif;
   }
 }
+/* Scrollbars in the brand navy (the color of the buttons and titles).
+   The page scrollbar keeps the browser's normal width and light grey lane, so the page still reaches
+   the edge the same way it always did (a custom lane looked like a gap beside the page).
+   Panels and pop-ups (cart, order history, details) get a thin navy scrollbar with no lane.
+   These are the standard CSS properties, so Chrome, Edge, Firefox and Safari all follow them.
+   Phones keep their own overlay scrollbars. */
+html {
+  scrollbar-color: rgba(34, 48, 106, 0.6) #f1f1f1;
+}
+body * {
+  scrollbar-width: thin;
+  scrollbar-color: rgba(34, 48, 106, 0.45) transparent;
+}
