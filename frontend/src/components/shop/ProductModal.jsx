@@ -84,6 +84,38 @@ export default function ProductModal({ product, onClose, onAddedToCart, onBuyNow
     return () => window.removeEventListener('resize', fit)
   }, [])
 
+  // Phones: drag the sheet down by its handle (or the row with the Close button) to close it. It follows the finger; let go more than
+  // 120px down (or with a quick flick) and it slides away, otherwise it springs back.
+  const sheetRef = useRef(null)
+  const drag = useRef(null)
+  const onHandleDown = (e) => {
+    if (!window.matchMedia('(max-width: 639px)').matches) return // phones only (the sheet)
+    if (e.target.closest('button')) return // a tap on Close stays a tap
+    drag.current = { startY: e.clientY, startTime: e.timeStamp, dy: 0 }
+    e.currentTarget.setPointerCapture(e.pointerId)
+    sheetRef.current.style.transition = 'none'
+  }
+  const onHandleMove = (e) => {
+    if (!drag.current) return
+    const dy = Math.max(0, e.clientY - drag.current.startY) // only downwards
+    drag.current.dy = dy
+    sheetRef.current.style.transform = `translateY(${dy}px)`
+  }
+  const onHandleUp = (e) => {
+    if (!drag.current) return
+    const { dy, startTime } = drag.current
+    drag.current = null
+    const sheet = sheetRef.current
+    const flick = dy > 40 && dy / Math.max(1, e.timeStamp - startTime) > 0.6 // px per ms
+    sheet.style.transition = 'transform 0.22s ease-out'
+    if (dy > 120 || flick) {
+      sheet.style.transform = 'translateY(100%)'
+      setTimeout(onClose, 200)
+    } else {
+      sheet.style.transform = 'translateY(0)'
+    }
+  }
+
   const inCart = getQuantity(product.id)
   const outOfStock = product.stock <= 0
   const maxReached = !outOfStock && inCart >= product.stock
@@ -168,6 +200,7 @@ export default function ProductModal({ product, onClose, onAddedToCart, onBuyNow
           A click on the dark area around the card closes it. */}
       <div className="fixed inset-0 z-50 flex items-end sm:items-center justify-center sm:p-4" onClick={onClose}>
         <div
+          ref={sheetRef}
           role="dialog"
           aria-modal="true"
           aria-labelledby="modalProductName"
@@ -180,14 +213,28 @@ export default function ProductModal({ product, onClose, onAddedToCart, onBuyNow
           </div>
 
           <div className="flex-1 min-w-0 min-h-0 flex flex-col">
-            {/* Phones: the grab handle of the sheet */}
-            <div className="sm:hidden flex justify-center pt-2.5 pb-1" aria-hidden="true">
+            {/* Phones: the grab handle of the sheet. Drag it down to close (the Close button does the same). */}
+            <div
+              className="sm:hidden flex justify-center pt-2.5 pb-2 touch-none cursor-grab active:cursor-grabbing"
+              aria-hidden="true"
+              onPointerDown={onHandleDown}
+              onPointerMove={onHandleMove}
+              onPointerUp={onHandleUp}
+              onPointerCancel={onHandleUp}
+            >
               <span className="w-10 h-1 rounded-full bg-[#d8dce8]"></span>
             </div>
 
             {/* Details: scroll on phones and tablets; on desktop they fit (see the fit steps above) */}
             <div ref={detailsRef} className="group flex-1 min-h-0 overflow-y-auto px-4 sm:px-7 lg:px-9 pt-2 sm:pt-6 lg:pt-8 pb-5">
-              <div className="flex items-center gap-2">
+              {/* Phones: this row can be dragged too, so the sheet is easy to grab */}
+              <div
+                className="flex items-center gap-2 max-sm:touch-none"
+                onPointerDown={onHandleDown}
+                onPointerMove={onHandleMove}
+                onPointerUp={onHandleUp}
+                onPointerCancel={onHandleUp}
+              >
                 <span id="modalProductType" className="px-3 py-1 rounded-full bg-[#eef1f8] text-[#22306a] text-[11px] lg:text-xs font-semibold tracking-[0.08em] uppercase inter">
                   {product.type}
                 </span>
