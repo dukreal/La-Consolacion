@@ -157,7 +157,7 @@ export default function Logs() {
         <p className="text-gray-600 text-sm sm:text-lg">Every change made by admins and customers</p>
       </div>
 
-      <div className="bg-white p-3 sm:p-5 rounded-2xl shadow-lg border border-blue-100 mb-8">
+      <div className="bg-white p-3 sm:p-5 rounded-2xl shadow-lg border border-blue-100">
         {/* Search (this page) and the Type chips (all logs); the chips slide sideways on phones */}
         <div className="flex flex-wrap items-center gap-x-3 gap-y-3 mb-2">
           <div className="relative flex-1 basis-[14rem] sm:basis-[20rem] min-w-0">
