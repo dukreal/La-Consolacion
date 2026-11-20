@@ -31,7 +31,7 @@ export default function AdminLayout() {
 
   return (
     <div className="admin-page min-h-screen overflow-hidden">
-      <header className="glass sticky top-0 z-50 px-6 py-4 border-b border-gray-200">
+      <header className="glass sticky top-0 z-50 px-4 sm:px-6 py-4 border-b border-gray-200">
         <div className="flex items-center justify-between">
           <div className="flex items-center space-x-4">
             <div className="flex items-center space-x-3">
@@ -40,8 +40,8 @@ export default function AdminLayout() {
               </Link>
             </div>
           </div>
-          <div className="flex items-center space-x-4">
-            <span className="text-sm text-gray-600">Dashboard | Welcome {user?.username || 'Admin'}</span>
+          <div className="flex items-center space-x-3 sm:space-x-4">
+            <span className="hidden sm:inline text-sm text-gray-600">Dashboard | Welcome {user?.username || 'Admin'}</span>
             <div className="relative" style={{ zIndex: 9999 }}>
               <Link
                 to="/profile"
@@ -57,12 +57,22 @@ export default function AdminLayout() {
                 )}
               </Link>
             </div>
+            {/* Phones and tablets: the sidebar becomes the bottom bar, so Log Out moves up here */}
+            <button
+              type="button"
+              onClick={handleLogout}
+              aria-label="Log out"
+              title="Log out"
+              className="lg:hidden w-9 h-9 flex-shrink-0 rounded-xl flex items-center justify-center text-red-600 hover:bg-red-50 transition-colors duration-200"
+            >
+              <LogOut className="w-5 h-5" />
+            </button>
           </div>
         </div>
       </header>
 
-      <div className="flex h-[calc(100vh-80px)] overflow-hidden">
-        <aside className="fixed top-[80px] left-0 w-72 h-[calc(100vh-80px)] glass p-6 border-r border-gray-200 overflow-y-auto">
+      <div className="flex h-[calc(100dvh-80px)] overflow-hidden">
+        <aside className="hidden lg:block fixed top-[80px] left-0 w-72 h-[calc(100vh-80px)] glass p-6 border-r border-gray-200 overflow-y-auto">
           <nav className="space-y-2">
             {NAV.map(({ to, label, icon: Icon, match }) => (
               <Link
@@ -87,10 +97,38 @@ export default function AdminLayout() {
           </div>
         </aside>
 
-        <main className="flex-1 p-8 ml-72 overflow-y-auto h-[calc(100vh-80px)]">
+        {/* Below 1024px the page uses the full width and leaves room for the bottom bar */}
+        <main className="flex-1 min-w-0 overflow-y-auto h-[calc(100dvh-80px)] px-4 pt-6 pb-[calc(6rem+env(safe-area-inset-bottom))] sm:px-6 lg:ml-72 lg:p-8">
           <Outlet />
         </main>
       </div>
+
+      {/* Phones and tablets (under 1024px): the sidebar links as a bar along the bottom */}
+      <nav
+        aria-label="Admin sections"
+        className="lg:hidden fixed bottom-0 inset-x-0 z-40 bg-white/90 backdrop-blur-md border-t border-gray-200 pb-[env(safe-area-inset-bottom)]"
+      >
+        <div className="grid grid-cols-5 max-w-xl mx-auto">
+          {NAV.map(({ to, label, icon: Icon, match }) => {
+            const active = match(pathname)
+            return (
+              <Link
+                key={to}
+                to={to}
+                aria-current={active ? 'page' : undefined}
+                className={`flex flex-col items-center gap-1 pt-2 pb-2.5 text-[11px] leading-none transition-colors duration-200 ${
+                  active ? 'text-[#1f488a] font-semibold' : 'text-gray-500 font-medium hover:text-gray-700'
+                }`}
+              >
+                <span className={`flex items-center justify-center w-12 h-7 rounded-full ${active ? 'gradient-deep-blue text-white shadow' : ''}`}>
+                  <Icon className="w-5 h-5" />
+                </span>
+                {label}
+              </Link>
+            )
+          })}
+        </div>
+      </nav>
     </div>
   )
 }

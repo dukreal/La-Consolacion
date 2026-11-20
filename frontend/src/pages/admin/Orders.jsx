@@ -120,7 +120,7 @@ function WalkInToast({ onClose }) {
   return (
     <div
       id="walkinToast"
-      className={`fixed bottom-6 right-6 z-[9999] transform transition-all duration-500 ease-out ${shown ? 'translate-y-0 opacity-100' : 'translate-y-20 opacity-0'}`}
+      className={`fixed bottom-[calc(5.5rem+env(safe-area-inset-bottom))] right-4 lg:bottom-6 lg:right-6 z-[9999] transform transition-all duration-500 ease-out ${shown ? 'translate-y-0 opacity-100' : 'translate-y-20 opacity-0'}`}
     >
       <div className="bg-emerald-600 text-white px-6 py-4 rounded-2xl shadow-2xl flex items-center gap-4 border border-emerald-400/20 backdrop-blur-md">
         <div className="bg-white/20 p-2 rounded-lg">
