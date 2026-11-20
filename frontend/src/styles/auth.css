@@ -302,13 +302,18 @@
     flex-shrink: 0;
     flex-direction: column;
     justify-content: center;
-    gap: 2rem;
-    padding: 2.5rem 2rem;
+    gap: 1.75rem;
+    padding: 2.5rem 1.75rem;
+  }
+  .auth-brand-logo {
+    width: 100%;
+    display: flex;
+    justify-content: center;
   }
   .auth-brand-logo img {
-    height: 64px;
-    max-width: 100%;
-    object-fit: contain;
+    height: auto;
+    width: 100%;
+    max-width: 17rem; /* about 88px tall; shrinks to fit the panel on smaller laptops */
   }
   .auth-brand-gem {
     display: block;
