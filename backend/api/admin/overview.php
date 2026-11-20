@@ -13,6 +13,7 @@ try {
         'totalOrders'      => $count(''),
         'pendingOrders'    => $count("AND status = 'pending'"),
         'processingOrders' => $count("AND status = 'processing'"),
+        'waitingOrders'    => $count("AND status = 'waiting_for_buyer'"),
         // YEARWEEK (not WEEK) so the same week number of an earlier year is not counted
         'thisWeek'         => $count('AND YEARWEEK(date_ordered) = YEARWEEK(NOW())'),
     ];

@@ -17,21 +17,23 @@ const STAT_CARDS = [
 const formatDate = (value) =>
   new Date(value.replace(' ', 'T')).toLocaleDateString('en-US', { month: 'short', day: '2-digit', year: 'numeric' })
 
+// Phones: compact, two per row, with the label under the icon and number. Wider screens: as before.
 function StatCard({ label, value, icon: Icon, colors, stat }) {
   return (
-    <div className={`relative overflow-hidden bg-gradient-to-br ${colors} rounded-2xl p-6 text-white shadow-xl hover:shadow-2xl transition-shadow duration-300`}>
+    <div className={`relative overflow-hidden bg-gradient-to-br ${colors} rounded-2xl p-3.5 sm:p-6 text-white shadow-xl hover:shadow-2xl transition-shadow duration-300`}>
       <div className="absolute top-0 right-0 w-32 h-32 bg-white opacity-10 rounded-full -translate-y-16 translate-x-16" />
       <div className="absolute bottom-0 left-0 w-24 h-24 bg-white opacity-5 rounded-full translate-y-12 -translate-x-12" />
       <div className="relative z-10">
-        <div className="flex items-center justify-between mb-4">
-          <div className="w-14 h-14 bg-white bg-opacity-30 rounded-xl flex items-center justify-center backdrop-blur-sm shadow-lg">
-            <Icon className="w-7 h-7 text-white drop-shadow-lg" />
+        <div className="flex items-center justify-between mb-2 sm:mb-4">
+          <div className="w-9 h-9 sm:w-14 sm:h-14 flex-shrink-0 bg-white bg-opacity-30 rounded-lg sm:rounded-xl flex items-center justify-center backdrop-blur-sm shadow-lg">
+            <Icon className="w-5 h-5 sm:w-7 sm:h-7 text-white drop-shadow-lg" />
           </div>
           <div className="text-right">
-            <div className="text-4xl font-bold text-white drop-shadow-lg" data-stat={stat}>{value}</div>
-            <div className="text-white text-base font-semibold drop-shadow-md">{label}</div>
+            <div className="text-2xl sm:text-4xl font-bold text-white drop-shadow-lg" data-stat={stat}>{value}</div>
+            <div className="hidden sm:block text-white text-base font-semibold drop-shadow-md">{label}</div>
           </div>
         </div>
+        <div className="sm:hidden text-white text-sm font-semibold leading-tight drop-shadow-md">{label}</div>
       </div>
     </div>
   )
@@ -250,7 +252,7 @@ export default function Orders() {
       {error && <p className="text-red-600 mb-4">{error}</p>}
 
       {/* Stats */}
-      <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-4 gap-4 sm:gap-6 mb-8">
+      <div className="stat-grid stat-grid-short grid grid-cols-2 gap-3 sm:gap-6 mb-8">
         {STAT_CARDS.map((c) => (
           <StatCard key={c.key} stat={c.key === 'total' ? 'total-orders' : c.key} label={c.label} value={stats[c.key]} icon={c.icon} colors={c.colors} />
         ))}

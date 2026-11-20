@@ -1,27 +1,29 @@
-import { Clock, Package, Settings, ShoppingCart, TrendingUp, Truck, Zap } from 'lucide-react'
+import { Clock, Package, PackageCheck, Settings, ShoppingCart, Store, TrendingUp, Truck } from 'lucide-react'
 import { useEffect, useState } from 'react'
 import { Link } from 'react-router-dom'
 import { getOverview } from '../../services/adminService'
 
-// One coloured number card (Total Orders, Pending, Processing)
+// One coloured number card (Total Orders, Pending, Processing, Waiting for Buyer).
+// Phones: compact, two per row, with the label under the icon and number. Wider screens: as before.
 function StatCard({ gradient, icon: Icon, value, label, note, noteIcon: NoteIcon }) {
   return (
-    <div className={`relative overflow-hidden bg-gradient-to-br ${gradient} rounded-2xl p-6 text-white shadow-xl`}>
+    <div className={`relative overflow-hidden bg-gradient-to-br ${gradient} rounded-2xl p-3.5 sm:p-6 text-white shadow-xl`}>
       <div className="absolute top-0 right-0 w-32 h-32 bg-white opacity-10 rounded-full -translate-y-16 translate-x-16"></div>
       <div className="absolute bottom-0 left-0 w-24 h-24 bg-white opacity-5 rounded-full translate-y-12 -translate-x-12"></div>
       <div className="relative z-10">
-        <div className="flex items-center justify-between mb-4">
-          <div className="w-14 h-14 bg-white bg-opacity-30 rounded-xl flex items-center justify-center backdrop-blur-sm shadow-lg">
-            <Icon className="w-7 h-7 text-white drop-shadow-lg" />
+        <div className="flex items-center justify-between mb-2 sm:mb-4">
+          <div className="w-9 h-9 sm:w-14 sm:h-14 flex-shrink-0 bg-white bg-opacity-30 rounded-lg sm:rounded-xl flex items-center justify-center backdrop-blur-sm shadow-lg">
+            <Icon className="w-5 h-5 sm:w-7 sm:h-7 text-white drop-shadow-lg" />
           </div>
           <div className="text-right">
-            <div className="text-4xl font-bold text-white drop-shadow-lg">{value}</div>
-            <div className="text-white text-base font-semibold drop-shadow-md">{label}</div>
+            <div className="text-2xl sm:text-4xl font-bold text-white drop-shadow-lg">{value}</div>
+            <div className="hidden sm:block text-white text-base font-semibold drop-shadow-md">{label}</div>
           </div>
         </div>
-        <div className="flex items-center justify-between">
-          <span className="text-white text-base font-medium drop-shadow-md">{note}</span>
-          <div className="flex items-center text-white">
+        <div className="sm:hidden text-white text-sm font-semibold leading-tight drop-shadow-md">{label}</div>
+        <div className="flex items-center justify-between gap-2 mt-0.5 sm:mt-0">
+          <span className="text-white text-xs sm:text-base font-medium drop-shadow-md">{note}</span>
+          <div className="hidden sm:flex items-center text-white">
             <NoteIcon className="w-4 h-4 drop-shadow-lg" />
           </div>
         </div>
@@ -80,7 +82,7 @@ export default function Overview() {
     }
   }, [])
 
-  const stats = data?.stats || { totalOrders: 0, pendingOrders: 0, processingOrders: 0, thisWeek: 0 }
+  const stats = data?.stats || { totalOrders: 0, pendingOrders: 0, processingOrders: 0, waitingOrders: 0, thisWeek: 0 }
 
   return (
     <>
@@ -93,7 +95,7 @@ export default function Overview() {
       {error && <div className="mb-6 p-4 bg-red-50 border border-red-200 rounded-xl text-red-700">{error}</div>}
 
       {/* Stats Cards */}
-      <div id="statCards" className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
+      <div id="statCards" className="stat-grid grid grid-cols-2 gap-3 sm:gap-6 mb-8">
         <StatCard
           gradient="from-violet-400 via-violet-500 to-violet-600"
           icon={ShoppingCart}
@@ -119,30 +121,14 @@ export default function Overview() {
           noteIcon={Settings}
         />
 
-        {/* Quick Actions */}
-        <div className="relative overflow-hidden bg-gradient-to-br from-rose-400 via-rose-500 to-rose-600 rounded-2xl p-6 text-white shadow-xl">
-          <div className="absolute top-0 right-0 w-32 h-32 bg-white opacity-10 rounded-full -translate-y-16 translate-x-16"></div>
-          <div className="absolute bottom-0 left-0 w-24 h-24 bg-white opacity-5 rounded-full translate-y-12 -translate-x-12"></div>
-          <div className="relative z-10">
-            <div className="flex items-center justify-between mb-4">
-              <div className="w-14 h-14 bg-white bg-opacity-30 rounded-xl flex items-center justify-center backdrop-blur-sm shadow-lg">
-                <Zap className="w-7 h-7 text-white drop-shadow-lg" />
-              </div>
-              <div className="text-right">
-                <div className="text-4xl font-bold text-white drop-shadow-lg">Quick</div>
-                <div className="text-white text-base font-semibold drop-shadow-md">Actions</div>
-              </div>
-            </div>
-            <div className="space-y-2">
-              <Link to="/admin/orders" className="block text-base text-white hover:text-rose-100 transition-colors duration-200 font-semibold drop-shadow-md">
-                View Orders
-              </Link>
-              <Link to="/admin/inventory" className="block text-base text-white hover:text-rose-100 transition-colors duration-200 font-semibold drop-shadow-md">
-                Manage Products
-              </Link>
-            </div>
-          </div>
-        </div>
+        <StatCard
+          gradient="from-rose-400 via-rose-500 to-rose-600"
+          icon={PackageCheck}
+          value={stats.waitingOrders}
+          label="Waiting for Buyer"
+          note="Ready for pickup"
+          noteIcon={Store}
+        />
       </div>
 
       {/* Recent Activity Section */}
