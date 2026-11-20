@@ -85,7 +85,7 @@ export default function Login() {
         <Notice type="error">
           <div role="alert">{message}</div>
           {needsVerification && resend.status !== 'sent' && (
-            <button type="button" className="mt-2.5 inline-flex items-center justify-center min-h-[40px] px-4 rounded-lg border-[1.5px] border-[#22306a] bg-white text-[#22306a] text-sm font-semibold hover:bg-[#f5f6fa] disabled:opacity-60 transition-colors" onClick={resendEmail} disabled={resend.status === 'sending'}>
+            <button type="button" className="notice-action" onClick={resendEmail} disabled={resend.status === 'sending'}>
               {resend.status === 'sending' ? 'Sending...' : 'Resend verification email'}
             </button>
           )}
@@ -115,7 +115,7 @@ export default function Login() {
             onChange={(e) => setPassword(e.target.value)}
           />
         </div>
-        <div style={{ textAlign: 'right', marginBottom: '10px' }}>
+        <div className="form-aside">
           <Link to="/forgot-password">Forgot Password?</Link>
         </div>
         <button type="submit" disabled={submitting}>Login</button>

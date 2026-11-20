@@ -1,271 +1,372 @@
-/* Styles for the login, register, forgot/reset password and verify-email pages.
-   Ported from the "Login & Registration Form Styles" section of the old style.css. */
+/* Account pages: Login, Register, Forgot/Reset Password, Verify Email.
+   Desktop (900px+): a split card, navy brand panel on the left, form on the right.
+   Phones and tablets: one card with a short navy band (logo) on top.
+   Built so the forms fit the screen without scrolling, messages included. */
 
 .form-bg {
   min-height: 100vh;
+  min-height: 100dvh;
   width: 100%;
+  box-sizing: border-box;
   background: linear-gradient(120deg, #f5f6fa 60%, #eaf3fa 100%);
-  font-family: "Segoe UI", Arial, sans-serif;
+  font-family: "Inter", "Segoe UI", Arial, sans-serif;
   display: flex;
   align-items: center;
   justify-content: center;
-  position: relative;
-  overflow-y: auto;
-  /* Even space above and below the card, so the Register form fits a 1920x1080 screen without scrolling */
-  padding: 24px 0;
-  z-index: 0;
+  padding: 16px;
 }
 
-.form-container {
+/* ---------- The card ---------- */
+.auth-shell {
   width: 100%;
-  max-width: 400px;
-  margin: 0 auto;
+  max-width: 27.5rem; /* phones and tablets: one column */
   background: #fff;
-  border-radius: 18px;
-  box-shadow: 0 8px 32px rgba(34, 48, 106, 0.1);
-  padding: 2.5rem 2rem 2rem 2rem;
+  border-radius: 20px;
+  box-shadow: 0 10px 36px rgba(34, 48, 106, 0.12);
+  overflow: hidden;
   display: flex;
   flex-direction: column;
+}
+
+/* ---------- Navy brand panel (a band on top on phones and tablets) ---------- */
+.auth-brand {
+  background: linear-gradient(140deg, #22306a 0%, #2b3f86 100%);
+  display: flex;
   align-items: center;
-  z-index: 2;
+  justify-content: center;
+  padding: 14px 20px;
+}
+/* The logo sits straight on the navy, in white (the file is navy lettering on a transparent background) */
+.auth-brand-logo {
+  display: block;
+  line-height: 0;
+  border-radius: 6px;
+}
+.auth-brand-logo img {
+  height: 44px; /* the lettering fills about 2/3 of the file's height */
+  width: auto;
+  display: block;
+  filter: brightness(0) invert(1);
+}
+.auth-brand-logo:focus-visible {
+  outline: 2px solid rgba(255, 255, 255, 0.7);
+  outline-offset: 6px;
+}
+.auth-brand-gem,
+.auth-brand-text {
+  display: none; /* desktop only */
+}
+
+/* ---------- The form side ---------- */
+.form-container {
+  padding: 1.5rem 1.5rem 1.4rem;
+  display: flex;
+  flex-direction: column;
+  align-items: stretch;
 }
 .form-container h2 {
   font-family: "Playfair Display", serif;
   color: #22306a;
-  font-size: 2rem;
+  font-size: 1.75rem;
   font-weight: 700;
-  margin-bottom: 1.5rem;
+  line-height: 1.2;
+  margin: 0;
+  text-align: center;
+  text-wrap: balance;
+}
+.form-welcome {
+  color: #5b6478;
+  font-size: 0.95rem;
+  line-height: 1.5;
+  text-align: center;
+  margin: 0.35rem 0 0;
 }
 .form-container form {
   width: 100%;
   display: flex;
   flex-direction: column;
-  gap: 1.1rem;
+  gap: 0.8rem;
+  margin-top: 1.1rem;
 }
+
+/* Inputs */
+.input-group {
+  position: relative;
+  height: 46px;
+}
+.input-group input,
 .form-container input[type="text"],
 .form-container input[type="email"],
 .form-container input[type="password"] {
   width: 100%;
-  padding: 0.7rem 1rem;
+  height: 46px;
+  box-sizing: border-box;
+  padding: 0 1rem;
   border: 1.5px solid #e0e3eb;
-  border-radius: 8px;
+  border-radius: 10px;
   font-size: 1rem;
+  font-family: inherit;
   background: #f7f8fc;
   color: #22306a;
   outline: none;
-  transition: border 0.2s;
+  transition: border-color 0.2s, background-color 0.2s, box-shadow 0.2s;
 }
-.form-container input[type="text"]:focus,
-.form-container input[type="email"]:focus,
-.form-container input[type="password"]:focus {
+.input-group input:focus,
+.form-container input:focus {
   border-color: #22306a;
   background: #fff;
+  box-shadow: 0 0 0 3px rgba(36, 116, 182, 0.12);
 }
-.form-container button[type="submit"] {
+
+/* Two fields side by side (Register: first + last name, password + confirm) */
+.form-row {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 0.7rem;
+}
+@media (max-width: 479px) {
+  .form-row-wide-only {
+    grid-template-columns: minmax(0, 1fr);
+    gap: 0.8rem;
+  }
+}
+
+/* "Forgot Password?" row */
+.form-aside {
+  display: flex;
+  justify-content: flex-end;
+  margin-top: -0.2rem;
+  font-size: 0.9rem;
+}
+
+/* Main button, and links that look like it (Verify Email: "Go to Login") */
+.form-container button[type="submit"],
+.form-container a.auth-button-link {
+  display: block;
+  width: 100%;
+  box-sizing: border-box;
+  text-align: center;
   background: #22306a;
   color: #fff;
   border: none;
-  border-radius: 8px;
-  font-size: 1.08rem;
+  border-radius: 10px;
+  font-family: inherit;
+  font-size: 1.02rem;
   font-weight: 600;
-  padding: 0.7em 0;
-  margin-top: 0.5rem;
+  padding: 0.8em 0;
   cursor: pointer;
-  box-shadow: 0 2px 8px rgba(34, 48, 106, 0.08);
-  transition: background 0.2s, color 0.2s;
+  text-decoration: none;
+  box-shadow: 0 2px 8px rgba(34, 48, 106, 0.1);
+  transition: background-color 0.2s, box-shadow 0.2s;
 }
-.form-container button[type="submit"]:hover {
+.form-container button[type="submit"]:hover,
+.form-container a.auth-button-link:hover {
   background: #1a2550;
+  color: #fff;
+  box-shadow: 0 4px 14px rgba(34, 48, 106, 0.18);
 }
 .form-container button[type="submit"]:disabled {
   opacity: 0.7;
   cursor: not-allowed;
 }
+.form-container a.auth-button-link {
+  margin-top: 1.1rem;
+}
+
+/* Text and links */
 .form-container p {
-  margin-top: 1.2rem;
-  font-size: 1rem;
-  color: #444;
+  margin: 0;
+  font-size: 0.95rem;
+  color: #5b6478;
   text-align: center;
 }
 .form-container a {
   color: #22306a;
+  font-weight: 500;
   text-decoration: underline;
+  text-underline-offset: 2px;
   transition: color 0.2s;
 }
 .form-container a:hover {
   color: #2474b6;
 }
-#error-message {
-  margin-top: 0.7rem;
-  color: #dc2626;
-  font-size: 0.98rem;
+
+/* "Back to Login" under the Forgot / Reset Password forms */
+.form-back {
+  margin-top: 1rem;
   text-align: center;
+  font-size: 0.95rem;
 }
 
-.form-logo {
-  width: 80px;
-  height: 80px;
-  object-fit: contain;
-  margin-bottom: 1.2rem;
-  border-radius: 16px;
-  box-shadow: 0 2px 8px rgba(34, 48, 106, 0.1);
+/* Verify Email: "Verifying your account..." */
+.form-container p.form-status {
+  margin-top: 1rem;
 }
-.form-welcome {
-  color: #444;
-  font-size: 1.08rem;
-  margin-bottom: 1.2rem;
-  text-align: center;
-}
-.input-group {
-  position: relative;
+
+/* "or" line */
+.form-divider {
   display: flex;
   align-items: center;
-  margin-bottom: 0.2rem;
-  height: 48px;
+  gap: 12px;
+  color: #9aa1b2;
+  font-size: 0.85rem;
+  margin: 0.1rem 0;
 }
-.input-group input {
+.form-divider::before,
+.form-divider::after {
+  content: "";
+  flex: 1;
+  height: 1px;
+  background: #e6e9f0;
+}
+
+/* ---------- Messages (compact, with an icon) ---------- */
+.notice {
+  display: flex;
+  align-items: flex-start;
+  gap: 10px;
   width: 100%;
-  height: 48px;
-  line-height: 48px;
-  padding: 0 1rem 0 3rem;
-  border: 1.5px solid #e0e3eb;
-  border-radius: 10px;
-  font-size: 1rem;
-  background: #f7f8fc;
-  color: #22306a;
-  outline: none;
-  transition: border 0.2s, box-shadow 0.2s;
-  margin-bottom: 0;
   box-sizing: border-box;
+  margin-top: 1rem;
+  padding: 10px 12px;
+  border-radius: 10px;
+  border: 1px solid transparent;
+  font-size: 0.9rem;
+  line-height: 1.45;
+  text-align: left;
 }
-.input-group i {
-  position: absolute;
-  left: 14px;
-  top: 50%;
-  transform: translateY(-50%);
-  color: #b0b4c3;
-  font-size: 1.2rem;
-  z-index: 2;
-  pointer-events: none;
+.notice + .notice {
+  margin-top: 0.6rem;
 }
-.form-divider {
-  width: 100%;
-  text-align: center;
-  border-bottom: 1px solid #e0e3eb;
-  line-height: 0.1em;
-  margin: 1.2rem 0 1.2rem 0;
-  position: relative;
+.notice-icon {
+  flex-shrink: 0;
+  font-size: 1.15rem;
+  line-height: 1.25;
 }
-.form-divider span {
-  background: #fff;
-  color: #b0b4c3;
-  padding: 0 16px;
-  font-size: 0.98rem;
-  position: relative;
-  top: 0.6em;
+.notice-body {
+  flex: 1;
+  min-width: 0;
 }
+.notice-success {
+  color: #14532d;
+  background: #f0faf4;
+  border-color: #cdebd8;
+}
+.notice-error {
+  color: #7f1d1d;
+  background: #fdf2f2;
+  border-color: #f5d0d0;
+}
+.notice-info {
+  color: #1e3a5f;
+  background: #eef4fb;
+  border-color: #d3e3f4;
+}
+/* A small link-style button inside a message ("Resend verification email") */
+.notice-action {
+  display: inline-block;
+  margin-top: 4px;
+  padding: 0;
+  border: none;
+  background: none;
+  color: #22306a;
+  font: inherit;
+  font-weight: 600;
+  text-decoration: underline;
+  text-underline-offset: 2px;
+  cursor: pointer;
+}
+.notice-action:hover {
+  color: #2474b6;
+}
+.notice-action:disabled {
+  opacity: 0.6;
+  cursor: default;
+}
+
+/* ---------- Desktop: split card ---------- */
+@media (min-width: 900px) {
+  .form-bg {
+    padding: 24px;
+  }
+  .auth-shell {
+    max-width: 54rem; /* 864px with normal text; grows with larger text settings */
+    flex-direction: row;
+    min-height: 30rem;
+  }
+  .auth-shell-wide {
+    max-width: 58rem;
+  }
+  .auth-brand {
+    width: 38%;
+    flex-shrink: 0;
+    flex-direction: column;
+    justify-content: center;
+    gap: 2rem;
+    padding: 2.5rem 2rem;
+  }
+  .auth-brand-logo img {
+    height: 64px;
+    max-width: 100%;
+    object-fit: contain;
+  }
+  .auth-brand-gem {
+    display: block;
+    width: 110px;
+    height: auto;
+    stroke: rgba(255, 255, 255, 0.5);
+    stroke-width: 1.3;
+    stroke-linejoin: round;
+  }
+  .auth-brand-text {
+    display: block;
+    margin: 0;
+    max-width: 16rem;
+    color: rgba(255, 255, 255, 0.88);
+    font-size: 1rem;
+    line-height: 1.6;
+    text-align: center;
+  }
+  .form-container {
+    flex: 1;
+    min-width: 0;
+    justify-content: center;
+    padding: 2.25rem 2.75rem;
+  }
+  .form-container h2 {
+    font-size: 2rem;
+  }
+  .form-welcome {
+    display: none; /* it is in the navy panel */
+  }
+}
+
+/* Short laptop screens (1366x657 and similar): a little tighter */
+@media (min-width: 900px) and (max-height: 700px) {
+  .form-bg {
+    padding: 12px 24px;
+  }
+  .auth-shell {
+    min-height: 0;
+  }
+  .form-container {
+    padding: 1.6rem 2.5rem;
+  }
+  .form-container form {
+    gap: 0.7rem;
+  }
+}
+
 .fade-in {
-  animation: fadeIn 0.8s cubic-bezier(0.39, 0.575, 0.56, 1) both;
+  animation: authFadeIn 0.6s cubic-bezier(0.39, 0.575, 0.56, 1) both;
 }
-@keyframes fadeIn {
+@keyframes authFadeIn {
   0% {
     opacity: 0;
-    transform: translateY(30px);
+    transform: translateY(16px);
   }
   100% {
     opacity: 1;
     transform: none;
   }
-}
-
-/* Green / red message boxes (registration, forgot and reset password) */
-.notice {
-  width: 100%;
-  text-align: center;
-  margin-bottom: 20px;
-  padding: 10px;
-  border-radius: 5px;
-}
-.notice-success {
-  color: #155724;
-  background: #d4edda;
-}
-.notice-error {
-  color: #721c24;
-  background: #f8d7da;
-}
-.notice-info {
-  color: #0c4a6e;
-  background: #e0f2fe;
-}
-
-@media (max-width: 600px) {
-  /* The card used to touch the screen edges (98vw wide, almost no inner padding) */
-  .form-container {
-    max-width: calc(100% - 32px);
-    margin: 0 16px;
-    padding: 1.75rem 1.25rem 1.5rem 1.25rem;
-  }
-  .form-container h2 {
-    font-size: 1.4rem;
-  }
-  .form-logo {
-    width: 56px;
-    height: 56px;
-  }
-  .form-welcome {
-    font-size: 0.98rem;
-  }
-}
-
-/* Laptops and short browser windows: tighter spacing so the forms need little or no scrolling */
-@media (min-width: 601px) and (max-height: 900px) {
-  .form-container {
-    padding: 1.75rem 2rem 1.5rem 2rem;
-  }
-  .form-logo {
-    width: 64px;
-    height: 64px;
-    margin-bottom: 0.8rem;
-  }
-  .form-container h2 {
-    margin-bottom: 0.75rem;
-  }
-  .form-welcome {
-    margin-bottom: 1rem;
-  }
-  .form-container form {
-    gap: 0.85rem;
-  }
-}
-
-/* Verify-email page (these styles were inline in the old verify-email.php) */
-.verify-page {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  min-height: 100vh;
-  background: #f7f7f7;
-}
-.verify-container {
-  background: #fff;
-  padding: 2rem 3rem;
-  border-radius: 10px;
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
-  text-align: center;
-}
-.verify-success {
-  color: #27ae60;
-  font-size: 1.2rem;
-}
-.verify-error {
-  color: #c0392b;
-  font-size: 1.2rem;
-}
-.verify-container a {
-  color: #2980b9;
-  text-decoration: none;
-}
-.verify-container a:hover {
-  text-decoration: underline;
 }

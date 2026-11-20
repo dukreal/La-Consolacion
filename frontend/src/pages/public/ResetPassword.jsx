@@ -68,7 +68,7 @@ export default function ResetPassword() {
           <button type="submit" disabled={submitting}>Reset Password</button>
         </form>
       )}
-      <div style={{ marginTop: '20px', textAlign: 'center' }}>
+      <div className="form-back">
         <Link to="/login">Back to Login</Link>
       </div>
     </AuthCard>
