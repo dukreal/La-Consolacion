@@ -38,7 +38,7 @@ function ProductCard({ product, canDelete, onDelete }) {
 
   return (
     <div
-      className="product-card bg-white border border-gray-200 rounded-xl p-2.5 sm:p-3 flex flex-col min-w-0 hover:shadow-lg transition-shadow duration-300"
+      className="product-card bg-white border border-gray-200 rounded-xl p-2.5 sm:p-3 flex flex-col min-w-0"
       data-type={product.type.toLowerCase()}
     >
       <div className="w-full aspect-square rounded-lg overflow-hidden bg-[#f5f7fb]">
