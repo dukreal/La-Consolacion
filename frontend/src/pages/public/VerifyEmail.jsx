@@ -1,8 +1,10 @@
 import { useEffect, useRef, useState } from 'react'
 import { Link, useSearchParams } from 'react-router-dom'
+import AuthCard from '../../components/common/AuthCard'
+import Notice from '../../components/common/Notice'
 import { api } from '../../services/api'
-import '../../styles/auth.css'
 
+// The page the link in the verification email opens. Same card as Login, Forgot and Reset Password.
 export default function VerifyEmail() {
   const [params] = useSearchParams()
   const token = params.get('token') || ''
@@ -29,26 +31,33 @@ export default function VerifyEmail() {
       })
   }, [token])
 
+  if (status === 'loading') {
+    return (
+      <AuthCard title="Verifying your email">
+        <p className="form-status" role="status">
+          Verifying your account...
+        </p>
+      </AuthCard>
+    )
+  }
+
+  if (status === 'success') {
+    return (
+      <AuthCard title="Email verified">
+        <Notice type="success">Your account has been verified! You may now log in.</Notice>
+        <Link to="/login" className="auth-button-link">
+          Go to Login
+        </Link>
+      </AuthCard>
+    )
+  }
+
   return (
-    <div className="verify-page">
-      <div className="verify-container">
-        {status === 'loading' && <div>Verifying your account...</div>}
-
-        {status === 'success' && (
-          <div className="verify-success">
-            Your account has been verified! You may now <Link to="/login">log in</Link>.
-          </div>
-        )}
-
-        {status === 'error' && (
-          <>
-            <div className="verify-error">{message}</div>
-            <div style={{ marginTop: '1rem' }}>
-              <Link to="/login">Back to Login</Link>
-            </div>
-          </>
-        )}
-      </div>
-    </div>
+    <AuthCard title="Verification failed">
+      <Notice type="error">{message}</Notice>
+      <Link to="/login" className="auth-button-link">
+        Back to Login
+      </Link>
+    </AuthCard>
   )
 }

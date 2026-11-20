@@ -16,8 +16,19 @@ try {
     $stmt->execute([$email]);
     $user = $stmt->fetch();
 
-    if (!$user || !password_verify($password, $user['password'])) {
+    // A deleted account answers like a wrong password, so nobody learns that it exists
+    if (!$user || (int) $user['deleted'] === 1 || !password_verify($password, $user['password'])) {
         json_response(['success' => false, 'error' => 'Invalid email or password.'], 401);
+    }
+
+    // The email must be verified before the first login (the link sent when registering).
+    // Checked after the password, so only the owner of the account sees this message.
+    if ((int) $user['is_verified'] !== 1) {
+        json_response([
+            'success' => false,
+            'needsVerification' => true,
+            'error' => 'Please verify your email first. We sent a link to your Gmail when you registered.',
+        ], 403);
     }
 
     $_SESSION['user_id'] = $user['id'];
@@ -35,5 +46,6 @@ try {
     // React uses "role" to decide where to send the user (admin dashboard or home).
     json_response(['success' => true, 'role' => $user['role']]);
 } catch (PDOException $e) {
+    error_log('login.php database error: ' . $e->getMessage()); // details for the server log only
     json_response(['success' => false, 'error' => 'Database error. Please try again.'], 500);
 }
