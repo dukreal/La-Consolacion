@@ -6,7 +6,7 @@ import { getOverview } from '../../services/adminService'
 // One coloured number card (Total Orders, Pending, Processing)
 function StatCard({ gradient, icon: Icon, value, label, note, noteIcon: NoteIcon }) {
   return (
-    <div className={`relative overflow-hidden bg-gradient-to-br ${gradient} rounded-2xl p-6 text-white shadow-xl hover:shadow-2xl transition-all duration-300 transform hover:-translate-y-1`}>
+    <div className={`relative overflow-hidden bg-gradient-to-br ${gradient} rounded-2xl p-6 text-white shadow-xl hover:shadow-2xl transition-shadow duration-300`}>
       <div className="absolute top-0 right-0 w-32 h-32 bg-white opacity-10 rounded-full -translate-y-16 translate-x-16"></div>
       <div className="absolute bottom-0 left-0 w-24 h-24 bg-white opacity-5 rounded-full translate-y-12 -translate-x-12"></div>
       <div className="relative z-10">
@@ -120,7 +120,7 @@ export default function Overview() {
         />
 
         {/* Quick Actions */}
-        <div className="relative overflow-hidden bg-gradient-to-br from-rose-400 via-rose-500 to-rose-600 rounded-2xl p-6 text-white shadow-xl hover:shadow-2xl transition-all duration-300 transform hover:-translate-y-1">
+        <div className="relative overflow-hidden bg-gradient-to-br from-rose-400 via-rose-500 to-rose-600 rounded-2xl p-6 text-white shadow-xl hover:shadow-2xl transition-shadow duration-300">
           <div className="absolute top-0 right-0 w-32 h-32 bg-white opacity-10 rounded-full -translate-y-16 translate-x-16"></div>
           <div className="absolute bottom-0 left-0 w-24 h-24 bg-white opacity-5 rounded-full translate-y-12 -translate-x-12"></div>
           <div className="relative z-10">

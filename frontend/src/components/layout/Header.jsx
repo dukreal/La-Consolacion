@@ -129,7 +129,7 @@ export default function Header({ sticky = false }) {
                   setMobileOpen(false)
                 }}
                 aria-label="Account menu"
-                className="w-10 h-10 rounded-full flex items-center justify-center hover:scale-105 transition-transform cursor-pointer border-2 border-white shadow-md"
+                className="w-10 h-10 rounded-full flex items-center justify-center hover:shadow-lg transition-shadow cursor-pointer border-2 border-white shadow-md"
                 style={{ background: 'linear-gradient(135deg, #2474b6 0%, #1e5a8a 100%)' }}
               >
                 {profileImg ? (

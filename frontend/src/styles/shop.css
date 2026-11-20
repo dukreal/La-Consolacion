@@ -180,7 +180,6 @@
         /* Active button hover effect */
         :where(.shop-page) .filter-btn.active:hover {
             background-color: #1a2452 !important;
-            transform: translateY(-1px);
             box-shadow: 0 10px 25px rgba(34, 48, 106, 0.3);
         }
         

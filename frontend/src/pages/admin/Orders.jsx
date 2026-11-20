@@ -19,7 +19,7 @@ const formatDate = (value) =>
 
 function StatCard({ label, value, icon: Icon, colors, stat }) {
   return (
-    <div className={`relative overflow-hidden bg-gradient-to-br ${colors} rounded-2xl p-6 text-white shadow-xl hover:shadow-2xl transition-all duration-300 transform hover:-translate-y-1`}>
+    <div className={`relative overflow-hidden bg-gradient-to-br ${colors} rounded-2xl p-6 text-white shadow-xl hover:shadow-2xl transition-shadow duration-300`}>
       <div className="absolute top-0 right-0 w-32 h-32 bg-white opacity-10 rounded-full -translate-y-16 translate-x-16" />
       <div className="absolute bottom-0 left-0 w-24 h-24 bg-white opacity-5 rounded-full translate-y-12 -translate-x-12" />
       <div className="relative z-10">
@@ -206,7 +206,7 @@ export default function Orders() {
         <div>
           <Link
             to="/admin/walk-in"
-            className="inline-flex items-center gap-2 px-6 py-3 rounded-xl bg-gradient-to-r from-emerald-500 to-blue-500 text-white font-bold shadow-lg hover:from-emerald-600 hover:to-blue-600 transition-all transform hover:-translate-y-1 text-lg"
+            className="inline-flex items-center gap-2 px-6 py-3 rounded-xl bg-gradient-to-r from-emerald-500 to-blue-500 text-white font-bold shadow-lg hover:from-emerald-600 hover:to-blue-600 transition-all text-lg"
           >
             <PlusCircle className="w-6 h-6" />
             Walk-in Order

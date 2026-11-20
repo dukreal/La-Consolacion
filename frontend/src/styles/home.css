@@ -766,14 +766,13 @@
 .footer-social-icon {
   color: #22306a;
   font-size: 2.1em;
-  transition: color 0.2s, transform 0.2s;
+  transition: color 0.2s;
   display: flex;
   align-items: center;
   justify-content: center;
 }
 .footer-social-icon:hover {
   color: #2474b6;
-  transform: scale(1.15);
 }
 .footer-nav-modern {
   display: flex;

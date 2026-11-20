@@ -169,7 +169,7 @@ export default function WalkIn() {
               <button
                 type="submit"
                 disabled={saving}
-                className="w-full py-5 rounded-2xl bg-gradient-to-r from-gray-800 to-gray-900 text-white font-bold text-xl shadow-xl hover:shadow-gray-400/30 transform transition hover:-translate-y-1 flex items-center justify-center gap-3 disabled:opacity-60"
+                className="w-full py-5 rounded-2xl bg-gradient-to-r from-gray-800 to-gray-900 text-white font-bold text-xl shadow-xl hover:shadow-gray-400/30 transition flex items-center justify-center gap-3 disabled:opacity-60"
               >
                 <CheckCircle className="w-6 h-6" />
                 Complete Transaction
