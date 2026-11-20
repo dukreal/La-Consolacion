@@ -1,4 +1,3 @@
-import { PlusCircle } from 'lucide-react'
 import { useNavigate } from 'react-router-dom'
 import CustomOrderForm from '../../components/admin/CustomOrderForm'
 import { addCustomOrder } from '../../services/adminService'
@@ -20,6 +19,13 @@ export default function AddCustomOrder() {
   }
 
   return (
-    <CustomOrderForm mode="add" title="Add Custom Order" icon={PlusCircle} submitLabel="Add Custom Order" initial={{}} onSubmit={handleSubmit} />
+    <CustomOrderForm
+      mode="add"
+      title="Add Custom Order"
+      subtitle="Create a made-to-order piece and email the customer"
+      submitLabel="Add Custom Order"
+      initial={{}}
+      onSubmit={handleSubmit}
+    />
   )
 }

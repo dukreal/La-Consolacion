@@ -33,7 +33,7 @@ function ProductCard({ product, canDelete, onDelete }) {
   const custom = isCustom(product)
   // Custom products have their own image folder and their own edit page
   const imageSrc = `/uploads/${product.type.toLowerCase() === 'custom' ? 'custom' : 'products'}/${product.image}`
-  const editLink = custom ? `/admin/inventory/edit-custom/${product.id}` : `/admin/inventory/edit/${product.id}`
+  const editLink = custom ? `/admin/inventory/edit-custom/${product.id}` : `/admin/inventory/edit-premade/${product.id}`
   const inStock = product.stock > 0
 
   return (
@@ -194,7 +194,7 @@ export default function Inventory() {
         {isSuperAdmin && (
           <div className="grid grid-cols-2 gap-2 sm:flex sm:flex-shrink-0">
             <Link
-              to="/admin/inventory/add"
+              to="/admin/inventory/add-premade"
               className="inline-flex items-center justify-center gap-1.5 h-10 sm:h-11 px-3 sm:px-5 rounded-xl bg-[#22306a] hover:bg-[#1a2550] text-white text-sm sm:text-base font-bold shadow-md transition-colors whitespace-nowrap"
             >
               <Plus className="w-4 h-4 sm:w-5 sm:h-5" />

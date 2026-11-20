@@ -1,4 +1,4 @@
-import { Route, Routes } from 'react-router-dom'
+import { Navigate, Route, Routes, useParams } from 'react-router-dom'
 import AdminLayout from './components/admin/AdminLayout'
 import AdminRoute from './components/admin/AdminRoute'
 import ProtectedRoute from './components/common/ProtectedRoute'
@@ -26,6 +26,12 @@ import Register from './pages/public/Register'
 import ResetPassword from './pages/public/ResetPassword'
 import VerifyEmail from './pages/public/VerifyEmail'
 
+// /admin/inventory/edit/5 (the old address) -> /admin/inventory/edit-premade/5
+function OldEditPremadeRedirect() {
+  const { id } = useParams()
+  return <Navigate to={`/admin/inventory/edit-premade/${id}`} replace />
+}
+
 export default function App() {
   return (
     <Routes>
@@ -52,8 +58,11 @@ export default function App() {
           <Route path="/admin/orders" element={<Orders />} />
           <Route path="/admin/walk-in" element={<WalkIn />} />
           <Route path="/admin/inventory" element={<Inventory />} />
-          <Route path="/admin/inventory/add" element={<AddProduct />} />
-          <Route path="/admin/inventory/edit/:id" element={<EditProduct />} />
+          <Route path="/admin/inventory/add-premade" element={<AddProduct />} />
+          <Route path="/admin/inventory/edit-premade/:id" element={<EditProduct />} />
+          {/* The old addresses still work */}
+          <Route path="/admin/inventory/add" element={<Navigate to="/admin/inventory/add-premade" replace />} />
+          <Route path="/admin/inventory/edit/:id" element={<OldEditPremadeRedirect />} />
           <Route path="/admin/inventory/add-custom" element={<AddCustomOrder />} />
           <Route path="/admin/inventory/edit-custom/:id" element={<EditCustomOrder />} />
           <Route path="/admin/users" element={<Users />} />

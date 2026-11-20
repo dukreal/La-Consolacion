@@ -1,4 +1,3 @@
-import { Edit3 } from 'lucide-react'
 import { useEffect, useState } from 'react'
 import { useNavigate, useParams } from 'react-router-dom'
 import CustomOrderForm from '../../components/admin/CustomOrderForm'
@@ -35,7 +34,7 @@ export default function EditCustomOrder() {
       key={order.id}
       mode="edit"
       title="Edit Custom Order"
-      icon={Edit3}
+      subtitle={`${order.productName} for ${order.customerName}`}
       submitLabel="Update Custom Order"
       initial={order}
       imageUrl={order.image ? `/uploads/custom/${order.image}` : ''}

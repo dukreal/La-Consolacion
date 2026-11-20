@@ -1,10 +1,9 @@
-import { Edit3 } from 'lucide-react'
 import { useEffect, useState } from 'react'
 import { useNavigate, useParams } from 'react-router-dom'
 import PremadeProductForm from '../../components/admin/PremadeProductForm'
 import { getProduct, updateProduct } from '../../services/adminService'
 
-// "Edit Product" for premade products (was edit-product.php).
+// "Edit Premade Product" (was edit-product.php, at /admin/inventory/edit-premade/:id).
 // SuperAdmins can change everything; Admins only the stock.
 export default function EditProduct() {
   const { id } = useParams()
@@ -34,8 +33,8 @@ export default function EditProduct() {
   return (
     <PremadeProductForm
       key={data.product.id}
-      title="Edit Product"
-      icon={Edit3}
+      title="Edit Premade Product"
+      subtitle={data.product.name}
       submitLabel="Save Changes"
       variant="edit"
       initial={data.product}
