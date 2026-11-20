@@ -41,7 +41,7 @@ function ProductCell({ item }) {
   if (!item) {
     return (
       <div className="flex items-center space-x-3">
-        <div className="w-12 h-12 bg-gray-200 rounded-lg flex items-center justify-center">
+        <div className="w-12 h-12 flex-shrink-0 bg-gray-200 rounded-lg flex items-center justify-center">
           <Package className="w-6 h-6 text-gray-400" />
         </div>
         <div>
@@ -54,11 +54,11 @@ function ProductCell({ item }) {
   return (
     <div className="flex items-center space-x-3">
       {item.image ? (
-        <div className="w-12 h-12 rounded-lg overflow-hidden shadow-sm bg-gray-100">
+        <div className="w-12 h-12 flex-shrink-0 rounded-lg overflow-hidden shadow-sm bg-gray-100">
           <img src={`/uploads/${item.folder}/${item.image}`} alt={item.name} className="w-full h-full object-cover" />
         </div>
       ) : (
-        <div className="w-12 h-12 bg-gradient-to-br from-violet-400 to-violet-500 rounded-lg flex items-center justify-center shadow-sm">
+        <div className="w-12 h-12 flex-shrink-0 bg-gradient-to-br from-violet-400 to-violet-500 rounded-lg flex items-center justify-center shadow-sm">
           <Gem className="w-6 h-6 text-white" />
         </div>
       )}
@@ -78,10 +78,10 @@ function CustomerCell({ order }) {
   return (
     <div className="flex items-center gap-4">
       {!order.isWalkIn && order.profileImage ? (
-        <img src={`/uploads/profile/${order.profileImage}`} alt="Profile" className="w-10 h-10 rounded-full object-cover bg-gray-100" />
+        <img src={`/uploads/profile/${order.profileImage}`} alt="Profile" className="w-10 h-10 flex-shrink-0 rounded-full object-cover bg-gray-100" />
       ) : (
         <div
-          className={`w-10 h-10 rounded-full flex items-center justify-center bg-gradient-to-br ${
+          className={`w-10 h-10 flex-shrink-0 rounded-full flex items-center justify-center bg-gradient-to-br ${
             order.isWalkIn ? 'from-blue-600 to-indigo-600' : 'from-slate-400 to-slate-500'
           } text-white shadow-sm`}
         >
@@ -106,6 +106,37 @@ function StatusPill({ order }) {
     </span>
   )
 }
+
+// Details / Payment (or Unpaid) / Delete. Used by the table and by the order cards.
+function OrderActions({ order, adminLevel, onDetails, onPayment, onDelete, className = '' }) {
+  return (
+    <div className={`flex items-center gap-2 ${className}`}>
+      <button type="button" onClick={() => onDetails(order.id)} className="view-order-details-btn bg-gray-100 hover:bg-gray-200 text-gray-700 px-3 py-1 rounded-lg text-xs font-medium transition-colors duration-200">
+        Details
+      </button>
+      {order.paid ? (
+        <button type="button" onClick={() => onPayment(order.paymentId)} className="view-payment-btn bg-emerald-100 hover:bg-emerald-200 text-emerald-700 px-3 py-1 rounded-lg text-xs font-medium transition-colors duration-200">
+          Payment
+        </button>
+      ) : (
+        <button type="button" disabled title="Customer not yet paid" className="bg-orange-50 text-orange-700 border border-orange-200 px-3 py-1 rounded-lg text-xs font-medium">
+          Unpaid
+        </button>
+      )}
+      {adminLevel === 2 && (
+        <button
+          type="button"
+          onClick={() => onDelete(order.id)}
+          className="deleteOrderBtn bg-red-100 hover:bg-red-200 text-red-700 px-3 py-1 rounded-lg text-xs font-medium transition-colors duration-200"
+        >
+          Delete
+        </button>
+      )}
+    </div>
+  )
+}
+
+const peso = (n) => '₱' + n.toLocaleString('en-US', { maximumFractionDigits: 0 })
 
 // "Sale Recorded!" in the bottom-right corner after a walk-in sale. Slides in, leaves after 4 seconds.
 function WalkInToast({ onClose }) {
@@ -188,6 +219,7 @@ export default function Orders() {
   }
 
   const orders = data?.orders ?? []
+  const actionHandlers = { onDetails: setDetailsId, onPayment: setPaymentId, onDelete: setToDelete }
   const stats = {
     total: orders.length,
     pending: orders.filter((o) => o.status === 'pending').length,
@@ -218,7 +250,7 @@ export default function Orders() {
       {error && <p className="text-red-600 mb-4">{error}</p>}
 
       {/* Stats */}
-      <div className="grid grid-cols-1 md:grid-cols-4 gap-6 mb-8">
+      <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-4 gap-4 sm:gap-6 mb-8">
         {STAT_CARDS.map((c) => (
           <StatCard key={c.key} stat={c.key === 'total' ? 'total-orders' : c.key} label={c.label} value={stats[c.key]} icon={c.icon} colors={c.colors} />
         ))}
@@ -240,66 +272,72 @@ export default function Orders() {
             <p className="text-gray-500">Orders will appear here when customers make purchases.</p>
           </div>
         ) : (
-          <div className="overflow-x-auto">
-            <table className="w-full">
-              <thead className="bg-gray-50 border-b border-gray-200">
-                <tr>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider w-64">PRODUCT NAME</th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider w-40">CUSTOMER NAME</th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider w-32">ORDER ID</th>
-                  <th className="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider w-32">AMOUNT</th>
-                  <th className="px-6 py-3 text-center text-xs font-medium text-gray-500 uppercase tracking-wider w-32">STATUS</th>
-                  <th className="px-6 py-3 text-center text-xs font-medium text-gray-500 uppercase tracking-wider w-32">ACTION</th>
-                </tr>
-              </thead>
-              <tbody id="ordersTableBody" className="bg-white divide-y divide-gray-100">
-                {orders.map((order) => (
-                  <tr key={order.id} className="hover:bg-gray-50 transition-all duration-200" data-order-id={order.id}>
-                    <td className="px-6 py-4 w-64"><ProductCell item={order.firstItem} /></td>
-                    <td className="px-6 py-4 w-40"><CustomerCell order={order} /></td>
-                    <td className="px-6 py-4 w-32">
-                      <p className="font-semibold text-gray-900">#{order.id}</p>
-                      <p className="text-sm text-gray-500">{formatDate(order.dateOrdered)}</p>
-                    </td>
-                    <td className="px-6 py-4 w-32 text-right">
-                      <p className="font-bold text-lg text-gray-900">
-                        ₱{order.total.toLocaleString('en-US', { maximumFractionDigits: 0 })}
-                      </p>
+          <>
+            {/* Narrower than 96em (1536px at normal text size, wider if the browser text is set larger):
+                one card per order, so nothing has to squeeze into a narrow column */}
+            <ul className="orders-cards divide-y divide-gray-100">
+              {orders.map((order) => (
+                <li key={order.id} className="p-4 sm:px-6 sm:py-5" data-order-card={order.id}>
+                  <div className="flex items-start justify-between gap-4">
+                    <div className="min-w-0"><ProductCell item={order.firstItem} /></div>
+                    <div className="flex-shrink-0 text-right">
+                      <p className="font-bold text-lg text-gray-900 leading-tight">{peso(order.total)}</p>
                       {order.service && order.service !== 'custom' && (
-                        <p className="text-xs text-gray-500 uppercase">{order.service}</p>
+                        <p className="text-xs text-gray-500 uppercase mt-0.5">{order.service}</p>
                       )}
-                    </td>
-                    <td className="px-6 py-4 w-32 text-center status-cell"><StatusPill order={order} /></td>
-                    <td className="px-6 py-4 w-32 text-center">
-                      <div className="flex items-center justify-center gap-2">
-                        <button type="button" onClick={() => setDetailsId(order.id)} className="view-order-details-btn bg-gray-100 hover:bg-gray-200 text-gray-700 px-3 py-1 rounded-lg text-xs font-medium transition-colors duration-200">
-                          Details
-                        </button>
-                        {order.paid ? (
-                          <button type="button" onClick={() => setPaymentId(order.paymentId)} className="view-payment-btn bg-emerald-100 hover:bg-emerald-200 text-emerald-700 px-3 py-1 rounded-lg text-xs font-medium transition-colors duration-200">
-                            Payment
-                          </button>
-                        ) : (
-                          <button type="button" disabled title="Customer not yet paid" className="bg-orange-50 text-orange-700 border border-orange-200 px-3 py-1 rounded-lg text-xs font-medium">
-                            Unpaid
-                          </button>
-                        )}
-                        {data.adminLevel === 2 && (
-                          <button
-                            type="button"
-                            onClick={() => setToDelete(order.id)}
-                            className="deleteOrderBtn bg-red-100 hover:bg-red-200 text-red-700 px-3 py-1 rounded-lg text-xs font-medium transition-colors duration-200"
-                          >
-                            Delete
-                          </button>
-                        )}
-                      </div>
-                    </td>
+                    </div>
+                  </div>
+                  <div className="mt-4 flex flex-wrap items-center justify-between gap-x-4 gap-y-3">
+                    <CustomerCell order={order} />
+                    <p className="text-sm text-gray-500">
+                      <span className="font-semibold text-gray-900">#{order.id}</span> · {formatDate(order.dateOrdered)}
+                    </p>
+                  </div>
+                  <div className="mt-4 flex flex-wrap items-center justify-between gap-3">
+                    <StatusPill order={order} />
+                    <OrderActions order={order} adminLevel={data.adminLevel} className="flex-wrap justify-end" {...actionHandlers} />
+                  </div>
+                </li>
+              ))}
+            </ul>
+
+            <div className="orders-table overflow-x-auto">
+              <table className="w-full">
+                <thead className="bg-gray-50 border-b border-gray-200">
+                  <tr>
+                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">PRODUCT NAME</th>
+                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider w-40">CUSTOMER NAME</th>
+                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider whitespace-nowrap w-32">ORDER ID</th>
+                    <th className="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider w-32">AMOUNT</th>
+                    <th className="px-6 py-3 text-center text-xs font-medium text-gray-500 uppercase tracking-wider w-32">STATUS</th>
+                    <th className="px-6 py-3 text-center text-xs font-medium text-gray-500 uppercase tracking-wider w-32">ACTION</th>
                   </tr>
-                ))}
-              </tbody>
-            </table>
-          </div>
+                </thead>
+                <tbody id="ordersTableBody" className="bg-white divide-y divide-gray-100">
+                  {orders.map((order) => (
+                    <tr key={order.id} className="hover:bg-gray-50 transition-all duration-200" data-order-id={order.id}>
+                      <td className="px-6 py-4"><ProductCell item={order.firstItem} /></td>
+                      <td className="px-6 py-4 w-40"><CustomerCell order={order} /></td>
+                      <td className="px-6 py-4 w-32">
+                        <p className="font-semibold text-gray-900">#{order.id}</p>
+                        <p className="text-sm text-gray-500 whitespace-nowrap">{formatDate(order.dateOrdered)}</p>
+                      </td>
+                      <td className="px-6 py-4 w-32 text-right">
+                        <p className="font-bold text-lg text-gray-900">{peso(order.total)}</p>
+                        {order.service && order.service !== 'custom' && (
+                          <p className="text-xs text-gray-500 uppercase">{order.service}</p>
+                        )}
+                      </td>
+                      <td className="px-6 py-4 w-32 text-center status-cell"><StatusPill order={order} /></td>
+                      <td className="px-6 py-4 w-32 text-center">
+                        <OrderActions order={order} adminLevel={data.adminLevel} className="justify-center" {...actionHandlers} />
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          </>
         )}
       </div>
 

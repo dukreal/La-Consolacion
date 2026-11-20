@@ -30,8 +30,10 @@ export default function AdminLayout() {
   }
 
   return (
-    <div className="admin-page min-h-screen overflow-hidden">
-      <header className="glass sticky top-0 z-50 px-4 sm:px-6 py-4 border-b border-gray-200">
+    // One screen tall: the top bar stays on top, and only the page area (and the sidebar, if its links ever
+    // do not fit) scrolls. No fixed heights, so the frame never ends up taller than the screen.
+    <div className="admin-page h-dvh flex flex-col overflow-hidden">
+      <header className="glass relative flex-none z-50 px-4 sm:px-6 py-4 border-b border-gray-200">
         <div className="flex items-center justify-between">
           <div className="flex items-center space-x-4">
             <div className="flex items-center space-x-3">
@@ -71,8 +73,8 @@ export default function AdminLayout() {
         </div>
       </header>
 
-      <div className="flex h-[calc(100dvh-80px)] overflow-hidden">
-        <aside className="hidden lg:block fixed top-[80px] left-0 w-72 h-[calc(100vh-80px)] glass p-6 border-r border-gray-200 overflow-y-auto">
+      <div className="flex flex-1 min-h-0">
+        <aside className="hidden lg:block w-72 flex-none glass p-6 border-r border-gray-200 overflow-y-auto overscroll-contain">
           <nav className="space-y-2">
             {NAV.map(({ to, label, icon: Icon, match }) => (
               <Link
@@ -98,7 +100,7 @@ export default function AdminLayout() {
         </aside>
 
         {/* Below 1024px the page uses the full width and leaves room for the bottom bar */}
-        <main className="flex-1 min-w-0 overflow-y-auto h-[calc(100dvh-80px)] px-4 pt-6 pb-[calc(6rem+env(safe-area-inset-bottom))] sm:px-6 lg:ml-72 lg:p-8">
+        <main className="flex-1 min-w-0 overflow-y-auto overscroll-contain px-4 pt-6 pb-[calc(6rem+env(safe-area-inset-bottom))] sm:px-6 lg:p-8">
           <Outlet />
         </main>
       </div>

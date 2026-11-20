@@ -55,3 +55,17 @@
   scrollbar-width: thin;
   scrollbar-color: #cbd5e1 #f1f5f9;
 }
+
+/* Orders: cards on narrower screens, the table only when it really fits. The breakpoint is in em so it
+   moves with the browser's text size: 96em is 1536px at normal text and wider when text is set larger. */
+.admin-page .orders-table {
+  display: none;
+}
+@media (min-width: 96em) {
+  .admin-page .orders-cards {
+    display: none;
+  }
+  .admin-page .orders-table {
+    display: block;
+  }
+}
