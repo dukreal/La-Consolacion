@@ -231,7 +231,7 @@ export default function OrderDetailsModal({ orderId, onClose, onStatusChange }) 
                       id="modalUpdateStatusBtn"
                       onClick={handleUpdate}
                       disabled={!order || !updateEnabled || busy}
-                      className={`${sky} ${buttonBase} ${!order || !updateEnabled ? 'opacity-50 cursor-not-allowed' : 'transform hover:-translate-y-0.5'}`}
+                      className={`${sky} ${buttonBase} ${!order || !updateEnabled ? 'opacity-50 cursor-not-allowed' : ''}`}
                     >
                       {busy && updateEnabled ? 'Updating...' : updateLabel}
                     </button>
@@ -241,7 +241,7 @@ export default function OrderDetailsModal({ orderId, onClose, onStatusChange }) 
                         id="modalConfirmOrderBtn"
                         onClick={() => setAskConfirm(true)}
                         disabled={busy}
-                        className={`${emerald} ${buttonBase} transform hover:-translate-y-0.5 disabled:opacity-75`}
+                        className={`${emerald} ${buttonBase} disabled:opacity-75`}
                       >
                         {busy ? 'Confirming...' : 'Confirm Order'}
                       </button>

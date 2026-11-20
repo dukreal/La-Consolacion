@@ -45,7 +45,7 @@ export default function AdminLayout() {
             <div className="relative" style={{ zIndex: 9999 }}>
               <Link
                 to="/profile"
-                className="w-9 h-9 rounded-full flex items-center justify-center hover:scale-105 transition-transform cursor-pointer border-2 border-white shadow focus:outline-none focus:ring-2 focus:ring-blue-400"
+                className="w-9 h-9 rounded-full flex items-center justify-center hover:shadow-md transition-shadow cursor-pointer border-2 border-white shadow focus:outline-none focus:ring-2 focus:ring-blue-400"
                 style={{ background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)' }}
               >
                 {photo ? (

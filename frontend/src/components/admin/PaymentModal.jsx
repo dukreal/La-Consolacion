@@ -30,7 +30,7 @@ function Screenshot({ payment, onEnlarge }) {
           src={payment.imageUrl}
           alt="Payment Screenshot"
           onClick={onEnlarge}
-          className="w-full rounded-lg shadow-lg border border-gray-200 cursor-zoom-in payment-modal-image transition-transform duration-200 group-hover:scale-[1.02]"
+          className="w-full rounded-lg shadow-lg border border-gray-200 cursor-zoom-in payment-modal-image"
         />
         <div className="absolute inset-0 bg-black bg-opacity-0 group-hover:bg-opacity-10 rounded-lg transition-all duration-200 flex items-center justify-center pointer-events-none">
           <div className="opacity-0 group-hover:opacity-100 transition-opacity duration-200">

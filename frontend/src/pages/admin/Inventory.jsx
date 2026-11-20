@@ -31,7 +31,7 @@ function ProductCard({ product, canDelete, onDelete }) {
 
   return (
     <div
-      className="product-card glass bg-white/60 backdrop-blur-md border border-blue-100 rounded-2xl shadow-xl hover:shadow-2xl hover:-translate-y-1 transition-all duration-300 p-6 flex flex-col h-full relative overflow-hidden"
+      className="product-card glass bg-white/60 backdrop-blur-md border border-blue-100 rounded-2xl shadow-xl hover:shadow-2xl transition-shadow duration-300 p-6 flex flex-col h-full relative overflow-hidden"
       data-type={product.type.toLowerCase()}
     >
       <div
@@ -42,7 +42,7 @@ function ProductCard({ product, canDelete, onDelete }) {
         <img
           src={imageSrc}
           alt={product.name}
-          className="object-cover w-full h-full border-4 border-white rounded-xl shadow-md transition-transform duration-200 hover:scale-105"
+          className="object-cover w-full h-full border-4 border-white rounded-xl shadow-md"
           style={{ display: 'block' }}
         />
       </div>
