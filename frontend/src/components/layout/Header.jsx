@@ -141,7 +141,7 @@ export default function Header({ sticky = false }) {
 
               <div
                 style={{ right: menuShift, width: 'min(18rem, calc(100vw - 32px))' }}
-                className={`absolute mt-3 max-h-[calc(100vh-96px)] overflow-y-auto bg-white rounded-2xl shadow-2xl border border-gray-100 py-2 z-50 transform transition-all duration-300 ease-out backdrop-blur-sm ${
+                className={`absolute mt-3 max-h-[calc(100vh-96px)] overflow-y-auto bg-white rounded-2xl shadow-2xl border border-gray-100 pb-2 z-50 transform transition-all duration-300 ease-out backdrop-blur-sm ${
                   open ? 'opacity-100 scale-100 visible' : 'opacity-0 scale-95 invisible pointer-events-none'
                 }`}
               >
