@@ -40,7 +40,7 @@ function MenuLink({ to, icon, label, color = 'blue', extraClass = '', onClick })
     <Link
       to={to}
       onClick={onClick}
-      className={`flex items-center px-4 py-3 text-sm text-gray-700 hover:bg-gray-50 rounded-xl transition-all duration-200 group mx-1 ${extraClass}`}
+      className={`flex items-center px-4 py-3 text-sm text-gray-700 hover:bg-[#2474b6]/10 rounded-xl transition-all duration-200 group mx-1 ${extraClass}`}
     >
       <div className={`w-8 h-8 rounded-lg flex items-center justify-center mr-3 ${tints[color].box}`}>
         <i className={`bx ${icon} text-base ${tints[color].icon}`}></i>
@@ -178,10 +178,10 @@ export default function Header({ sticky = false }) {
                       <MenuLink to="/shop?openCart=true" icon="bx-cart" label="My Cart" extraClass="mt-1" onClick={close} />
                       <MenuLink to="/shop?openOrderHistory=true" icon="bx-history" label="Order History" color="green" extraClass="mt-1" onClick={close} />
 
-                      <div className="border-t border-gray-100 mt-2 pt-2 px-2">
+                      <div className="border-t border-gray-100 mt-2 pt-2 px-1">
                         <button
                           onClick={handleLogout}
-                          className="w-full flex items-center px-4 py-3 text-sm text-red-600 hover:bg-red-50 rounded-xl transition-all duration-200 group mx-1"
+                          className="w-full flex items-center px-4 py-3 text-sm text-red-600 hover:bg-red-100 rounded-xl transition-all duration-200 group"
                         >
                           <div className={`w-8 h-8 rounded-lg flex items-center justify-center mr-3 ${tints.red.box}`}>
                             <i className={`bx bx-log-out text-base ${tints.red.icon}`}></i>
