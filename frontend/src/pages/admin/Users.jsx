@@ -257,7 +257,7 @@ export default function Users() {
         <p className="text-gray-600 text-sm sm:text-lg">Manage and view all users and admins</p>
       </div>
 
-      <div className="bg-white p-3 sm:p-5 rounded-2xl shadow-lg border border-blue-100 mb-8">
+      <div className="bg-white p-3 sm:p-5 rounded-2xl shadow-lg border border-blue-100">
         {loadError && <div className="mb-4 p-3 bg-red-50 border border-red-200 rounded-lg text-red-700">{loadError}</div>}
 
         {/* Search with Clear beside it; the role chips share the line when there is room (they slide sideways on phones) */}

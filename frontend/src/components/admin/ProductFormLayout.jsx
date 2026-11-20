@@ -27,7 +27,7 @@ const saveClass =
 export default function ProductFormLayout({ title, subtitle, error, notice, photo, aside, saving, savingLabel, submitLabel, onSubmit, children }) {
   const label = saving && savingLabel ? savingLabel : submitLabel
   return (
-    <form onSubmit={onSubmit} className="pb-[4.5rem] md:pb-0">
+    <form onSubmit={onSubmit} className="pb-[calc(4.25rem+1px)] md:pb-0">
       <div className="flex items-start justify-between gap-4 mb-6 sm:mb-8">
         <div className="min-w-0">
           <h1 className="text-[1.375rem] leading-tight sm:text-4xl font-bold text-gray-800 sm:mb-2" style={{ letterSpacing: '-0.01em' }}>{title}</h1>

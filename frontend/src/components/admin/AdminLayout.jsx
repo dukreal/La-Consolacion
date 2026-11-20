@@ -99,8 +99,9 @@ export default function AdminLayout() {
           </div>
         </aside>
 
-        {/* Below 1024px the page uses the full width and leaves room for the bottom bar */}
-        <main className="flex-1 min-w-0 overflow-y-auto overscroll-contain px-4 pt-6 pb-[calc(6rem+env(safe-area-inset-bottom))] sm:px-6 lg:p-8">
+        {/* Below 1024px the page uses the full width and leaves room for the bottom bar (3.125rem + 12px tall).
+            Every page ends with the same space as its sides: 16px on phones, 24px on tablets, 32px on desktop. */}
+        <main className="flex-1 min-w-0 overflow-y-auto overscroll-contain px-4 pt-6 pb-[calc(3.125rem+12px+1rem+env(safe-area-inset-bottom))] sm:px-6 sm:pb-[calc(3.125rem+12px+1.5rem+env(safe-area-inset-bottom))] lg:p-8">
           <Outlet />
         </main>
       </div>
