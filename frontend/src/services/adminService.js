@@ -8,8 +8,9 @@ export async function getOverview() {
 }
 
 // One page (8 rows) of activity logs: { logs, page, perPage, total, totalPages }
-export async function getLogs(page = 1) {
-  const data = await api(`/admin/logs.php?page=${page}`)
+// type: '' (all), 'orders', 'products' or 'users' (filters across all logs, on the server)
+export async function getLogs(page = 1, type = '') {
+  const data = await api(`/admin/logs.php?page=${page}${type ? `&type=${type}` : ''}`)
   if (!data.success) throw new Error(data.message || data.error || 'Could not load logs')
   return data
 }
