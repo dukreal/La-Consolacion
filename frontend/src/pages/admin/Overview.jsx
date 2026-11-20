@@ -166,7 +166,12 @@ export default function Overview() {
 
   return (
     <>
-      {/* Welcome Section (hidden on phones, where the counters come first) */}
+      {/* Phones: a plain "Overview" title, same size and spacing as the Inventory and Orders titles */}
+      <div className="sm:hidden flex items-center min-h-10 mb-5">
+        <h1 className="text-[1.375rem] leading-tight font-bold text-gray-800" style={{ letterSpacing: '-0.01em' }}>Overview</h1>
+      </div>
+
+      {/* Welcome Section (tablets and up) */}
       <div className="hidden sm:block mb-8">
         <h1 className="text-4xl font-bold text-gray-800 mb-2">Welcome back, {data?.username || 'Admin'}!</h1>
         <p className="text-gray-600 text-lg">Here&apos;s what&apos;s happening with your jewelry business today.</p>
