@@ -62,6 +62,18 @@ export default function PremadeProductForm({ title, subtitle, submitLabel, varia
       photo={
         <ProductImageField variant={variant} currentUrl={imageUrl} file={image} onChange={setImage} editable={!stockOnly} required={variant === 'add'} />
       }
+      aside={
+        <FormSection title="Price and stock" grid="sm:grid-cols-2 xl:grid-cols-1">
+          <label className={labelClass}>
+            Price (₱)
+            <input type="number" name="itemPrice" step="0.01" min="0" placeholder="0.00" value={form.price} onChange={set('price')} disabled={stockOnly} required className={fieldClass} />
+          </label>
+          <label className={labelClass}>
+            Stock
+            <input type="number" name="itemStock" min="0" placeholder="0" value={form.stock} onChange={set('stock')} required className={fieldClass} />
+          </label>
+        </FormSection>
+      }
     >
       <FormSection title="Details">
         <label className={labelClass}>
@@ -84,16 +96,6 @@ export default function PremadeProductForm({ title, subtitle, submitLabel, varia
         <label className={`${labelClass} sm:col-span-2`}>
           Description
           <textarea name="itemDescription" rows={2} value={form.description} onChange={set('description')} disabled={stockOnly} className={textareaClass} />
-        </label>
-      </FormSection>
-      <FormSection title="Price and stock">
-        <label className={labelClass}>
-          Price (₱)
-          <input type="number" name="itemPrice" step="0.01" min="0" placeholder="0.00" value={form.price} onChange={set('price')} disabled={stockOnly} required className={fieldClass} />
-        </label>
-        <label className={labelClass}>
-          Stock
-          <input type="number" name="itemStock" min="0" placeholder="0" value={form.stock} onChange={set('stock')} required className={fieldClass} />
         </label>
       </FormSection>
     </ProductFormLayout>

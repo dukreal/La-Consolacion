@@ -67,25 +67,10 @@ export default function CustomOrderForm({ mode, title, subtitle, submitLabel, in
       submitLabel={submitLabel}
       onSubmit={handleSubmit}
       photo={<ProductImageField variant={mode} currentUrl={imageUrl} file={image} onChange={setImage} />}
-    >
-      <FormSection title="Customer">
-        <label className={labelClass}>
-          Customer Name
-          <input type="text" name="customerName" placeholder="Full name" value={form.customerName} onChange={set('customerName')} required className={fieldClass} />
-        </label>
-        <label className={labelClass}>
-          Email
-          <input type="email" name="customerEmail" placeholder="name@gmail.com" value={form.email} onChange={set('email')} required className={fieldClass} />
-        </label>
-      </FormSection>
-      <FormSection title="Piece" threeWide>
-        <label className={`${labelClass} sm:col-span-2 xl:col-span-3`}>
-          Product Name
-          <input type="text" name="productName" placeholder="e.g. Engraved Name Pendant" value={form.productName} onChange={set('productName')} required className={fieldClass} />
-        </label>
-        {isAdd ? (
-          <>
-            {/* On the old page this dropdown was required but its value was never saved (custom products are type "custom") */}
+      aside={
+        <FormSection title={isAdd ? 'Price and stock' : 'Price, stock and status'} grid="sm:grid-cols-3 xl:grid-cols-1">
+          {isAdd && (
+            // On the old page this dropdown was required but its value was never saved (custom products are type "custom")
             <label className={labelClass}>
               Product Type
               <select name="productType" value={form.productType} onChange={set('productType')} required className={fieldClass}>
@@ -96,13 +81,10 @@ export default function CustomOrderForm({ mode, title, subtitle, submitLabel, in
                 <option value="Bracelet">Bracelet</option>
               </select>
             </label>
-            {priceField}
-            {stockField}
-          </>
-        ) : (
-          <>
-            {priceField}
-            {stockField}
+          )}
+          {priceField}
+          {stockField}
+          {!isAdd && (
             <label className={labelClass}>
               Custom Order Status
               <select name="customStatus" value={form.status} onChange={set('status')} required className={fieldClass}>
@@ -111,9 +93,24 @@ export default function CustomOrderForm({ mode, title, subtitle, submitLabel, in
                 ))}
               </select>
             </label>
-          </>
-        )}
-        <label className={`${labelClass} sm:col-span-2 xl:col-span-3`}>
+          )}
+        </FormSection>
+      }
+    >
+      <FormSection title="Details">
+        <label className={labelClass}>
+          Customer Name
+          <input type="text" name="customerName" placeholder="Full name" value={form.customerName} onChange={set('customerName')} required className={fieldClass} />
+        </label>
+        <label className={labelClass}>
+          Email
+          <input type="email" name="customerEmail" placeholder="name@gmail.com" value={form.email} onChange={set('email')} required className={fieldClass} />
+        </label>
+        <label className={`${labelClass} sm:col-span-2`}>
+          Product Name
+          <input type="text" name="productName" placeholder="e.g. Engraved Name Pendant" value={form.productName} onChange={set('productName')} required className={fieldClass} />
+        </label>
+        <label className={`${labelClass} sm:col-span-2`}>
           Description
           <textarea name="customDescription" rows={2} value={form.description} onChange={set('description')} required className={textareaClass} />
         </label>
