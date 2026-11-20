@@ -1,4 +1,4 @@
-import { CheckCircle, Clock, Gem, Package, PlusCircle, Settings, ShoppingBag, ShoppingCart, User, X } from 'lucide-react'
+import { CheckCircle, Clock, Gem, Package, PlusCircle, Settings, ShoppingBag, ShoppingCart, Trash2, User, X } from 'lucide-react'
 import { useCallback, useEffect, useState } from 'react'
 import { Link, useLocation, useNavigate } from 'react-router-dom'
 import IconModal, { OkButton } from '../../components/admin/IconModal'
@@ -39,61 +39,91 @@ function StatCard({ label, value, icon: Icon, colors, stat }) {
   )
 }
 
-function ProductCell({ item }) {
+// The product picture (or a placeholder). Never squeezed.
+function ProductThumb({ item, size = 'w-12 h-12' }) {
   if (!item) {
     return (
-      <div className="flex items-center space-x-3">
-        <div className="w-12 h-12 flex-shrink-0 bg-gray-200 rounded-lg flex items-center justify-center">
-          <Package className="w-6 h-6 text-gray-400" />
-        </div>
-        <div>
-          <p className="font-semibold text-gray-900">No Product</p>
-          <p className="text-sm text-gray-500">No items found</p>
-        </div>
+      <div className={`${size} flex-shrink-0 bg-gray-200 rounded-lg flex items-center justify-center`}>
+        <Package className="w-6 h-6 text-gray-400" />
+      </div>
+    )
+  }
+  if (item.image) {
+    return (
+      <div className={`${size} flex-shrink-0 rounded-lg overflow-hidden shadow-sm bg-gray-100`}>
+        <img src={`/uploads/${item.folder}/${item.image}`} alt={item.name} className="w-full h-full object-cover" />
       </div>
     )
   }
   return (
+    <div className={`${size} flex-shrink-0 bg-gradient-to-br from-violet-400 to-violet-500 rounded-lg flex items-center justify-center shadow-sm`}>
+      <Gem className="w-6 h-6 text-white" />
+    </div>
+  )
+}
+
+// Table: picture, name and "Jewelry Product"
+function ProductCell({ item }) {
+  return (
     <div className="flex items-center space-x-3">
-      {item.image ? (
-        <div className="w-12 h-12 flex-shrink-0 rounded-lg overflow-hidden shadow-sm bg-gray-100">
-          <img src={`/uploads/${item.folder}/${item.image}`} alt={item.name} className="w-full h-full object-cover" />
-        </div>
-      ) : (
-        <div className="w-12 h-12 flex-shrink-0 bg-gradient-to-br from-violet-400 to-violet-500 rounded-lg flex items-center justify-center shadow-sm">
-          <Gem className="w-6 h-6 text-white" />
-        </div>
-      )}
+      <ProductThumb item={item} />
       <div>
-        <p className="font-semibold text-gray-900">{item.name}</p>
-        <p className="text-sm text-gray-500">Jewelry Product</p>
+        <p className="font-semibold text-gray-900">{item ? item.name : 'No Product'}</p>
+        <p className="text-sm text-gray-500">{item ? 'Jewelry Product' : 'No items found'}</p>
       </div>
     </div>
   )
 }
 
-function CustomerCell({ order }) {
-  let subtitle = <span className="text-gray-500">Customer</span>
-  if (order.isWalkIn) subtitle = <span className="text-blue-600">Walk-In</span>
-  else if (order.role === 'admin') subtitle = <span className="text-purple-600">Admin</span>
+// Who placed the order: Walk-In, Admin or Customer (with its color)
+function customerKind(order) {
+  if (order.isWalkIn) return { label: 'Walk-In', color: 'text-blue-600' }
+  if (order.role === 'admin') return { label: 'Admin', color: 'text-purple-600' }
+  return { label: 'Customer', color: 'text-gray-500' }
+}
 
+function CustomerAvatar({ order, size = 'w-10 h-10', iconSize = 'w-5 h-5' }) {
+  if (!order.isWalkIn && order.profileImage) {
+    return <img src={`/uploads/profile/${order.profileImage}`} alt="" className={`${size} flex-shrink-0 rounded-full object-cover bg-gray-100`} />
+  }
+  return (
+    <div
+      className={`${size} flex-shrink-0 rounded-full flex items-center justify-center bg-gradient-to-br ${
+        order.isWalkIn ? 'from-blue-600 to-indigo-600' : 'from-slate-400 to-slate-500'
+      } text-white shadow-sm`}
+    >
+      {order.isWalkIn ? <ShoppingBag className={iconSize} /> : <User className={iconSize} />}
+    </div>
+  )
+}
+
+// Table: avatar, name and Walk-In / Admin / Customer under it
+function CustomerCell({ order }) {
+  const kind = customerKind(order)
   return (
     <div className="flex items-center gap-4">
-      {!order.isWalkIn && order.profileImage ? (
-        <img src={`/uploads/profile/${order.profileImage}`} alt="Profile" className="w-10 h-10 flex-shrink-0 rounded-full object-cover bg-gray-100" />
-      ) : (
-        <div
-          className={`w-10 h-10 flex-shrink-0 rounded-full flex items-center justify-center bg-gradient-to-br ${
-            order.isWalkIn ? 'from-blue-600 to-indigo-600' : 'from-slate-400 to-slate-500'
-          } text-white shadow-sm`}
-        >
-          {order.isWalkIn ? <ShoppingBag className="w-5 h-5" /> : <User className="w-5 h-5" />}
-        </div>
-      )}
+      <CustomerAvatar order={order} />
       <div>
         <div className="font-bold text-gray-900 leading-tight">{order.isWalkIn ? 'Walk-In Sale' : order.username}</div>
-        <div className="text-xs font-semibold uppercase tracking-wider">{subtitle}</div>
+        <div className={`text-xs font-semibold uppercase tracking-wider ${kind.color}`}>{kind.label}</div>
       </div>
+    </div>
+  )
+}
+
+// Cards: one small line, "dukdakdok · Customer" (walk-ins just say "Walk-In Sale")
+function CustomerLine({ order }) {
+  const kind = customerKind(order)
+  return (
+    <div className="mt-1 flex items-center gap-1.5 min-w-0 text-sm text-gray-600">
+      <CustomerAvatar order={order} size="w-5 h-5" iconSize="w-3 h-3" />
+      {order.isWalkIn ? (
+        <span className={`truncate font-medium ${kind.color}`}>Walk-In Sale</span>
+      ) : (
+        <span className="truncate">
+          <span className="font-medium text-gray-800">{order.username}</span> · <span className={kind.color}>{kind.label}</span>
+        </span>
+      )}
     </div>
   )
 }
@@ -110,30 +140,43 @@ function StatusPill({ order }) {
 }
 
 // Details / Payment (or Unpaid) / Delete. Used by the table and by the order cards.
-function OrderActions({ order, adminLevel, onDetails, onPayment, onDelete, className = '' }) {
+// Cards: taller buttons (easier to tap), sharing the width on phones, and Delete as a separate trash icon.
+function OrderActions({ order, adminLevel, onDetails, onPayment, onDelete, card = false, className = '' }) {
+  const size = card ? 'h-9 px-4 text-sm flex-1 sm:flex-none' : 'px-3 py-1 text-xs'
   return (
     <div className={`flex items-center gap-2 ${className}`}>
-      <button type="button" onClick={() => onDetails(order.id)} className="view-order-details-btn bg-gray-100 hover:bg-gray-200 text-gray-700 px-3 py-1 rounded-lg text-xs font-medium transition-colors duration-200">
+      <button type="button" onClick={() => onDetails(order.id)} className={`view-order-details-btn ${size} bg-gray-100 hover:bg-gray-200 text-gray-700 rounded-lg font-medium transition-colors duration-200`}>
         Details
       </button>
       {order.paid ? (
-        <button type="button" onClick={() => onPayment(order.paymentId)} className="view-payment-btn bg-emerald-100 hover:bg-emerald-200 text-emerald-700 px-3 py-1 rounded-lg text-xs font-medium transition-colors duration-200">
+        <button type="button" onClick={() => onPayment(order.paymentId)} className={`view-payment-btn ${size} bg-emerald-100 hover:bg-emerald-200 text-emerald-700 rounded-lg font-medium transition-colors duration-200`}>
           Payment
         </button>
       ) : (
-        <button type="button" disabled title="Customer not yet paid" className="bg-orange-50 text-orange-700 border border-orange-200 px-3 py-1 rounded-lg text-xs font-medium">
+        <button type="button" disabled title="Customer not yet paid" className={`${size} bg-orange-50 text-orange-700 border border-orange-200 rounded-lg font-medium`}>
           Unpaid
         </button>
       )}
-      {adminLevel === 2 && (
-        <button
-          type="button"
-          onClick={() => onDelete(order.id)}
-          className="deleteOrderBtn bg-red-100 hover:bg-red-200 text-red-700 px-3 py-1 rounded-lg text-xs font-medium transition-colors duration-200"
-        >
-          Delete
-        </button>
-      )}
+      {adminLevel === 2 &&
+        (card ? (
+          <button
+            type="button"
+            onClick={() => onDelete(order.id)}
+            aria-label={`Delete order #${order.id}`}
+            title="Delete"
+            className="deleteOrderBtn w-9 h-9 flex-shrink-0 flex items-center justify-center bg-red-100 hover:bg-red-200 text-red-700 rounded-lg transition-colors duration-200"
+          >
+            <Trash2 className="w-4 h-4" />
+          </button>
+        ) : (
+          <button
+            type="button"
+            onClick={() => onDelete(order.id)}
+            className="deleteOrderBtn bg-red-100 hover:bg-red-200 text-red-700 px-3 py-1 rounded-lg text-xs font-medium transition-colors duration-200"
+          >
+            Delete
+          </button>
+        ))}
     </div>
   )
 }
@@ -231,21 +274,20 @@ export default function Orders() {
 
   return (
     <>
-      {/* Header */}
-      <div className="mb-8 flex flex-col md:flex-row md:items-center md:justify-between gap-4">
-        <div>
-          <h1 className="text-4xl font-bold text-gray-800 mb-2">Order Management</h1>
-          <p className="text-gray-600 text-lg">Manage and track all customer orders</p>
+      {/* Header: title and the Walk-in button side by side (a shorter label on phones) */}
+      <div className="mb-6 sm:mb-8 flex items-center justify-between gap-3">
+        <div className="min-w-0">
+          <h1 className="text-[1.375rem] leading-tight sm:text-4xl font-bold text-gray-800 sm:mb-2">Order Management</h1>
+          <p className="text-gray-600 text-sm sm:text-lg">Manage and track all customer orders</p>
         </div>
-        <div>
-          <Link
-            to="/admin/walk-in"
-            className="inline-flex items-center gap-2 px-6 py-3 rounded-xl bg-gradient-to-r from-emerald-500 to-blue-500 text-white font-bold shadow-lg hover:from-emerald-600 hover:to-blue-600 transition-all text-lg"
-          >
-            <PlusCircle className="w-6 h-6" />
-            Walk-in Order
-          </Link>
-        </div>
+        <Link
+          to="/admin/walk-in"
+          className="flex-shrink-0 inline-flex items-center gap-1.5 sm:gap-2 px-3 py-2 sm:px-6 sm:py-3 rounded-xl bg-[#22306a] hover:bg-[#1a2550] text-white font-bold shadow-lg transition-colors duration-200 text-sm sm:text-lg"
+        >
+          <PlusCircle className="w-5 h-5 sm:w-6 sm:h-6" />
+          <span className="sm:hidden">Walk-in</span>
+          <span className="hidden sm:inline">Walk-in Order</span>
+        </Link>
       </div>
 
       {walkinToast && <WalkInToast onClose={closeWalkinToast} />}
@@ -260,9 +302,9 @@ export default function Orders() {
 
       {/* Table */}
       <div className="bg-white rounded-2xl shadow-lg overflow-hidden">
-        <div className="bg-gradient-to-r from-slate-50 to-sky-50 px-6 py-4 border-b border-gray-200">
-          <h2 className="text-2xl font-bold text-gray-800">Order Details</h2>
-          <p className="text-gray-600">Manage individual order status and details</p>
+        <div className="bg-gradient-to-r from-slate-50 to-sky-50 px-4 py-3 sm:px-6 sm:py-4 border-b border-gray-200">
+          <h2 className="text-lg sm:text-2xl font-bold text-gray-800">Order Details</h2>
+          <p className="text-sm sm:text-base text-gray-600">Manage individual order status and details</p>
         </div>
 
         {data && orders.length === 0 ? (
@@ -280,26 +322,27 @@ export default function Orders() {
             <ul className="orders-cards divide-y divide-gray-100">
               {orders.map((order) => (
                 <li key={order.id} className="p-4 sm:px-6 sm:py-5" data-order-card={order.id}>
-                  <div className="flex items-start justify-between gap-4">
-                    <div className="min-w-0"><ProductCell item={order.firstItem} /></div>
-                    <div className="flex-shrink-0 text-right">
-                      <p className="font-bold text-lg text-gray-900 leading-tight">{peso(order.total)}</p>
-                      {order.service && order.service !== 'custom' && (
-                        <p className="text-xs text-gray-500 uppercase mt-0.5">{order.service}</p>
-                      )}
-                    </div>
+                <div className="flex items-center justify-between gap-3">
+                  <p className="text-sm text-gray-500 whitespace-nowrap">
+                    <span className="font-semibold text-gray-900">#{order.id}</span> · {formatDate(order.dateOrdered)}
+                  </p>
+                  <StatusPill order={order} />
+                </div>
+                <div className="mt-3 flex items-start gap-3">
+                  <ProductThumb item={order.firstItem} size="w-11 h-11 sm:w-12 sm:h-12" />
+                  <div className="flex-1 min-w-0">
+                    <p className="font-semibold text-gray-900 leading-snug">{order.firstItem ? order.firstItem.name : 'No Product'}</p>
+                    <CustomerLine order={order} />
                   </div>
-                  <div className="mt-4 flex flex-wrap items-center justify-between gap-x-4 gap-y-3">
-                    <CustomerCell order={order} />
-                    <p className="text-sm text-gray-500">
-                      <span className="font-semibold text-gray-900">#{order.id}</span> · {formatDate(order.dateOrdered)}
-                    </p>
+                  <div className="flex-shrink-0 text-right">
+                    <p className="font-bold text-base sm:text-lg text-gray-900 leading-tight">{peso(order.total)}</p>
+                    {order.service && order.service !== 'custom' && (
+                      <p className="text-xs text-gray-500 uppercase mt-0.5">{order.service}</p>
+                    )}
                   </div>
-                  <div className="mt-4 flex flex-wrap items-center justify-between gap-3">
-                    <StatusPill order={order} />
-                    <OrderActions order={order} adminLevel={data.adminLevel} className="flex-wrap justify-end" {...actionHandlers} />
-                  </div>
-                </li>
+                </div>
+                <OrderActions order={order} adminLevel={data.adminLevel} card className="mt-3 sm:justify-end" {...actionHandlers} />
+              </li>
               ))}
             </ul>
 
