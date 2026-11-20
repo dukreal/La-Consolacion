@@ -166,8 +166,8 @@ export default function Overview() {
 
   return (
     <>
-      {/* Welcome Section */}
-      <div className="mb-8">
+      {/* Welcome Section (hidden on phones, where the counters come first) */}
+      <div className="hidden sm:block mb-8">
         <h1 className="text-4xl font-bold text-gray-800 mb-2">Welcome back, {data?.username || 'Admin'}!</h1>
         <p className="text-gray-600 text-lg">Here&apos;s what&apos;s happening with your jewelry business today.</p>
       </div>
