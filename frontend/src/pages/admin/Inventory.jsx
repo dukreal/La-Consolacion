@@ -183,8 +183,9 @@ export default function Inventory() {
 
   return (
     <>
-      {/* Title with the add buttons beside it (shorter labels on phones) */}
-      <div className="flex items-center justify-between gap-3 mb-5 sm:mb-6">
+      {/* Title with the add buttons beside it (shorter labels on phones). On phones the line under the title
+          sits below this row, using the full width, because the buttons leave too little room beside the title. */}
+      <div className="flex items-center justify-between gap-3 mb-1 sm:mb-6">
         <div className="min-w-0">
           <h1 className="text-[1.375rem] leading-tight sm:text-4xl font-bold text-gray-800 sm:mb-2" style={{ letterSpacing: '-0.01em' }}>Inventory</h1>
           <p className="hidden sm:block text-gray-600 text-lg">Manage and track all products in your inventory</p>
@@ -210,6 +211,7 @@ export default function Inventory() {
           </div>
         )}
       </div>
+      <p className="sm:hidden mb-6 text-gray-600 text-sm">Manage and track all products in your inventory</p>
 
       {/* Search, the Premade / Custom switch and the type chips share one line when there is room; otherwise the
           chips (and on narrow phones the switch too) move to the next line. The chips slide sideways on phones. */}
