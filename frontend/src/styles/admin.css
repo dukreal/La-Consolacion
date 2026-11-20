@@ -82,3 +82,16 @@
     grid-template-columns: repeat(4, minmax(0, 1fr));
   }
 }
+
+/* Users: cards on narrower screens, the table from 80em (1280px at normal text, wider with larger text) */
+.admin-page .users-table {
+  display: none;
+}
+@media (min-width: 80em) {
+  .admin-page .users-cards {
+    display: none;
+  }
+  .admin-page .users-table {
+    display: block;
+  }
+}
