@@ -183,37 +183,33 @@ export default function Inventory() {
 
   return (
     <>
-      {/* Title with the add buttons beside it (shorter labels on phones). On phones the line under the title
-          sits below this row, using the full width, because the buttons leave too little room beside the title.
-          The 40px buttons make this row taller than the title, so on phones it moves up 6px to put the title
-          at the same height as the Overview and Orders titles. */}
-      <div className="flex items-center justify-between gap-3 -mt-1.5 sm:mt-0 mb-1 sm:mb-8">
+      {/* Title and subtitle laid out exactly like the Overview and Orders pages. The add buttons sit beside them
+          from 640px; on phones there is no room for two buttons beside the title, so they get their own row under
+          the subtitle, sharing the width. */}
+      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 sm:gap-3 mb-6 sm:mb-8">
         <div className="min-w-0">
           <h1 className="text-[1.375rem] leading-tight sm:text-4xl font-bold text-gray-800 sm:mb-2" style={{ letterSpacing: '-0.01em' }}>Inventory</h1>
-          <p className="hidden sm:block text-gray-600 text-lg">Manage and track all products in your inventory</p>
+          <p className="text-gray-600 text-sm sm:text-lg">Manage and track all products in your inventory</p>
         </div>
         {isSuperAdmin && (
-          <div className="flex gap-2 flex-shrink-0">
+          <div className="grid grid-cols-2 gap-2 sm:flex sm:flex-shrink-0">
             <Link
               to="/admin/inventory/add"
-              className="inline-flex items-center gap-1.5 h-10 sm:h-11 px-3 sm:px-5 rounded-xl bg-[#22306a] hover:bg-[#1a2550] text-white text-sm sm:text-base font-bold shadow-md transition-colors"
+              className="inline-flex items-center justify-center gap-1.5 h-10 sm:h-11 px-3 sm:px-5 rounded-xl bg-[#22306a] hover:bg-[#1a2550] text-white text-sm sm:text-base font-bold shadow-md transition-colors whitespace-nowrap"
             >
               <Plus className="w-4 h-4 sm:w-5 sm:h-5" />
-              <span className="sm:hidden">Premade</span>
-              <span className="hidden sm:inline">Add Premade</span>
+              Add Premade
             </Link>
             <Link
               to="/admin/inventory/add-custom"
-              className="inline-flex items-center gap-1.5 h-10 sm:h-11 px-3 sm:px-5 rounded-xl border-[1.5px] border-[#22306a] bg-white text-[#22306a] text-sm sm:text-base font-bold hover:bg-[#f5f6fa] transition-colors"
+              className="inline-flex items-center justify-center gap-1.5 h-10 sm:h-11 px-3 sm:px-5 rounded-xl border-[1.5px] border-[#22306a] bg-white text-[#22306a] text-sm sm:text-base font-bold hover:bg-[#f5f6fa] transition-colors whitespace-nowrap"
             >
               <Plus className="w-4 h-4 sm:w-5 sm:h-5" />
-              <span className="sm:hidden">Custom</span>
-              <span className="hidden sm:inline">Add Custom</span>
+              Add Custom
             </Link>
           </div>
         )}
       </div>
-      <p className="sm:hidden mb-6 text-gray-600 text-sm">Manage and track all products in your inventory</p>
 
       {/* Search, the Premade / Custom switch and the type chips share one line when there is room; otherwise the
           chips (and on narrow phones the switch too) move to the next line. The chips slide sideways on phones. */}
