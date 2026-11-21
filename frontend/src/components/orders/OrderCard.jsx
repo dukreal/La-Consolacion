@@ -63,7 +63,7 @@ export default function OrderCard({ order, onViewDetails, onCancel }) {
           <div className="flex items-center gap-2 -ml-3">
             <button
               onClick={() => onViewDetails(order.order_id)}
-              className="px-3 py-2 text-green-600 hover:text-green-700 hover:bg-green-50 rounded-lg transition-all duration-200 text-sm font-medium"
+              className="px-3 py-2 text-[#22306a] [@media(hover:hover)]:hover:bg-[#f5f6fa] rounded-lg transition-colors duration-200 text-sm font-medium"
             >
               View Details
             </button>

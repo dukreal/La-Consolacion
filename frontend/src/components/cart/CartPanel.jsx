@@ -4,7 +4,8 @@ import { useBodyScrollLock } from '../../hooks/useBodyScrollLock'
 import { useEscapeKey } from '../../hooks/useEscapeKey'
 import CartItem from './CartItem'
 
-const checkoutGradient = { background: 'linear-gradient(135deg, #2474b6 0%, #1e5a8a 100%)' }
+// Site navy (same as checkout, login and the admin); the darker navy on hover
+const checkoutGradient = { background: '#22306a' }
 
 // The slide-out shopping cart. It stays in the page and slides in/out, like the original.
 export default function CartPanel({ open, onClose, onCheckout }) {
@@ -47,8 +48,8 @@ export default function CartPanel({ open, onClose, onCheckout }) {
           <div id="cartItems" className="flex-1 overflow-y-auto p-4 sm:p-6 space-y-3 sm:space-y-4">
             {isEmpty ? (
               <div className="text-center py-12">
-                <div className="w-20 h-20 mx-auto mb-4 bg-gradient-to-br from-blue-100 to-blue-200 rounded-full flex items-center justify-center">
-                  <i className="bx bx-cart text-3xl text-blue-500"></i>
+                <div className="w-20 h-20 mx-auto mb-4 bg-[#eef1f8] rounded-full flex items-center justify-center">
+                  <i className="bx bx-cart text-3xl text-[#22306a]"></i>
                 </div>
                 <h3 className="playfair text-lg font-semibold text-gray-700 mb-2">Your cart is empty</h3>
                 <p className="inter text-sm text-gray-500 mb-6">Add some beautiful jewelry to get started</p>
@@ -68,7 +69,7 @@ export default function CartPanel({ open, onClose, onCheckout }) {
           {/* Cart Footer */}
           <div className="relative p-4 sm:p-6 bg-white border-t border-gray-200">
             {/* Decorative line */}
-            <div className="absolute top-0 left-6 right-6 h-px bg-gradient-to-r from-transparent via-blue-300 to-transparent"></div>
+            <div className="absolute top-0 left-6 right-6 h-px bg-gradient-to-r from-transparent via-[#d8dce8] to-transparent"></div>
             <div className="space-y-3 sm:space-y-4">
               {/* Cart Summary */}
               <div className="space-y-1 sm:space-y-2 sm:py-2">
@@ -96,26 +97,26 @@ export default function CartPanel({ open, onClose, onCheckout }) {
                   <span className="relative z-10">Proceed to Checkout</span>
                   <div
                     className="absolute inset-0 opacity-0 group-hover:opacity-100 transition-opacity duration-300"
-                    style={{ background: 'linear-gradient(135deg, #1e5a8a 0%, #154a73 100%)' }}
+                    style={{ background: '#1a2550' }}
                   ></div>
                 </button>
                 <button
                   onClick={onClose}
-                  className="w-full py-3 px-6 border-2 border-blue-200 text-blue-700 font-medium rounded-2xl hover:border-blue-300 hover:bg-blue-50 transition-all duration-300 inter group"
+                  className="w-full py-3 px-6 border-2 border-[#d8dce8] text-[#22306a] font-medium rounded-2xl [@media(hover:hover)]:hover:border-[#22306a] [@media(hover:hover)]:hover:bg-[#f5f6fa] transition-colors duration-300 inter"
                 >
-                  <span className="group-hover:text-blue-900">Continue Shopping</span>
+                  Continue Shopping
                 </button>
               </div>
 
               {/* Trust Indicators (wider screens only; on phones the buttons matter more) */}
-              <div className="hidden sm:flex items-center justify-center pt-4 space-x-6 text-xs inter text-blue-600">
+              <div className="hidden sm:flex items-center justify-center pt-4 space-x-6 text-xs inter text-gray-500">
                 <div className="flex items-center space-x-1">
-                  <i className="bx bx-check-shield text-blue-500"></i>
+                  <i className="bx bx-check-shield text-[#2474b6]"></i>
                   <span>Secure</span>
                 </div>
                 <div className="flex items-center space-x-1">
                   {/* The shop is pickup only, so "Free Shipping" was not true */}
-                  <i className="bx bx-store text-blue-500"></i>
+                  <i className="bx bx-store text-[#2474b6]"></i>
                   <span>Store Pickup</span>
                 </div>
               </div>

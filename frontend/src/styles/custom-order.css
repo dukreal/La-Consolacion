@@ -17,7 +17,8 @@
 }
 .custom-order-page .preview-box h2 {
   margin-top: 0;
-  color: #1e40af;
+  color: #22306a; /* site navy and the site's heading font, like the payment pages */
+  font-family: 'Playfair Display', serif;
   font-size: 28px;
   font-weight: 700;
   text-align: center;
@@ -42,7 +43,7 @@
 .custom-order-page .btn {
   display: inline-block;
   padding: 15px 30px;
-  background: linear-gradient(135deg, #10b981 0%, #059669 100%);
+  background: #22306a;
   color: #fff;
   border-radius: 8px;
   text-decoration: none;
@@ -55,8 +56,8 @@
   transition: all 0.3s ease;
 }
 .custom-order-page .btn:hover {
-  background: linear-gradient(135deg, #059669 0%, #047857 100%);
-  box-shadow: 0 8px 20px rgba(16, 185, 129, 0.3);
+  background: #1a2550;
+  box-shadow: 0 8px 20px rgba(34, 48, 106, 0.25);
 }
 .custom-order-page .preview-img {
   max-width: 200px;
@@ -95,11 +96,11 @@
 .custom-order-page .price-display {
   font-size: 24px;
   font-weight: 700;
-  color: #059669;
+  color: #22306a;
   text-align: center;
   margin: 20px 0;
   padding: 15px;
-  background: #f0fdf4;
+  background: #f5f7fb;
   border-radius: 8px;
-  border: 2px solid #bbf7d0;
+  border: 1px solid #d8dce8;
 }
