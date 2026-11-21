@@ -11,7 +11,7 @@ if ($id <= 0) {
 
 // Custom orders are stored in the products table (type = 'custom') plus a custom_orders row
 $stmt = $pdo->prepare(
-    "SELECT p.id, p.name, p.price, p.stock, p.image, c.customer_name, c.email, c.description, c.status
+    "SELECT p.id, p.name, p.price, p.stock, p.image, c.customer_name, c.email, c.phone, c.description, c.status
      FROM products p
      JOIN custom_orders c ON c.id = p.id
      WHERE p.id = ? AND p.type = 'custom' AND p.deleted = 0 AND (c.deleted = 0 OR c.deleted IS NULL)"
@@ -35,6 +35,7 @@ json_response([
         'image'        => $row['image'],
         'customerName' => $row['customer_name'],
         'email'        => $row['email'],
+        'phone'        => $row['phone'] ?: null, // optional, typed on the Add/Edit Custom Order form
         'description'  => $row['description'] ?? '',
         'status'       => $row['status'] ?? 'pending',
     ],

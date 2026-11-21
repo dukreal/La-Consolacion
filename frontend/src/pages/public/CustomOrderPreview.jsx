@@ -27,6 +27,12 @@ export default function CustomOrderPreview() {
             <div className="preview-value">{order.customerName}</div>
             <div className="preview-label">Email:</div>
             <div className="preview-value">{order.email}</div>
+            {order.phone && (
+              <>
+                <div className="preview-label">Phone:</div>
+                <div className="preview-value" id="previewPhone">{order.phone}</div>
+              </>
+            )}
             <div className="preview-label">Custom Description:</div>
             <div className="preview-value">{order.description}</div>
             <div className="price-display">₱{formatMoney(order.price)}</div>

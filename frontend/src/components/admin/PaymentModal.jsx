@@ -1,5 +1,6 @@
 import { AlertCircle, AlertTriangle, Banknote, CreditCard, X, ZoomIn } from 'lucide-react'
-import { useEffect, useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
+import { useDialog } from '../../hooks/useDialog'
 import { getPaymentDetails } from '../../services/adminService'
 
 // The balance box when money is still owed, for orders that are already closed (title, small text)
@@ -78,7 +79,34 @@ function Screenshot({ payment, onEnlarge }) {
 // fit what is left. Phones: picture on top, details under it. From 640px (and phones on their side): picture on
 // the left, details on the right. On short screens (phones under 680px tall, anything under 500px tall)
 // the spacing tightens and the two small helper lines are hidden, so everything still fits.
+// The full-size screenshot on top of the Payment pop-up: Escape or a click anywhere closes just this
+function ExpandedImage({ src, onClose }) {
+  const box = useRef(null)
+  useDialog(box, onClose)
+  return (
+    <div
+      id="expandedImageModal"
+      ref={box}
+      role="dialog"
+      aria-modal="true"
+      aria-label="Payment screenshot"
+      tabIndex={-1}
+      onClick={onClose}
+      className="fixed inset-0 bg-black/80 z-50 flex items-center justify-center p-4 outline-none"
+    >
+      <img
+        id="expandedImage"
+        src={src}
+        alt="Expanded Payment Screenshot"
+        className="max-w-full max-h-full object-contain rounded-2xl shadow-2xl border-4 border-white cursor-zoom-out"
+      />
+    </div>
+  )
+}
+
 export default function PaymentModal({ paymentId, onClose }) {
+  const box = useRef(null)
+  useDialog(box, onClose) // Escape closes it, keyboard focus stays inside
   const [payment, setPayment] = useState(null)
   const [error, setError] = useState(null) // { title, message }
   const [enlarged, setEnlarged] = useState(false)
@@ -201,7 +229,12 @@ export default function PaymentModal({ paymentId, onClose }) {
       onClick={(e) => e.target === e.currentTarget && onClose()}
     >
       <div
-        className={`bg-white rounded-[18px] border border-[#eef0f5] shadow-[0_12px_40px_rgba(34,48,106,0.18)] w-full max-w-4xl flex flex-col overflow-hidden max-h-[calc(100dvh-1.5rem)] sm:max-h-[calc(100dvh-2rem)] ${
+        ref={box}
+        role="dialog"
+        aria-modal="true"
+        aria-labelledby="paymentModalTitle"
+        tabIndex={-1}
+        className={`outline-none bg-white rounded-[18px] border border-[#eef0f5] shadow-[0_12px_40px_rgba(34,48,106,0.18)] w-full max-w-4xl flex flex-col overflow-hidden max-h-[calc(100dvh-1.5rem)] sm:max-h-[calc(100dvh-2rem)] ${
           payment?.imageUrl ? 'h-[calc(100dvh-1.5rem)] sm:h-[min(40rem,calc(100dvh-2rem))]' : ''
         }`}
       >
@@ -211,7 +244,7 @@ export default function PaymentModal({ paymentId, onClose }) {
               <CreditCard className="w-4 h-4" />
             </div>
             <div className="min-w-0">
-              <h2 className="text-lg sm:text-xl font-bold text-[#22306a] leading-tight">Payment Details</h2>
+              <h2 id="paymentModalTitle" className="text-lg sm:text-xl font-bold text-[#22306a] leading-tight">Payment Details</h2>
               <p className="hidden sm:block [@media(max-height:500px)]:hidden text-sm text-gray-500">Transaction information and proof of payment</p>
             </div>
           </div>
@@ -230,16 +263,7 @@ export default function PaymentModal({ paymentId, onClose }) {
       </div>
 
       {/* Full-size screenshot, always inside the screen; click anywhere to close */}
-      {enlarged && (
-        <div id="expandedImageModal" onClick={() => setEnlarged(false)} className="fixed inset-0 bg-black/80 z-50 flex items-center justify-center p-4">
-          <img
-            id="expandedImage"
-            src={payment.imageUrl}
-            alt="Expanded Payment Screenshot"
-            className="max-w-full max-h-full object-contain rounded-2xl shadow-2xl border-4 border-white cursor-zoom-out"
-          />
-        </div>
-      )}
+      {enlarged && <ExpandedImage src={payment.imageUrl} onClose={() => setEnlarged(false)} />}
     </div>
   )
 }
