@@ -284,41 +284,6 @@
             transform: translate3d(0, 0, 0);
         }
         
-        /* Edge-specific grid fixes */
-        :where(.shop-page) .grid-cols-1 {
-            -ms-grid-columns: 1fr;
-        }
-        
-        :where(.shop-page) .grid-cols-2 {
-            -ms-grid-columns: 1fr 1fr;
-        }
-        
-        :where(.shop-page) .grid-cols-3 {
-            -ms-grid-columns: 1fr 1fr 1fr;
-        }
-        
-        :where(.shop-page) .grid-cols-4 {
-            -ms-grid-columns: 1fr 1fr 1fr 1fr;
-        }
-        
-        @media (min-width: 768px) {
-            :where(.shop-page) .md\\:grid-cols-2 {
-                -ms-grid-columns: 1fr 1fr;
-            }
-        }
-        
-        @media (min-width: 1024px) {
-            :where(.shop-page) .lg\\:grid-cols-3 {
-                -ms-grid-columns: 1fr 1fr 1fr;
-            }
-        }
-        
-        @media (min-width: 1280px) {
-            :where(.shop-page) .xl\\:grid-cols-4 {
-                -ms-grid-columns: 1fr 1fr 1fr 1fr;
-            }
-        }
-        
         /* Enhanced Jewelry Loading Animations */
         @keyframes sparkle {
             0%, 100% { 
@@ -622,15 +587,6 @@
   color: #bfa14a;
   margin-bottom: 0.1rem;
   font-family: "Segoe UI", "Arial", sans-serif;
-}
-:where(.shop-page) .shop-product-stock {
-  font-size: 0.97rem;
-  color: #059669;
-  font-weight: 500;
-  margin-bottom: 0.2rem;
-}
-:where(.shop-page) .shop-product-stock:contains("Out of Stock") {
-  color: #b91c1c;
 }
 :where(.shop-page) .left-align-details {
   text-align: left !important;

@@ -282,6 +282,15 @@ export default function OrderDetailsModal({ orderId, onClose, onStatusChange }) 
                   <Phone className="w-4 h-4 mt-0.5 flex-shrink-0 text-gray-400" />
                   <span className="text-gray-700" id="modalCustomerMobile">{customer ? customer.mobile : 'Loading...'}</span>
                 </div>
+                {/* Custom orders: the number typed on the custom order form, when it is not the payment number above */}
+                {customer?.customPhone && customer.customPhone !== customer.mobile && (
+                  <div className="flex items-start gap-3">
+                    <Phone className="w-4 h-4 mt-0.5 flex-shrink-0 text-gray-400" />
+                    <span className="text-gray-700" id="modalCustomPhone">
+                      {customer.customPhone} <span className="text-gray-400">· custom order</span>
+                    </span>
+                  </div>
+                )}
               </div>
             </div>
           </div>
