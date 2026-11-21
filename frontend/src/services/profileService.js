@@ -26,3 +26,14 @@ export function updateProfile({ firstName, lastName, username, email, mobileNumb
   if (photo) form.append('profile_image', photo)
   return api('/users/update-profile.php', { method: 'POST', form })
 }
+
+// The mobile number saved in the user's profile ('' when there is none or it cannot be read).
+// Used to fill in "Your Mobile No." on the payment step; the customer can still change it there.
+export async function getProfileMobile() {
+  try {
+    const data = await api('/auth/check-profile-completion.php')
+    return data.success && data.mobileNumber ? String(data.mobileNumber).replace(/\D/g, '').slice(0, 11) : ''
+  } catch {
+    return ''
+  }
+}

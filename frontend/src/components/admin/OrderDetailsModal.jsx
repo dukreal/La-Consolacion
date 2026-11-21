@@ -1,5 +1,6 @@
 import { Gem, Mail, Phone, User } from 'lucide-react'
-import { useEffect, useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
+import { useDialog } from '../../hooks/useDialog'
 import { getOrderDetails, updateOrderStatus } from '../../services/adminService'
 import { ADMIN_STATUS_OPTIONS, orderStatus } from '../../utils/orderStatus'
 import { cancelButton, confirmButton } from '../../utils/dialogButtons'
@@ -56,6 +57,11 @@ export default function OrderDetailsModal({ orderId, onClose, onStatusChange }) 
   const [askConfirm, setAskConfirm] = useState(false) // "Please confirm it" pop-up
   const [askBalance, setAskBalance] = useState(false) // "Collect the balance" pop-up (Completed with money still owed)
   const [alert, setAlert] = useState(null)
+
+  // Escape closes it (not while a status is being saved); the confirm, balance and message pop-ups opened on top
+  // of it handle Escape first
+  const box = useRef(null)
+  useDialog(box, () => !busy && onClose())
 
   useEffect(() => {
     getOrderDetails(orderId)
@@ -135,7 +141,14 @@ export default function OrderDetailsModal({ orderId, onClose, onStatusChange }) 
       className="fixed inset-0 bg-[#22306a]/30 backdrop-blur-[2px] z-50 flex items-center justify-center p-3 sm:p-4"
       onClick={(e) => e.target === e.currentTarget && onClose()}
     >
-      <div className="bg-white rounded-[18px] border border-[#eef0f5] shadow-[0_12px_40px_rgba(34,48,106,0.18)] w-full max-w-3xl max-h-[calc(100dvh-1.5rem)] sm:max-h-[90vh] flex flex-col overflow-hidden">
+      <div
+        ref={box}
+        role="dialog"
+        aria-modal="true"
+        aria-labelledby="modalOrderTitle"
+        tabIndex={-1}
+        className="outline-none bg-white rounded-[18px] border border-[#eef0f5] shadow-[0_12px_40px_rgba(34,48,106,0.18)] w-full max-w-3xl max-h-[calc(100dvh-1.5rem)] sm:max-h-[90vh] flex flex-col overflow-hidden"
+      >
         {/* Header: order number, date, current status */}
         <div className="flex items-start justify-between gap-3 px-5 py-4 sm:px-6 border-b border-gray-100">
           <div className="min-w-0">
@@ -282,6 +295,15 @@ export default function OrderDetailsModal({ orderId, onClose, onStatusChange }) 
                   <Phone className="w-4 h-4 mt-0.5 flex-shrink-0 text-gray-400" />
                   <span className="text-gray-700" id="modalCustomerMobile">{customer ? customer.mobile : 'Loading...'}</span>
                 </div>
+                {/* Custom orders: the number typed on the custom order form, when it is not the payment number above */}
+                {customer?.customPhone && customer.customPhone !== customer.mobile && (
+                  <div className="flex items-start gap-3">
+                    <Phone className="w-4 h-4 mt-0.5 flex-shrink-0 text-gray-400" />
+                    <span className="text-gray-700" id="modalCustomPhone">
+                      {customer.customPhone} <span className="text-gray-400">· custom order</span>
+                    </span>
+                  </div>
+                )}
               </div>
             </div>
           </div>

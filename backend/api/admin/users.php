@@ -1,5 +1,7 @@
 <?php
-// All users (not deleted), newest first, for the admin Users page (was the PHP at the top of admin-users.php).
+// All users (not deleted) for the admin Users page (was the PHP at the top of admin-users.php).
+// Most recently updated first: updated_at changes by itself (MySQL ON UPDATE) when a user edits their profile,
+// an admin edits them, they verify their email or reset their password. Signing in does not change it.
 require_once __DIR__ . '/../../helpers/admin.php';
 
 $admin = require_admin();
@@ -10,7 +12,7 @@ try {
          FROM users u
          LEFT JOIN admin a ON u.id = a.user_id
          WHERE u.deleted = 0
-         ORDER BY u.created_at DESC, u.id DESC'
+         ORDER BY u.updated_at DESC, u.id DESC'
     )->fetchAll(PDO::FETCH_ASSOC);
 } catch (PDOException $e) {
     error_log('users.php database error: ' . $e->getMessage());

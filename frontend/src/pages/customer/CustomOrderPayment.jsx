@@ -24,6 +24,7 @@ export default function CustomOrderPayment() {
   const [error, setError] = useState('')
 
   const downpayment = order ? order.downpayment.toFixed(2) : '0.00'
+  const balance = order ? Math.max(0, order.price - order.downpayment) : 0 // paid at the store at pickup
 
   const handleSubmit = async ({ mobile, reference, screenshot }) => {
     setError('')
@@ -127,6 +128,11 @@ export default function CustomOrderPayment() {
                     <div>
                       <span className="font-medium text-[#22306a]">Email:</span> {order.email}
                     </div>
+                    {order.phone && (
+                      <div id="customPhone">
+                        <span className="font-medium text-[#22306a]">Phone:</span> {order.phone}
+                      </div>
+                    )}
                   </div>
                 </div>
                 <div className="pay-panel p-3.5">
@@ -144,14 +150,18 @@ export default function CustomOrderPayment() {
                   <span className="pay-muted">Downpayment</span>
                   <span className="font-semibold text-[#2474b6]">30%</span>
                 </div>
+                <div className="flex justify-between items-center gap-4">
+                  <span className="pay-muted">Balance at pickup</span>
+                  <span id="customBalance" className="font-semibold text-[#22306a] whitespace-nowrap">₱{formatMoney(balance)}</span>
+                </div>
               </div>
 
-              <div className="pay-panel flex justify-between items-center gap-4 px-4 py-3.5 mt-4">
+              <div className="pay-panel flex flex-wrap justify-between items-center gap-x-4 gap-y-1 px-4 py-3.5 mt-4">
                 <div>
-                  <span className="text-lg font-bold text-[#22306a]">Amount to Pay</span>
+                  <span className="text-lg font-bold text-[#22306a] whitespace-nowrap">Amount to Pay</span>
                   <p className="text-xs sm:text-sm pay-muted">(30% downpayment)</p>
                 </div>
-                <span id="customDownpayment" className="text-xl min-[360px]:text-2xl font-bold text-[#22306a] whitespace-nowrap">₱{formatMoney(downpayment)}</span>
+                <span id="customDownpayment" className="ml-auto text-xl min-[360px]:text-2xl font-bold text-[#22306a] whitespace-nowrap">₱{formatMoney(downpayment)}</span>
               </div>
 
               <button id="continueBtn" onClick={() => goToStep(2)} className="pay-btn w-full mt-5">

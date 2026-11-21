@@ -37,6 +37,16 @@ try {
     $items = $stmt->fetchAll(PDO::FETCH_ASSOC);
 
     $amounts = order_amounts($pdo, $order_id);
+
+    // Custom orders: the phone number typed on the Add/Edit Custom Order form (custom_orders.id = the custom product's id)
+    $stmt = $pdo->prepare(
+        "SELECT c.phone FROM order_items oi
+         JOIN products p ON p.id = oi.product_id AND p.type = 'custom'
+         JOIN custom_orders c ON c.id = oi.product_id
+         WHERE oi.order_id = ? AND c.phone IS NOT NULL AND c.phone <> '' LIMIT 1"
+    );
+    $stmt->execute([$order_id]);
+    $custom_phone = $stmt->fetchColumn() ?: null;
 } catch (PDOException $e) {
     error_log('get-order-details.php database error: ' . $e->getMessage());
     json_response(['success' => false, 'error' => 'Database error. Please try again.'], 500);
@@ -63,7 +73,8 @@ json_response([
     'customer' => [
         'name'         => $order['username'],
         'email'        => $order['email'] ?? 'N/A',
-        'mobile'       => $order['mobile'] ?? 'N/A',
+        'mobile'       => $order['mobile'] ?? 'N/A', // the number used for the payment
+        'customPhone'  => $custom_phone,             // custom orders: the number from the custom order form, or null
         'profileImage' => $photo,
         // Same test as the old pop-up: the walk-in account, or a cash sale
         'isWalkIn'     => $order['username'] === 'walkin_guest' || str_contains((string) $order['email'], 'walkin')

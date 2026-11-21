@@ -198,6 +198,15 @@
   font-size: 0.95rem;
 }
 
+/* "Forgot Password?" and "Back to Login": a taller tap area (at least 24px, the accessibility minimum for
+   touch screens) without moving anything: the padding is taken back with an equal negative margin */
+.form-aside a,
+.form-back a {
+  display: inline-block;
+  padding: 4px 2px;
+  margin: -4px -2px;
+}
+
 /* Verify Email: "Verifying your account..." */
 .form-container p.form-status {
   margin-top: 1rem;

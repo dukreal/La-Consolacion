@@ -1,7 +1,8 @@
 import { Edit3, Search, SearchX, Trash2 } from 'lucide-react'
-import { useCallback, useEffect, useState } from 'react'
+import { useCallback, useEffect, useRef, useState } from 'react'
 import Skeleton, { LoadingArea } from '../../components/admin/Skeleton'
 import { useAuth } from '../../hooks/useAuth'
+import { useDialog } from '../../hooks/useDialog'
 import { refreshingClass, useRefreshing } from '../../hooks/useRefreshing'
 import { deleteUser, getUsers, updateUser } from '../../services/adminService'
 
@@ -151,6 +152,10 @@ function EditUserModal({ user, canChangeRole, onClose, onSaved }) {
   const [error, setError] = useState('')
   const [saving, setSaving] = useState(false)
   const set = (key) => (e) => setForm({ ...form, [key]: e.target.value })
+  // Escape = Cancel and focus starts in First Name. A click outside does not close it, so a stray click
+  // does not throw away what was typed.
+  const box = useRef(null)
+  useDialog(box, () => !saving && onClose())
 
   const handleSubmit = async (e) => {
     e.preventDefault()
@@ -169,11 +174,18 @@ function EditUserModal({ user, canChangeRole, onClose, onSaved }) {
 
   return (
     <div id="editUserModal" className="fixed inset-0 z-50 flex items-center justify-center p-3 sm:p-4 bg-[#22306a]/30 backdrop-blur-[2px]">
-      <div className="bg-white rounded-[18px] border border-[#eef0f5] shadow-[0_12px_40px_rgba(34,48,106,0.18)] p-5 sm:p-6 w-full max-w-lg max-h-[calc(100dvh-1.5rem)] overflow-y-auto">
+      <div
+        ref={box}
+        role="dialog"
+        aria-modal="true"
+        aria-labelledby="editUserTitle"
+        tabIndex={-1}
+        className="outline-none bg-white rounded-[18px] border border-[#eef0f5] shadow-[0_12px_40px_rgba(34,48,106,0.18)] p-5 sm:p-6 w-full max-w-lg max-h-[calc(100dvh-1.5rem)] overflow-y-auto"
+      >
         <div className="flex items-center gap-3 mb-5">
           <Avatar user={user} size="w-11 h-11 text-base" />
           <div className="min-w-0">
-            <h2 className="text-xl font-bold text-[#22306a] leading-tight">Edit User</h2>
+            <h2 id="editUserTitle" className="text-xl font-bold text-[#22306a] leading-tight">Edit User</h2>
             <p className="text-sm text-gray-500 truncate">{user.email}</p>
           </div>
         </div>
@@ -226,6 +238,10 @@ function DeleteUserModal({ user, onClose, onDeleted }) {
   const [error, setError] = useState('')
   const [deleting, setDeleting] = useState(false)
 
+  // Escape or a click outside = Cancel; focus starts on Cancel so Enter never deletes by accident
+  const box = useRef(null)
+  useDialog(box, () => !deleting && onClose())
+
   const handleDelete = async () => {
     setDeleting(true)
     try {
@@ -240,14 +256,26 @@ function DeleteUserModal({ user, onClose, onDeleted }) {
   }
 
   return (
-    <div id="deleteUserModal" className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-[#22306a]/30 backdrop-blur-[2px]">
-      <div className="bg-white rounded-[18px] border border-[#eef0f5] shadow-[0_12px_40px_rgba(34,48,106,0.18)] p-6 w-full max-w-md">
-        <h2 className="text-xl font-bold text-gray-900 mb-2">Delete User</h2>
-        <p className="text-gray-600 mb-1">Are you sure you want to delete this account?</p>
+    <div
+      id="deleteUserModal"
+      className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-[#22306a]/30 backdrop-blur-[2px]"
+      onClick={(e) => e.target === e.currentTarget && !deleting && onClose()}
+    >
+      <div
+        ref={box}
+        role="alertdialog"
+        aria-modal="true"
+        aria-labelledby="deleteUserTitle"
+        aria-describedby="deleteUserText"
+        tabIndex={-1}
+        className="outline-none bg-white rounded-[18px] border border-[#eef0f5] shadow-[0_12px_40px_rgba(34,48,106,0.18)] p-6 w-full max-w-md"
+      >
+        <h2 id="deleteUserTitle" className="text-xl font-bold text-gray-900 mb-2">Delete User</h2>
+        <p id="deleteUserText" className="text-gray-600 mb-1">Are you sure you want to delete this account?</p>
         <p className="font-semibold text-gray-900 mb-6 break-words">{fullName(user)} · {user.email}</p>
         {error && <p id="deleteUserError" className="text-sm text-red-600 mb-4">{error}</p>}
         <div className="flex flex-col-reverse sm:flex-row sm:justify-end gap-2">
-          <button id="cancelDeleteUser" type="button" onClick={onClose} className={outlineBtn}>
+          <button id="cancelDeleteUser" type="button" onClick={onClose} disabled={deleting} data-autofocus className={outlineBtn}>
             Cancel
           </button>
           <button id="confirmDeleteUser" type="button" onClick={handleDelete} disabled={deleting} className="h-11 px-5 rounded-[10px] bg-red-600 hover:bg-red-700 text-white font-semibold transition-colors disabled:opacity-60">

@@ -1017,10 +1017,11 @@
 .carousel-dots {
   display: flex;
   justify-content: center;
-  gap: 8px;
+  gap: 16px; /* room for each dot's 24px tap area (below) without them overlapping */
   margin-top: 8px;
 }
 .carousel-dot {
+  position: relative;
   width: 8px;
   height: 8px;
   border-radius: 999px;
@@ -1029,6 +1030,13 @@
   background: #c7cde0;
   cursor: pointer;
   transition: width 0.25s, background 0.25s;
+}
+/* The dot stays 8px, but the area you can tap is 24px tall and at least 24px wide
+   (the accessibility minimum for touch screens) */
+.carousel-dot::before {
+  content: '';
+  position: absolute;
+  inset: -8px;
 }
 .carousel-dot.active {
   width: 22px;
