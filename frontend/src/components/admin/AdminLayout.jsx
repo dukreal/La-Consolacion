@@ -107,8 +107,10 @@ export default function AdminLayout() {
         </aside>
 
         {/* Below 1024px the page uses the full width and leaves room for the bottom bar (3.125rem + 12px tall).
-            Every page ends with the same space as its sides: 16px on phones, 24px on tablets, 32px on desktop. */}
-        <main className="flex-1 min-w-0 overflow-y-auto overscroll-contain px-4 pt-6 pb-[calc(3.125rem+12px+1rem+env(safe-area-inset-bottom))] sm:px-6 sm:pb-[calc(3.125rem+12px+1.5rem+env(safe-area-inset-bottom))] lg:p-8">
+            Every page ends with the same space as its sides: 16px on phones, 24px on tablets, 32px on desktop.
+            scrollbar-gutter: stable keeps the scrollbar's space even when a page is too short to scroll, so the
+            content does not get wider or narrower (and jump) when the scrollbar comes and goes. */}
+        <main className="flex-1 min-w-0 overflow-y-auto overscroll-contain [scrollbar-gutter:stable] px-4 pt-6 pb-[calc(3.125rem+12px+1rem+env(safe-area-inset-bottom))] sm:px-6 sm:pb-[calc(3.125rem+12px+1.5rem+env(safe-area-inset-bottom))] lg:p-8">
           <AdminBusyContext.Provider value={markBusy}>
             <Outlet />
           </AdminBusyContext.Provider>
