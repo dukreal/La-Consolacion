@@ -125,6 +125,7 @@ function StatusPill({ order }) {
 
 // Details / Payment (or Unpaid) / Delete. Used by the table and by the order cards.
 // Cards: taller buttons (easier to tap), sharing the width on phones, and Delete as a separate trash icon.
+// Delete gets the whole order: an active one has to be cancelled first (see askDelete).
 function OrderActions({ order, adminLevel, onDetails, onPayment, onDelete, card = false, className = '' }) {
   const size = card ? 'h-9 px-4 text-sm flex-1 sm:flex-none' : 'px-3 py-1 text-xs'
   return (
@@ -145,7 +146,7 @@ function OrderActions({ order, adminLevel, onDetails, onPayment, onDelete, card 
         (card ? (
           <button
             type="button"
-            onClick={() => onDelete(order.id)}
+            onClick={() => onDelete(order)}
             aria-label={`Delete order #${order.id}`}
             title="Delete"
             className="deleteOrderBtn w-9 h-9 flex-shrink-0 flex items-center justify-center bg-red-100 hover:bg-red-200 text-red-700 rounded-lg transition-colors duration-200"
@@ -155,7 +156,7 @@ function OrderActions({ order, adminLevel, onDetails, onPayment, onDelete, card 
         ) : (
           <button
             type="button"
-            onClick={() => onDelete(order.id)}
+            onClick={() => onDelete(order)}
             className="deleteOrderBtn bg-red-100 hover:bg-red-200 text-red-700 px-3 py-1 rounded-lg text-xs font-medium transition-colors duration-200"
           >
             Delete
@@ -306,6 +307,20 @@ export default function Orders() {
     setData((d) => ({ ...d, orders: d.orders.map((o) => (o.id === id ? { ...o, status } : o)) }))
   }, [])
 
+  // Only finished or unpaid orders can be deleted (the server checks this too). Deleting a paid, active order
+  // would only hide it: the customer would still see it as active and its stock would never come back.
+  const askDelete = useCallback((order) => {
+    if (!order.paid || order.status === 'completed' || order.status === 'cancelled') {
+      setToDelete(order.id)
+    } else {
+      setAlert({
+        type: 'warning',
+        title: 'Cancel the order first',
+        message: `Order #${order.id} is still active. Open Details and change its status to Cancelled: this puts the items back into stock and emails the customer. Then you can delete it.`,
+      })
+    }
+  }, [])
+
   const handleDelete = async () => {
     setDeleting(true)
     try {
@@ -328,7 +343,7 @@ export default function Orders() {
   const loading = !data && !error
   const orders = data?.orders ?? []
   const canDelete = (data?.adminLevel ?? Number(me?.adminLevel)) === 2
-  const actionHandlers = { onDetails: setDetailsId, onPayment: setPaymentId, onDelete: setToDelete }
+  const actionHandlers = { onDetails: setDetailsId, onPayment: setPaymentId, onDelete: askDelete }
   const stats = {
     total: orders.length,
     pending: orders.filter((o) => o.status === 'pending').length,

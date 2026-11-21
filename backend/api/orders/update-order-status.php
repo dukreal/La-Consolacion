@@ -7,9 +7,11 @@
 //
 // Completed and Cancelled are final: they also set date_completed, and after that the order is locked.
 // The customer gets an email for every status except Pending.
+// Cancelled puts the order's items back into stock (helpers/stock.php), the same as when the customer cancels.
 require_once __DIR__ . '/../../helpers/admin.php';
 require_once __DIR__ . '/../../helpers/mailer.php';
 require_once __DIR__ . '/../../helpers/payments.php';
+require_once __DIR__ . '/../../helpers/stock.php';
 
 $admin = require_admin();
 
@@ -81,7 +83,17 @@ try {
         $pdo->prepare('UPDATE orders SET status = ?, date_completed = NOW(), balance_payment_id = ? WHERE id = ?')
             ->execute([$new_status, (int) $pdo->lastInsertId(), $order_id]);
     } elseif (in_array($new_status, FINAL_STATUSES, true)) {
-        $pdo->prepare('UPDATE orders SET status = ?, date_completed = NOW() WHERE id = ?')->execute([$new_status, $order_id]);
+        // Only while the order is still open, so two clicks (or the customer cancelling at the same moment)
+        // cannot put the stock back twice
+        $stmt = $pdo->prepare("UPDATE orders SET status = ?, date_completed = NOW() WHERE id = ? AND status NOT IN ('completed', 'cancelled')");
+        $stmt->execute([$new_status, $order_id]);
+        if ($stmt->rowCount() === 0) {
+            $pdo->rollBack();
+            json_response(['success' => false, 'error' => 'This order was already completed or cancelled. Please refresh the page.'], 409);
+        }
+        if ($new_status === 'cancelled') {
+            restore_order_stock($pdo, $order_id);
+        }
     } else {
         $pdo->prepare('UPDATE orders SET status = ? WHERE id = ?')->execute([$new_status, $order_id]);
     }
