@@ -128,6 +128,11 @@ export default function CustomOrderPayment() {
                     <div>
                       <span className="font-medium text-[#22306a]">Email:</span> {order.email}
                     </div>
+                    {order.phone && (
+                      <div id="customPhone">
+                        <span className="font-medium text-[#22306a]">Phone:</span> {order.phone}
+                      </div>
+                    )}
                   </div>
                 </div>
                 <div className="pay-panel p-3.5">
