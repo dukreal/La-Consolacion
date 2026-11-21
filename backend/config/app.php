@@ -4,5 +4,5 @@
 return [
     'frontend_url' => 'http://localhost:5173', // where the React site runs
     'mailer_url'   => 'http://localhost:3000', // the Node mailer (mailer/server.js)
-    'admin_email'  => 'kenzho.suarez@gmail.com', // gets a copy of every new custom order
+    'admin_email'  => 'lcj.laconsolacionjewelry1980@gmail.com', // the shop's Gmail: gets a copy of every new custom order and is the contact in customer emails
 ];
