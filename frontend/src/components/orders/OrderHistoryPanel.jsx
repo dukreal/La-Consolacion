@@ -7,7 +7,8 @@ import CancelOrderModal from './CancelOrderModal'
 import OrderCard from './OrderCard'
 import OrderDetailsModal from './OrderDetailsModal'
 
-const greenGradient = { background: 'linear-gradient(135deg, #10b981 0%, #059669 100%)' }
+// Site navy (same as checkout, login and the admin)
+const navyButton = { background: '#22306a' }
 
 // The slide-out Order History. It also owns the details modal, the cancel modal and the
 // success/error popup, because they are all opened from here.
@@ -47,7 +48,7 @@ export default function OrderHistoryPanel({ open, onClose }) {
       >
         <div className="flex flex-col h-full">
           {/* Header */}
-          <div className="relative px-5 py-4 sm:p-6 bg-gradient-to-r from-green-600 to-green-700 text-white overflow-hidden">
+          <div className="relative px-5 py-4 sm:p-6 bg-[#22306a] text-white overflow-hidden">
             {/* Decorative elements */}
             <div className="absolute top-0 left-0 w-32 h-32 bg-white/10 rounded-full -translate-y-16 -translate-x-16"></div>
             <div className="absolute bottom-0 right-0 w-24 h-24 bg-white/5 rounded-full translate-y-12 translate-x-12"></div>
@@ -66,15 +67,15 @@ export default function OrderHistoryPanel({ open, onClose }) {
           <div id="orderHistoryItems" className="flex-1 overflow-y-auto p-4 sm:p-6 space-y-3 sm:space-y-4">
             {orders && orders.length === 0 && (
               <div className="text-center py-12">
-                <div className="w-20 h-20 mx-auto mb-4 bg-gradient-to-br from-green-100 to-green-200 rounded-full flex items-center justify-center">
-                  <i className="bx bx-history text-3xl text-green-500"></i>
+                <div className="w-20 h-20 mx-auto mb-4 bg-[#eef1f8] rounded-full flex items-center justify-center">
+                  <i className="bx bx-history text-3xl text-[#22306a]"></i>
                 </div>
                 <h3 className="playfair text-lg font-semibold text-gray-700 mb-2">No orders yet</h3>
                 <p className="inter text-sm text-gray-500 mb-6">Start shopping to see your order history</p>
                 <button
                   onClick={onClose}
                   className="px-6 py-3 text-white font-medium rounded-xl hover:shadow-lg transition-all duration-300 inter"
-                  style={greenGradient}
+                  style={navyButton}
                 >
                   Start Shopping
                 </button>
@@ -89,7 +90,7 @@ export default function OrderHistoryPanel({ open, onClose }) {
           {/* Footer */}
           <div className="relative px-4 py-3 sm:p-6 bg-white border-t border-gray-200">
             {/* Decorative line */}
-            <div className="absolute top-0 left-6 right-6 h-px bg-gradient-to-r from-transparent via-green-300 to-transparent"></div>
+            <div className="absolute top-0 left-6 right-6 h-px bg-gradient-to-r from-transparent via-[#d8dce8] to-transparent"></div>
             <div className="space-y-4">
               {/* Summary */}
               <div className="space-y-2 sm:py-2">
@@ -104,19 +105,19 @@ export default function OrderHistoryPanel({ open, onClose }) {
               <div className="hidden sm:block space-y-3 pt-4">
                 <button
                   onClick={onClose}
-                  className="w-full py-3 px-6 border-2 border-green-200 text-green-700 font-medium rounded-2xl hover:border-green-300 hover:bg-green-50 transition-all duration-300 inter group"
+                  className="w-full py-3 px-6 border-2 border-[#d8dce8] text-[#22306a] font-medium rounded-2xl [@media(hover:hover)]:hover:border-[#22306a] [@media(hover:hover)]:hover:bg-[#f5f6fa] transition-colors duration-300 inter"
                 >
-                  <span className="group-hover:text-green-900">Close</span>
+                  Close
                 </button>
               </div>
 
-              <div className="hidden sm:flex items-center justify-center pt-4 space-x-6 text-xs inter text-green-600">
+              <div className="hidden sm:flex items-center justify-center pt-4 space-x-6 text-xs inter text-gray-500">
                 <div className="flex items-center space-x-1">
-                  <i className="bx bx-check-shield text-green-500"></i>
+                  <i className="bx bx-check-shield text-[#2474b6]"></i>
                   <span>Secure</span>
                 </div>
                 <div className="flex items-center space-x-1">
-                  <i className="bx bx-history text-green-500"></i>
+                  <i className="bx bx-history text-[#2474b6]"></i>
                   <span>Track Orders</span>
                 </div>
               </div>

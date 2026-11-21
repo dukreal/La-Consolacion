@@ -100,7 +100,7 @@ export default function OrderDetailsModal({ orderId, onClose, onCancel }) {
           className={`flex flex-col bg-white rounded-2xl shadow-2xl w-full max-w-md lg:max-w-4xl max-h-[calc(100dvh-1.5rem)] sm:max-h-[calc(100dvh-2rem)] overflow-hidden transform transition-all duration-300 pointer-events-auto ${shown ? 'scale-100 opacity-100' : 'scale-95 opacity-0'}`}
         >
           {/* Header */}
-          <div className="relative flex-shrink-0 px-5 py-4 sm:px-6 sm:py-5 lg:[@media(max-height:700px)]:py-3 bg-gradient-to-r from-green-600 to-green-700 text-white overflow-hidden">
+          <div className="relative flex-shrink-0 px-5 py-4 sm:px-6 sm:py-5 lg:[@media(max-height:700px)]:py-3 bg-[#22306a] text-white overflow-hidden">
             {/* Decorative elements */}
             <div className="absolute top-0 left-0 w-32 h-32 bg-white/10 rounded-full -translate-y-16 -translate-x-16"></div>
             <div className="absolute bottom-0 right-0 w-24 h-24 bg-white/5 rounded-full translate-y-12 translate-x-12"></div>
@@ -127,7 +127,7 @@ export default function OrderDetailsModal({ orderId, onClose, onCancel }) {
           <div className="flex-1 min-h-0 overflow-y-auto p-4 sm:p-6 lg:py-5 lg:[@media(max-height:700px)]:py-4">
             {state.status === 'loading' && (
               <div id="orderDetailsLoading" className="text-center py-8">
-                <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-green-600 mx-auto mb-4"></div>
+                <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-[#22306a] mx-auto mb-4"></div>
                 <p className="text-gray-500">Loading order details...</p>
               </div>
             )}
