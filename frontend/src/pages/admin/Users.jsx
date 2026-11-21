@@ -1,6 +1,8 @@
 import { Edit3, Search, SearchX, Trash2 } from 'lucide-react'
 import { useCallback, useEffect, useState } from 'react'
+import Skeleton, { LoadingArea } from '../../components/admin/Skeleton'
 import { useAuth } from '../../hooks/useAuth'
+import { refreshingClass, useRefreshing } from '../../hooks/useRefreshing'
 import { deleteUser, getUsers, updateUser } from '../../services/adminService'
 
 const ROLE_LABEL = { user: 'Customer', 'admin-1': 'Admin', 'admin-2': 'SuperAdmin' }
@@ -71,6 +73,69 @@ function UserActions({ user, canDelete, onEdit, onDelete }) {
         </button>
       )}
     </div>
+  )
+}
+
+// Placeholders shown until the users arrive, shaped like a user card and a table row
+const SKELETON_ROWS = [1, 2, 3, 4, 5, 6]
+
+function UserActionsSkeleton({ canDelete }) {
+  return (
+    <div className="flex items-center gap-2 flex-shrink-0">
+      <Skeleton className="h-9 w-[4.5rem] !rounded-lg" />
+      {canDelete && <Skeleton className="h-9 w-9 !rounded-lg" />}
+    </div>
+  )
+}
+
+function UserCardSkeleton({ canDelete }) {
+  return (
+    <li className="py-3.5 first:pt-1">
+      <div className="flex items-center gap-3">
+        <Skeleton className="w-10 h-10 flex-shrink-0 !rounded-full" />
+        <div className="flex-1 min-w-0">
+          <Skeleton className="h-4 w-32" />
+          <Skeleton className="mt-2 h-3.5 w-48 max-w-full" />
+        </div>
+        <Skeleton className="h-5 w-16 flex-shrink-0" />
+      </div>
+      <div className="mt-2.5 sm:pl-[3.25rem] flex items-center justify-between gap-3">
+        <Skeleton className="h-4 w-28" />
+        <UserActionsSkeleton canDelete={canDelete} />
+      </div>
+    </li>
+  )
+}
+
+function UserRowSkeleton({ canDelete }) {
+  return (
+    <tr>
+      <td className="px-3 py-3">
+        <div className="flex items-center gap-3">
+          <Skeleton className="w-10 h-10 flex-shrink-0 !rounded-full" />
+          <div className="flex-1 min-w-0"><Skeleton className="h-4 w-32 max-w-full" /><Skeleton className="mt-2 h-3 w-20" /></div>
+        </div>
+      </td>
+      <td className="px-3 py-3"><Skeleton className="h-4 w-44 max-w-full" /></td>
+      <td className="px-3 py-3"><Skeleton className="h-5 w-16" /></td>
+      <td className="px-3 py-3"><Skeleton className="h-4 w-24" /></td>
+      <td className="px-3 py-3"><div className="flex justify-end"><UserActionsSkeleton canDelete={canDelete} /></div></td>
+    </tr>
+  )
+}
+
+// The table's column headings (the loading placeholder table uses the same ones, so the columns do not shift)
+function UsersTableHead() {
+  return (
+    <thead className="border-b border-gray-200">
+      <tr>
+        <th className="w-[30%] px-3 py-3 text-xs font-semibold text-gray-500 uppercase tracking-wider">Name</th>
+        <th className="w-[32%] px-3 py-3 text-xs font-semibold text-gray-500 uppercase tracking-wider">Email</th>
+        <th className="px-3 py-3 text-xs font-semibold text-gray-500 uppercase tracking-wider">Role</th>
+        <th className="px-3 py-3 text-xs font-semibold text-gray-500 uppercase tracking-wider">Joined</th>
+        <th className="w-[9rem] px-3 py-3"><span className="sr-only">Actions</span></th>
+      </tr>
+    </thead>
   )
 }
 
@@ -197,20 +262,25 @@ function DeleteUserModal({ user, onClose, onDeleted }) {
 // Users (was admin-users.php).
 export default function Users() {
   const { user: me, refresh } = useAuth()
-  const [data, setData] = useState({ users: [], adminLevel: 1, currentUserId: null })
+  const [data, setData] = useState(null) // null until the first load is done
+  const [reloading, setReloading] = useState(false) // getting the list again after an edit or delete
+  const refreshing = useRefreshing(reloading)
   const [loadError, setLoadError] = useState('')
   const [search, setSearch] = useState('')
   const [roleFilter, setRoleFilter] = useState('')
   const [editing, setEditing] = useState(null)
   const [deleting, setDeleting] = useState(null)
 
+  // Reload after an edit or delete (the first load is in the effect below)
   const load = useCallback(async () => {
+    setReloading(true)
     try {
       setData(await getUsers())
       setLoadError('')
     } catch (error) {
       setLoadError(error.message)
     }
+    setReloading(false)
   }, [])
 
   useEffect(() => {
@@ -227,9 +297,12 @@ export default function Users() {
     }
   }, [])
 
-  const isSuperAdmin = data.adminLevel >= 2
+  const loading = !data && !loadError
+  const users = data?.users ?? []
+  // Known from the sign-in straight away, so the placeholders already show the right buttons
+  const isSuperAdmin = (data?.adminLevel ?? Number(me?.adminLevel)) >= 2
   const term = search.toLowerCase().trim()
-  const visible = data.users.filter((u) => {
+  const visible = users.filter((u) => {
     const matchesSearch = fullName(u).toLowerCase().includes(term) || u.email.toLowerCase().includes(term)
     const matchesRole = !roleFilter || ROLE_LABEL[u.role] === roleFilter
     return matchesSearch && matchesRole
@@ -302,65 +375,75 @@ export default function Users() {
           </div>
         </div>
 
-        {/* Narrower than 80em (1280px at normal text size): one card per user */}
-        <ul id="usersCards" className="users-cards divide-y divide-gray-100">
-          {visible.map((u) => (
-            <li key={u.id} className="py-3.5 first:pt-1" data-user-card={u.id}>
-              <div className="flex items-center gap-3">
-                <Avatar user={u} />
-                <div className="flex-1 min-w-0">
-                  <p className="font-semibold text-gray-900 truncate">{fullName(u)}</p>
-                  <p className="text-sm text-gray-500 truncate">{u.email}</p>
-                </div>
-                <RoleBadge role={u.role} />
-              </div>
-              <div className="mt-2.5 sm:pl-[3.25rem] flex flex-wrap items-center justify-between gap-x-3 gap-y-2">
-                <span className="text-sm text-gray-500 whitespace-nowrap">Joined {joinedOn(u.createdAt)}</span>
-                <UserActions user={u} canDelete={isSuperAdmin} onEdit={setEditing} onDelete={setDeleting} />
-              </div>
-            </li>
-          ))}
-        </ul>
+        {loading && (
+          <LoadingArea label="Loading users…">
+            <ul className="users-cards divide-y divide-gray-100">
+              {SKELETON_ROWS.map((n) => <UserCardSkeleton key={n} canDelete={isSuperAdmin} />)}
+            </ul>
+            <div className="users-table">
+              <table className="w-full table-fixed text-sm text-left">
+                <UsersTableHead />
+                <tbody className="divide-y divide-gray-100">
+                  {SKELETON_ROWS.map((n) => <UserRowSkeleton key={n} canDelete={isSuperAdmin} />)}
+                </tbody>
+              </table>
+            </div>
+          </LoadingArea>
+        )}
 
-        {/* 80em and wider: the table */}
-        <div className="users-table">
-          <table className="w-full table-fixed text-sm text-left">
-            <thead className="border-b border-gray-200">
-              <tr>
-                <th className="w-[30%] px-3 py-3 text-xs font-semibold text-gray-500 uppercase tracking-wider">Name</th>
-                <th className="w-[32%] px-3 py-3 text-xs font-semibold text-gray-500 uppercase tracking-wider">Email</th>
-                <th className="px-3 py-3 text-xs font-semibold text-gray-500 uppercase tracking-wider">Role</th>
-                <th className="px-3 py-3 text-xs font-semibold text-gray-500 uppercase tracking-wider">Joined</th>
-                <th className="w-[9rem] px-3 py-3"><span className="sr-only">Actions</span></th>
-              </tr>
-            </thead>
-            <tbody id="usersTableBody" className="divide-y divide-gray-100">
-              {visible.map((u) => (
-                <tr key={u.id}>
-                  <td className="px-3 py-3">
-                    <div className="flex items-center gap-3 min-w-0">
-                      <Avatar user={u} />
-                      <div className="min-w-0">
-                        <p className="font-semibold text-gray-900 truncate" title={fullName(u)}>{fullName(u)}</p>
-                        <p className="text-xs text-gray-500 truncate">@{u.username}</p>
+        <div className={refreshingClass(refreshing)} aria-busy={refreshing || undefined}>
+          {/* Narrower than 80em (1280px at normal text size): one card per user */}
+          <ul id="usersCards" className="users-cards divide-y divide-gray-100">
+            {visible.map((u) => (
+              <li key={u.id} className="py-3.5 first:pt-1" data-user-card={u.id}>
+                <div className="flex items-center gap-3">
+                  <Avatar user={u} />
+                  <div className="flex-1 min-w-0">
+                    <p className="font-semibold text-gray-900 truncate">{fullName(u)}</p>
+                    <p className="text-sm text-gray-500 truncate">{u.email}</p>
+                  </div>
+                  <RoleBadge role={u.role} />
+                </div>
+                <div className="mt-2.5 sm:pl-[3.25rem] flex flex-wrap items-center justify-between gap-x-3 gap-y-2">
+                  <span className="text-sm text-gray-500 whitespace-nowrap">Joined {joinedOn(u.createdAt)}</span>
+                  <UserActions user={u} canDelete={isSuperAdmin} onEdit={setEditing} onDelete={setDeleting} />
+                </div>
+              </li>
+            ))}
+          </ul>
+
+          {/* 80em and wider: the table */}
+          <div className="users-table">
+            <table className="w-full table-fixed text-sm text-left">
+              <UsersTableHead />
+              <tbody id="usersTableBody" className="divide-y divide-gray-100">
+                {visible.map((u) => (
+                  <tr key={u.id}>
+                    <td className="px-3 py-3">
+                      <div className="flex items-center gap-3 min-w-0">
+                        <Avatar user={u} />
+                        <div className="min-w-0">
+                          <p className="font-semibold text-gray-900 truncate" title={fullName(u)}>{fullName(u)}</p>
+                          <p className="text-xs text-gray-500 truncate">@{u.username}</p>
+                        </div>
                       </div>
-                    </div>
-                  </td>
-                  <td className="px-3 py-3 text-gray-700"><p className="truncate" title={u.email}>{u.email}</p></td>
-                  <td className="px-3 py-3"><RoleBadge role={u.role} /></td>
-                  <td className="px-3 py-3 text-gray-700 whitespace-nowrap">{joinedOn(u.createdAt)}</td>
-                  <td className="px-3 py-3">
-                    <div className="flex justify-end">
-                      <UserActions user={u} canDelete={isSuperAdmin} onEdit={setEditing} onDelete={setDeleting} />
-                    </div>
-                  </td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
+                    </td>
+                    <td className="px-3 py-3 text-gray-700"><p className="truncate" title={u.email}>{u.email}</p></td>
+                    <td className="px-3 py-3"><RoleBadge role={u.role} /></td>
+                    <td className="px-3 py-3 text-gray-700 whitespace-nowrap">{joinedOn(u.createdAt)}</td>
+                    <td className="px-3 py-3">
+                      <div className="flex justify-end">
+                        <UserActions user={u} canDelete={isSuperAdmin} onEdit={setEditing} onDelete={setDeleting} />
+                      </div>
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
         </div>
 
-        {data.users.length > 0 && visible.length === 0 && (
+        {users.length > 0 && visible.length === 0 && (
           <div id="noResultsMsg" className="py-10 text-center text-gray-500">
             <div className="flex flex-col items-center gap-2">
               <SearchX className="w-8 h-8 text-gray-400" />

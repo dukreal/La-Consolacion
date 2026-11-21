@@ -1,5 +1,7 @@
 import { Activity, BarChart3, LogOut, Package, ShoppingCart, Users } from 'lucide-react'
+import { useCallback, useState } from 'react'
 import { Link, Outlet, useLocation, useNavigate } from 'react-router-dom'
+import { AdminBusyContext } from '../../context/admin-busy-context'
 import { useAuth } from '../../hooks/useAuth'
 import '../../styles/admin.css'
 
@@ -20,6 +22,9 @@ export default function AdminLayout() {
   const { user, logout } = useAuth()
   const { pathname } = useLocation()
   const navigate = useNavigate()
+  // How many pages are reloading right now (see hooks/useRefreshing.js); above 0 the thin bar shows
+  const [busy, setBusy] = useState(0)
+  const markBusy = useCallback((change) => setBusy((n) => Math.max(0, n + change)), [])
 
   const initials = (user?.firstName || '').slice(0, 2).toUpperCase()
   const photo = user?.profileImage ? `/uploads/profile/${user.profileImage}` : ''
@@ -71,6 +76,8 @@ export default function AdminLayout() {
             </button>
           </div>
         </div>
+        {/* A page is reloading: a thin blue bar slides along the bottom edge of the top bar */}
+        {busy > 0 && <div className="refresh-bar" role="progressbar" aria-label="Loading" />}
       </header>
 
       <div className="flex flex-1 min-h-0">
@@ -102,7 +109,9 @@ export default function AdminLayout() {
         {/* Below 1024px the page uses the full width and leaves room for the bottom bar (3.125rem + 12px tall).
             Every page ends with the same space as its sides: 16px on phones, 24px on tablets, 32px on desktop. */}
         <main className="flex-1 min-w-0 overflow-y-auto overscroll-contain px-4 pt-6 pb-[calc(3.125rem+12px+1rem+env(safe-area-inset-bottom))] sm:px-6 sm:pb-[calc(3.125rem+12px+1.5rem+env(safe-area-inset-bottom))] lg:p-8">
-          <Outlet />
+          <AdminBusyContext.Provider value={markBusy}>
+            <Outlet />
+          </AdminBusyContext.Provider>
         </main>
       </div>
 

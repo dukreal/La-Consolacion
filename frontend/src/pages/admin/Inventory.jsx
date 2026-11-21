@@ -1,7 +1,10 @@
 import { Edit3, Package, Plus, Search, Trash2 } from 'lucide-react'
 import { useCallback, useEffect, useState } from 'react'
 import { Link, useLocation, useNavigate } from 'react-router-dom'
+import Skeleton, { LoadingArea } from '../../components/admin/Skeleton'
 import Toast from '../../components/admin/Toast'
+import { useAuth } from '../../hooks/useAuth'
+import { refreshingClass, useRefreshing } from '../../hooks/useRefreshing'
 import { deleteProduct, getInventory } from '../../services/adminService'
 
 const PREMADE_TYPES = ['ring', 'charm', 'earring', 'bracelet']
@@ -81,6 +84,26 @@ function ProductCard({ product, canDelete, onDelete }) {
   )
 }
 
+// Placeholder shown until the products arrive, the same size as a ProductCard
+function ProductCardSkeleton({ canDelete }) {
+  return (
+    <div className="bg-white border border-gray-200 rounded-xl p-2.5 sm:p-3 flex flex-col min-w-0">
+      <Skeleton className="w-full aspect-square !rounded-lg" />
+      <div className="mt-2.5 h-[1rem] flex items-center"><Skeleton className="h-2.5 w-12" /></div>
+      <div className="mt-0.5 h-[2.75em] text-sm sm:text-base leading-snug pt-[0.2em] space-y-[0.4em]">
+        <Skeleton className="h-[0.9em] w-11/12" />
+        <Skeleton className="h-[0.9em] w-1/2" />
+      </div>
+      <div className="mt-1 h-6 sm:h-7 flex items-center"><Skeleton className="h-4 sm:h-5 w-24" /></div>
+      <Skeleton className="mt-1.5 h-5 w-20" />
+      <div className="mt-3 flex gap-2">
+        <Skeleton className="flex-1 h-9 !rounded-lg" />
+        {canDelete && <Skeleton className="w-9 h-9 flex-shrink-0 !rounded-lg" />}
+      </div>
+    </div>
+  )
+}
+
 function DeleteModal({ product, deleting, onCancel, onConfirm }) {
   return (
     <div
@@ -113,6 +136,7 @@ function DeleteModal({ product, deleting, onCancel, onConfirm }) {
 }
 
 export default function Inventory() {
+  const { user: me } = useAuth()
   const location = useLocation()
   const navigate = useNavigate()
   const [data, setData] = useState(null)
@@ -122,6 +146,8 @@ export default function Inventory() {
   const [type, setType] = useState('') // '' = All, or 'ring', 'charm', ...
   const [toDelete, setToDelete] = useState(null)
   const [deleting, setDeleting] = useState(false)
+  const [reloading, setReloading] = useState(false) // getting the list again after a delete
+  const refreshing = useRefreshing(reloading)
   // A message passed from another page (e.g. after saving a product) shows once
   const [toast, setToast] = useState(() => location.state?.toast ?? null)
 
@@ -146,7 +172,9 @@ export default function Inventory() {
       const res = await deleteProduct(toDelete.id)
       if (res.success) {
         showToast('green', 'Product removed from inventory successfully!', 2000)
+        setReloading(true)
         await load()
+        setReloading(false)
       } else if (res.error === 'level') {
         showToast('red', 'Insufficient permissions to delete products. Only SuperAdmin can delete products.', 3000)
       } else {
@@ -164,8 +192,10 @@ export default function Inventory() {
     if (value === 'custom') setType('') // type buttons are switched off for custom, back to "All"
   }
 
+  const loading = !data && !error
   const products = data?.products ?? []
-  const isSuperAdmin = data?.adminLevel === 2
+  // Known from the sign-in straight away, so the Add buttons do not pop in after loading
+  const isSuperAdmin = (data?.adminLevel ?? Number(me?.adminLevel)) === 2
   const q = search.trim().toLowerCase()
   const visible = products.filter((p) => {
     if (productType === 'custom' ? !isCustom(p) : isCustom(p)) return false
@@ -271,7 +301,12 @@ export default function Inventory() {
       {error && <p className="text-red-600 mb-4">{error}</p>}
 
       {/* 2 cards per row on phones, 3 on tablets, then as many as fit (each at least 11.5rem wide) */}
-      <div className="bg-white p-3 sm:p-5 rounded-2xl shadow-lg border border-blue-100">
+      <div className={`bg-white p-3 sm:p-5 rounded-2xl shadow-lg border border-blue-100 ${refreshingClass(refreshing)}`} aria-busy={refreshing || undefined}>
+        {loading && (
+          <LoadingArea label="Loading products…" className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-[repeat(auto-fill,minmax(11.5rem,1fr))] gap-3 sm:gap-4">
+            {[1, 2, 3, 4, 5, 6, 7, 8].map((n) => <ProductCardSkeleton key={n} canDelete={isSuperAdmin} />)}
+          </LoadingArea>
+        )}
         <div id="inventoryGrid" className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-[repeat(auto-fill,minmax(11.5rem,1fr))] gap-3 sm:gap-4">
           {data && products.length === 0 && (
             <div className="col-span-full text-center text-gray-400 text-xl sm:text-2xl py-16 sm:py-24">No products are added.</div>

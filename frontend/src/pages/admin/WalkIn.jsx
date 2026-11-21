@@ -18,7 +18,7 @@ const METHODS = [
 // "Walk-In Order" point of sale (was admin-walkin.php). Opened from the Orders page.
 export default function WalkIn() {
   const navigate = useNavigate()
-  const [products, setProducts] = useState([])
+  const [products, setProducts] = useState(null) // null until the jewelry list has loaded
   const [productId, setProductId] = useState('')
   const [quantity, setQuantity] = useState('1')
   const [method, setMethod] = useState('CASH')
@@ -30,10 +30,13 @@ export default function WalkIn() {
   useEffect(() => {
     getWalkInProducts()
       .then((d) => setProducts(d.products))
-      .catch((e) => setError(e.message))
+      .catch((e) => {
+        setProducts([]) // stop saying "Loading jewelry…"; the error shows above the form
+        setError(e.message)
+      })
   }, [])
 
-  const product = products.find((p) => String(p.id) === productId)
+  const product = (products ?? []).find((p) => String(p.id) === productId)
   const price = product?.price ?? 0
   const qty = parseInt(quantity, 10) || 0
   const money = (n) => (changed ? `₱${n.toLocaleString('en-US')}` : '₱0.00')
@@ -96,8 +99,8 @@ export default function WalkIn() {
                     onChange={(e) => { setProductId(e.target.value); setChanged(true) }}
                     className={`${inputClass} text-lg`}
                   >
-                    <option value="">-- Search Jewelry --</option>
-                    {products.map((p) => (
+                    <option value="">{products ? '-- Search Jewelry --' : 'Loading jewelry…'}</option>
+                    {(products ?? []).map((p) => (
                       <option key={p.id} value={p.id}>
                         {p.name} (₱{p.price.toLocaleString('en-US', { maximumFractionDigits: 0 })})
                       </option>

@@ -2,6 +2,8 @@ import { ChevronLeft, ChevronRight, Search, SearchX } from 'lucide-react'
 import { useEffect, useState } from 'react'
 import { Link, useSearchParams } from 'react-router-dom'
 import ActivityDialog, { ActivityAvatar } from '../../components/admin/ActivityDialog'
+import Skeleton, { LoadingArea } from '../../components/admin/Skeleton'
+import { refreshingClass, useRefreshing } from '../../hooks/useRefreshing'
 import { getLogs } from '../../services/adminService'
 import { dayKey, formatDayHeading, formatTimeOnly, isFailedAction } from '../../utils/activityTime'
 
@@ -42,6 +44,27 @@ function LogRow({ log, onOpen }) {
         </div>
         <ChevronRight className="w-4 h-4 mt-1 flex-shrink-0 text-gray-400" aria-hidden="true" />
       </button>
+    </li>
+  )
+}
+
+// Placeholder for one entry, shaped like LogRow (phones: name, action, details and time on their own lines)
+function LogRowSkeleton() {
+  return (
+    <li className="flex items-start gap-3 py-3">
+      <Skeleton className="w-10 h-10 flex-shrink-0 !rounded-full" />
+      <div className="flex-1 min-w-0">
+        <div className="flex items-center gap-2 h-6">
+          <Skeleton className="h-4 w-28" />
+          <Skeleton className="hidden sm:block h-4 w-36" />
+          <Skeleton className="hidden sm:block ml-auto h-3 w-14" />
+        </div>
+        <Skeleton className="sm:hidden mt-1 h-4 w-36" />
+        <Skeleton className="mt-[0.6rem] h-3.5 w-full sm:w-4/5" />
+        <Skeleton className="sm:hidden mt-2 h-3.5 w-2/3" />
+        <Skeleton className="sm:hidden mt-2.5 h-3 w-14" />
+      </div>
+      <span className="w-4 flex-shrink-0" />
     </li>
   )
 }
@@ -118,18 +141,23 @@ export default function Logs() {
   const page = Math.max(1, parseInt(searchParams.get('page'), 10) || 1)
   const typeParam = searchParams.get('type') || ''
   const type = TYPES.some((t) => t.value === typeParam) ? typeParam : ''
-  const [data, setData] = useState(null)
-  const [error, setError] = useState('')
+  const key = `${page}|${type}` // which page of which type the address asks for
+  const [data, setData] = useState(null) // the last list that arrived, with the key it belongs to
+  const [error, setError] = useState(null) // { key, message }
   const [search, setSearch] = useState('')
   const [open, setOpen] = useState(null) // the entry shown in the pop-up
 
   useEffect(() => {
     let cancelled = false
     getLogs(page, type)
-      .then((d) => { if (!cancelled) { setData(d); setError('') } })
-      .catch((e) => { if (!cancelled) setError(e.message) })
+      .then((d) => { if (!cancelled) { setData({ ...d, key: `${page}|${type}` }); setError(null) } })
+      .catch((e) => { if (!cancelled) setError({ key: `${page}|${type}`, message: e.message }) })
     return () => { cancelled = true }
   }, [page, type])
+
+  // First visit: placeholders. Another page or type: the old list stays, faded, with the bar under the top bar.
+  const loading = !data && !error
+  const refreshing = useRefreshing(Boolean(data) && data.key !== key && error?.key !== key)
 
   // A new type starts again at page 1 (the type is kept in the address, like the page)
   const chooseType = (value) => setSearchParams(value ? { type: value } : {})
@@ -188,34 +216,46 @@ export default function Logs() {
           </div>
         </div>
 
-        {error && <p className="text-red-600 my-4" id="logsError">{error}</p>}
+        {error && <p className="text-red-600 my-4" id="logsError">{error.message}</p>}
 
-        <div id="logsList">
-          {data && logs.length === 0 && <div className="text-center text-gray-400 py-10">No logs found.</div>}
-          {days.map((day) => (
-            <section key={day.key}>
-              <h2 className="pt-4 pb-1 text-xs font-semibold uppercase tracking-wider text-[#2474b6]">{day.label}</h2>
-              <ul className="divide-y divide-gray-100">
-                {day.logs.map((log) => (
-                  <LogRow key={log.id} log={log} onOpen={setOpen} />
-                ))}
-              </ul>
-            </section>
-          ))}
-          {logs.length > 0 && visible.length === 0 && (
-            <div id="noResultsMsg" className="py-10 text-center text-gray-500">
-              <div className="flex flex-col items-center gap-2">
-                <SearchX className="w-8 h-8 text-gray-400" />
-                <span className="text-lg font-medium">No logs found</span>
-                <span className="text-sm">Try adjusting your search criteria</span>
+        {loading && (
+          <LoadingArea label="Loading logs…">
+            {/* Same spacing as a day heading */}
+            <div className="pt-4 pb-1 h-9 flex items-center"><Skeleton className="h-3 w-36" /></div>
+            <ul className="divide-y divide-gray-100">
+              {[1, 2, 3, 4, 5, 6, 7, 8].map((n) => <LogRowSkeleton key={n} />)}
+            </ul>
+          </LoadingArea>
+        )}
+
+        <div className={refreshingClass(refreshing)} aria-busy={refreshing || undefined}>
+          <div id="logsList">
+            {data && logs.length === 0 && <div className="text-center text-gray-400 py-10">No logs found.</div>}
+            {days.map((day) => (
+              <section key={day.key}>
+                <h2 className="pt-4 pb-1 text-xs font-semibold uppercase tracking-wider text-[#2474b6]">{day.label}</h2>
+                <ul className="divide-y divide-gray-100">
+                  {day.logs.map((log) => (
+                    <LogRow key={log.id} log={log} onOpen={setOpen} />
+                  ))}
+                </ul>
+              </section>
+            ))}
+            {logs.length > 0 && visible.length === 0 && (
+              <div id="noResultsMsg" className="py-10 text-center text-gray-500">
+                <div className="flex flex-col items-center gap-2">
+                  <SearchX className="w-8 h-8 text-gray-400" />
+                  <span className="text-lg font-medium">No logs found</span>
+                  <span className="text-sm">Try adjusting your search criteria</span>
+                </div>
               </div>
-            </div>
+            )}
+          </div>
+
+          {data && data.totalPages > 1 && (
+            <Pagination page={data.page} totalPages={data.totalPages} total={data.total} perPage={data.perPage} type={type} />
           )}
         </div>
-
-        {data && data.totalPages > 1 && (
-          <Pagination page={data.page} totalPages={data.totalPages} total={data.total} perPage={data.perPage} type={type} />
-        )}
       </div>
 
       {open && <ActivityDialog activity={open} onClose={() => setOpen(null)} />}

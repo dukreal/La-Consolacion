@@ -2,11 +2,14 @@ import { ChevronRight, Clock, Package, PackageCheck, Settings, ShoppingCart, Sto
 import { useEffect, useState } from 'react'
 import { Link } from 'react-router-dom'
 import ActivityDialog, { ActivityAvatar, RoleBadge } from '../../components/admin/ActivityDialog'
+import Skeleton, { LoadingArea } from '../../components/admin/Skeleton'
+import { useAuth } from '../../hooks/useAuth'
 import { formatActivityTime } from '../../utils/activityTime'
 import { getOverview } from '../../services/adminService'
 
 // One coloured number card (Total Orders, Pending, Processing, Waiting for Buyer).
 // Phones: compact, two per row, with the label under the icon and number. Wider screens: as before.
+// While loading, the numbers are see-through placeholders (instead of showing 0).
 function StatCard({ gradient, icon: Icon, value, label, note, noteIcon: NoteIcon }) {
   return (
     <div className={`relative overflow-hidden bg-gradient-to-br ${gradient} rounded-2xl p-3.5 sm:p-6 text-white shadow-xl`}>
@@ -31,6 +34,28 @@ function StatCard({ gradient, icon: Icon, value, label, note, noteIcon: NoteIcon
         </div>
       </div>
     </div>
+  )
+}
+
+// A see-through placeholder in place of a counter number (same height as the number's line)
+const numberSkeleton = <Skeleton tone="light" className="inline-block align-middle w-9 h-6 sm:w-12 sm:h-8" />
+
+// Placeholder for one "Recent Activity" entry, shaped like ActivityRow
+function ActivityRowSkeleton() {
+  return (
+    <li className="flex gap-3 py-3 sm:py-4">
+      <Skeleton className="w-10 h-10 flex-shrink-0 !rounded-full" />
+      <div className="flex-1 min-w-0">
+        <div className="flex items-center gap-2 h-6">
+          <Skeleton className="h-4 w-28" />
+          <Skeleton className="hidden sm:block ml-auto h-3 w-32" />
+        </div>
+        <Skeleton className="mt-1 h-4 w-40" />
+        <Skeleton className="mt-2 h-3 w-full sm:w-3/4" />
+        <Skeleton className="sm:hidden mt-1.5 h-3 w-2/3" />
+        <Skeleton className="sm:hidden mt-2 h-3 w-24" />
+      </div>
+    </li>
   )
 }
 
@@ -68,6 +93,7 @@ function ActivityRow({ activity, onOpen }) {
 
 // Admin dashboard home (was admin-overview.php).
 export default function Overview() {
+  const { user: me } = useAuth()
   const [data, setData] = useState(null)
   const [error, setError] = useState('')
   const [openActivity, setOpenActivity] = useState(null) // phones: the entry shown in the pop-up
@@ -86,7 +112,9 @@ export default function Overview() {
     }
   }, [])
 
+  const loading = !data && !error
   const stats = data?.stats || { totalOrders: 0, pendingOrders: 0, processingOrders: 0, waitingOrders: 0, thisWeek: 0 }
+  const number = (n) => (loading ? numberSkeleton : n)
 
   return (
     <>
@@ -98,7 +126,7 @@ export default function Overview() {
 
       {/* Welcome Section (tablets and up) */}
       <div className="hidden sm:block mb-8">
-        <h1 className="text-4xl font-bold text-gray-800 mb-2">Welcome back, {data?.username || 'Admin'}!</h1>
+        <h1 className="text-4xl font-bold text-gray-800 mb-2">Welcome back, {data?.username || me?.username || 'Admin'}!</h1>
         <p className="text-gray-600 text-lg">Here&apos;s what&apos;s happening with your jewelry business today.</p>
       </div>
 
@@ -109,15 +137,15 @@ export default function Overview() {
         <StatCard
           gradient="from-violet-400 via-violet-500 to-violet-600"
           icon={ShoppingCart}
-          value={stats.totalOrders}
+          value={number(stats.totalOrders)}
           label="Total Orders"
-          note={`This week: ${stats.thisWeek}`}
+          note={<>This week: {loading ? <Skeleton tone="light" className="inline-block align-middle w-5 h-3.5" /> : stats.thisWeek}</>}
           noteIcon={TrendingUp}
         />
         <StatCard
           gradient="from-amber-400 via-amber-500 to-amber-600"
           icon={Package}
-          value={stats.pendingOrders}
+          value={number(stats.pendingOrders)}
           label="Pending Orders"
           note="Awaiting processing"
           noteIcon={Clock}
@@ -125,7 +153,7 @@ export default function Overview() {
         <StatCard
           gradient="from-sky-400 via-sky-500 to-sky-600"
           icon={Truck}
-          value={stats.processingOrders}
+          value={number(stats.processingOrders)}
           label="Processing"
           note="In production"
           noteIcon={Settings}
@@ -134,7 +162,7 @@ export default function Overview() {
         <StatCard
           gradient="from-rose-400 via-rose-500 to-rose-600"
           icon={PackageCheck}
-          value={stats.waitingOrders}
+          value={number(stats.waitingOrders)}
           label="Waiting for Buyer"
           note="Ready for pickup"
           noteIcon={Store}
@@ -151,6 +179,13 @@ export default function Overview() {
         </div>
         {data && data.recentActivity.length === 0 && (
           <div className="text-gray-400 text-center py-8">No recent activity found.</div>
+        )}
+        {loading && (
+          <LoadingArea label="Loading recent activity…">
+            <ul className="divide-y divide-gray-100">
+              {[1, 2, 3].map((n) => <ActivityRowSkeleton key={n} />)}
+            </ul>
+          </LoadingArea>
         )}
         <ul id="recentActivity" className="divide-y divide-gray-100">
           {data?.recentActivity.map((activity) => (

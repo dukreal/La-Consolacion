@@ -4,6 +4,9 @@ import { Link, useLocation, useNavigate } from 'react-router-dom'
 import IconModal, { OkButton } from '../../components/admin/IconModal'
 import OrderDetailsModal from '../../components/admin/OrderDetailsModal'
 import PaymentModal from '../../components/admin/PaymentModal'
+import Skeleton, { LoadingArea } from '../../components/admin/Skeleton'
+import { useAuth } from '../../hooks/useAuth'
+import { refreshingClass, useRefreshing } from '../../hooks/useRefreshing'
 import { deleteOrder, getOrders } from '../../services/adminService'
 import { orderStatus } from '../../utils/orderStatus'
 
@@ -181,6 +184,79 @@ function OrderActions({ order, adminLevel, onDetails, onPayment, onDelete, card 
   )
 }
 
+// Placeholders shown until the orders arrive, shaped like the order cards and the table rows
+const SKELETON_ROWS = [1, 2, 3, 4, 5]
+
+function OrderCardSkeleton({ canDelete }) {
+  return (
+    <li className="p-4 sm:px-6 sm:py-5">
+      <div className="flex items-center justify-between gap-3">
+        <Skeleton className="h-4 w-36" />
+        <Skeleton className="h-6 w-20" />
+      </div>
+      <div className="mt-3 flex items-start gap-3">
+        <Skeleton className="w-11 h-11 sm:w-12 sm:h-12 flex-shrink-0 !rounded-lg" />
+        <div className="flex-1 min-w-0">
+          <Skeleton className="mt-0.5 h-4 w-3/4 max-w-[14rem]" />
+          <Skeleton className="mt-2.5 h-4 w-1/2 max-w-[10rem]" />
+        </div>
+        <Skeleton className="mt-0.5 h-5 w-16 flex-shrink-0" />
+      </div>
+      <div className="mt-3 flex items-center gap-2 sm:justify-end">
+        <Skeleton className="h-9 flex-1 sm:flex-none sm:w-24 !rounded-lg" />
+        <Skeleton className="h-9 flex-1 sm:flex-none sm:w-24 !rounded-lg" />
+        {canDelete && <Skeleton className="h-9 w-9 flex-shrink-0 !rounded-lg" />}
+      </div>
+    </li>
+  )
+}
+
+function OrderRowSkeleton({ canDelete }) {
+  return (
+    <tr>
+      <td className="px-6 py-4">
+        <div className="flex items-center gap-3">
+          <Skeleton className="w-12 h-12 flex-shrink-0 !rounded-lg" />
+          <div className="flex-1"><Skeleton className="h-4 w-40" /><Skeleton className="mt-2 h-3 w-24" /></div>
+        </div>
+      </td>
+      <td className="px-6 py-4 w-40">
+        <div className="flex items-center gap-4">
+          <Skeleton className="w-10 h-10 flex-shrink-0 !rounded-full" />
+          <div className="flex-1"><Skeleton className="h-4 w-[4.75rem]" /><Skeleton className="mt-2 h-3 w-14" /></div>
+        </div>
+      </td>
+      <td className="px-6 py-4 w-32"><Skeleton className="h-4 w-10" /><Skeleton className="mt-2 h-3 w-[5.5rem]" /></td>
+      <td className="px-6 py-4 w-32"><Skeleton className="ml-auto h-5 w-16" /></td>
+      <td className="px-6 py-4 w-32"><Skeleton className="mx-auto h-6 w-[5.75rem]" /></td>
+      {/* Same widths as the Details / Payment / Delete buttons, so the columns keep their place */}
+      <td className="px-6 py-4 w-32">
+        <div className="flex justify-center gap-2">
+          <Skeleton className="h-6 w-[3.95rem] !rounded-lg" />
+          <Skeleton className="h-6 w-[4.65rem] !rounded-lg" />
+          {canDelete && <Skeleton className="h-6 w-[3.8rem] !rounded-lg" />}
+        </div>
+      </td>
+    </tr>
+  )
+}
+
+// The table's column headings (the loading placeholder table uses the same ones, so the columns do not shift)
+function OrdersTableHead() {
+  return (
+    <thead className="bg-gray-50 border-b border-gray-200">
+      <tr>
+        <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">PRODUCT NAME</th>
+        <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider w-40">CUSTOMER NAME</th>
+        <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider whitespace-nowrap w-32">ORDER ID</th>
+        <th className="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider w-32">AMOUNT</th>
+        <th className="px-6 py-3 text-center text-xs font-medium text-gray-500 uppercase tracking-wider w-32">STATUS</th>
+        <th className="px-6 py-3 text-center text-xs font-medium text-gray-500 uppercase tracking-wider w-32">ACTION</th>
+      </tr>
+    </thead>
+  )
+}
+
 const peso = (n) => '₱' + n.toLocaleString('en-US', { maximumFractionDigits: 0 })
 
 // "Sale Recorded!" in the bottom-right corner after a walk-in sale. Slides in, leaves after 4 seconds.
@@ -215,6 +291,7 @@ function WalkInToast({ onClose }) {
 }
 
 export default function Orders() {
+  const { user: me } = useAuth()
   const location = useLocation()
   const navigate = useNavigate()
   const [data, setData] = useState(null)
@@ -225,6 +302,8 @@ export default function Orders() {
   const [alert, setAlert] = useState(null) // { type, title, message }
   const [detailsId, setDetailsId] = useState(null) // order shown in the Details pop-up
   const [paymentId, setPaymentId] = useState(null) // payment shown in the Payment pop-up
+  const [reloading, setReloading] = useState(false) // getting the list again after a delete
+  const refreshing = useRefreshing(reloading)
 
   const load = useCallback(() => {
     return getOrders()
@@ -252,7 +331,9 @@ export default function Orders() {
       const res = await deleteOrder(toDelete)
       if (res.success) {
         setAlert({ type: 'success', title: 'Order Deleted', message: 'Order has been successfully deleted.' })
+        setReloading(true)
         await load()
+        setReloading(false)
       } else {
         setAlert({ type: 'error', title: 'Delete Failed', message: res.message || res.error || 'Failed to delete order.' })
       }
@@ -263,7 +344,9 @@ export default function Orders() {
     setToDelete(null)
   }
 
+  const loading = !data && !error
   const orders = data?.orders ?? []
+  const canDelete = (data?.adminLevel ?? Number(me?.adminLevel)) === 2
   const actionHandlers = { onDetails: setDetailsId, onPayment: setPaymentId, onDelete: setToDelete }
   const stats = {
     total: orders.length,
@@ -294,20 +377,42 @@ export default function Orders() {
       {error && <p className="text-red-600 mb-4">{error}</p>}
 
       {/* Stats */}
-      <div className="stat-grid stat-grid-short grid grid-cols-2 gap-3 sm:gap-6 mb-8">
+      {/* While loading, the numbers are see-through placeholders (instead of showing 0) */}
+      <div className={`stat-grid stat-grid-short grid grid-cols-2 gap-3 sm:gap-6 mb-8 ${refreshingClass(refreshing)}`}>
         {STAT_CARDS.map((c) => (
-          <StatCard key={c.key} stat={c.key === 'total' ? 'total-orders' : c.key} label={c.label} value={stats[c.key]} icon={c.icon} colors={c.colors} />
+          <StatCard
+            key={c.key}
+            stat={c.key === 'total' ? 'total-orders' : c.key}
+            label={c.label}
+            value={loading ? <Skeleton tone="light" className="inline-block align-middle w-9 h-6 sm:w-12 sm:h-8" /> : stats[c.key]}
+            icon={c.icon}
+            colors={c.colors}
+          />
         ))}
       </div>
 
       {/* Table */}
-      <div className="bg-white rounded-2xl shadow-lg overflow-hidden">
+      <div className={`bg-white rounded-2xl shadow-lg overflow-hidden ${refreshingClass(refreshing)}`} aria-busy={refreshing || undefined}>
         <div className="bg-gradient-to-r from-slate-50 to-sky-50 px-4 py-3 sm:px-6 sm:py-4 border-b border-gray-200">
           <h2 className="text-lg sm:text-2xl font-bold text-gray-800">Order Details</h2>
           <p className="text-sm sm:text-base text-gray-600">Manage individual order status and details</p>
         </div>
 
-        {data && orders.length === 0 ? (
+        {loading ? (
+          <LoadingArea label="Loading orders…">
+            <ul className="orders-cards divide-y divide-gray-100">
+              {SKELETON_ROWS.map((n) => <OrderCardSkeleton key={n} canDelete={canDelete} />)}
+            </ul>
+            <div className="orders-table overflow-x-auto">
+              <table className="w-full">
+                <OrdersTableHead />
+                <tbody className="bg-white divide-y divide-gray-100">
+                  {SKELETON_ROWS.map((n) => <OrderRowSkeleton key={n} canDelete={canDelete} />)}
+                </tbody>
+              </table>
+            </div>
+          </LoadingArea>
+        ) : data && orders.length === 0 ? (
           <div className="text-center py-16">
             <div className="w-24 h-24 bg-gray-100 rounded-full flex items-center justify-center mx-auto mb-4">
               <Package className="w-12 h-12 text-gray-400" />
@@ -348,16 +453,7 @@ export default function Orders() {
 
             <div className="orders-table overflow-x-auto">
               <table className="w-full">
-                <thead className="bg-gray-50 border-b border-gray-200">
-                  <tr>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">PRODUCT NAME</th>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider w-40">CUSTOMER NAME</th>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider whitespace-nowrap w-32">ORDER ID</th>
-                    <th className="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider w-32">AMOUNT</th>
-                    <th className="px-6 py-3 text-center text-xs font-medium text-gray-500 uppercase tracking-wider w-32">STATUS</th>
-                    <th className="px-6 py-3 text-center text-xs font-medium text-gray-500 uppercase tracking-wider w-32">ACTION</th>
-                  </tr>
-                </thead>
+                <OrdersTableHead />
                 <tbody id="ordersTableBody" className="bg-white divide-y divide-gray-100">
                   {orders.map((order) => (
                     <tr key={order.id} className="hover:bg-gray-50 transition-all duration-200" data-order-id={order.id}>
