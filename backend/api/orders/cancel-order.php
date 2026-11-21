@@ -1,6 +1,7 @@
 <?php
 session_start();
 require_once __DIR__ . '/../../config/db.php';
+require_once __DIR__ . '/../../helpers/stock.php';
 
 // Check if user is logged in
 if (!isset($_SESSION['user_id'])) {
@@ -48,60 +49,32 @@ try {
         exit();
     }
 
-    // Start transaction
     $pdo->beginTransaction();
-    
-    // Update order status to cancelled and set completion date
+
+    // Cancel only while the order can still be cancelled, so two clicks (or the shop cancelling
+    // at the same moment) cannot put the stock back twice
     $stmt = $pdo->prepare("
-        UPDATE orders 
-        SET status = 'cancelled', date_completed = NOW() 
-        WHERE id = ?
-    ");
-    $result = $stmt->execute([$order_id]);
-    
-    if (!$result) {
-        throw new Exception('Failed to update order status');
-    }
-    
-    // Get order items to restore stock
-    $stmt = $pdo->prepare("
-        SELECT oi.product_id, oi.quantity, p.stock 
-        FROM order_items oi
-        JOIN products p ON oi.product_id = p.id
-        WHERE oi.order_id = ?
+        UPDATE orders
+        SET status = 'cancelled', date_completed = NOW()
+        WHERE id = ? AND status IN ('pending', 'processing', 'confirmed', 'waiting_for_buyer')
     ");
     $stmt->execute([$order_id]);
-    $orderItems = $stmt->fetchAll(PDO::FETCH_ASSOC);
-    
-    // Check if order has items
-    if (empty($orderItems)) {
-        echo json_encode(['success' => false, 'error' => 'This order could not be cancelled. Please contact the shop.']);
+    if ($stmt->rowCount() === 0) {
+        $pdo->rollBack();
+        echo json_encode(['success' => false, 'error' => 'This order can no longer be cancelled. Please refresh the page.']);
         exit();
     }
-    
-    // Restore stock for each item
-    foreach ($orderItems as $item) {
-        $newStock = $item['stock'] + $item['quantity'];
-        $stmt = $pdo->prepare("
-            UPDATE products 
-            SET stock = ? 
-            WHERE id = ?
-        ");
-        $result = $stmt->execute([$newStock, $item['product_id']]);
-        
-        if (!$result) {
-            throw new Exception('Failed to restore stock for product ID: ' . $item['product_id']);
-        }
-    }
-    
+
+    // Put the items back into stock (helpers/stock.php, shared with the admin's Cancelled status)
+    restore_order_stock($pdo, (int) $order_id);
+
     // Commit transaction
     $pdo->commit();
     
     echo json_encode([
         'success' => true, 
         'message' => 'Order #' . $order_id . ' has been cancelled.',
-        'order_id' => $order_id,
-        'items_restored' => count($orderItems)
+        'order_id' => $order_id
     ]);
     
 } catch (PDOException $e) {
