@@ -9,6 +9,7 @@ import StatCard from '../../components/admin/StatCard'
 import { useAuth } from '../../hooks/useAuth'
 import { refreshingClass, useRefreshing } from '../../hooks/useRefreshing'
 import { deleteOrder, getOrders } from '../../services/adminService'
+import { cancelButton, dangerButton } from '../../utils/dialogButtons'
 import { orderStatus } from '../../utils/orderStatus'
 
 // note: the bottom line of each card, like on Overview (Processing also counts orders waiting for the buyer)
@@ -476,13 +477,14 @@ export default function Orders() {
           type="delete"
           title="Delete Order?"
           message="Are you sure you want to delete this order? This action can be undone from the database but will hide the order from the admin panel."
+          onClose={() => !deleting && setToDelete(null)}
         >
           <button
             type="button"
             id="deleteOrderConfirmYesBtn"
             onClick={handleDelete}
             disabled={deleting}
-            className="bg-red-600 hover:bg-red-700 text-white px-6 py-2 rounded-lg font-semibold transition-all duration-200 shadow-md hover:shadow-lg disabled:opacity-60"
+            className={dangerButton}
           >
             {deleting ? 'Deleting...' : 'Delete'}
           </button>
@@ -490,7 +492,9 @@ export default function Orders() {
             type="button"
             id="deleteOrderConfirmCancelBtn"
             onClick={() => setToDelete(null)}
-            className="bg-gray-200 hover:bg-gray-300 text-gray-800 px-6 py-2 rounded-lg font-semibold transition-colors duration-200"
+            disabled={deleting}
+            data-autofocus
+            className={cancelButton}
           >
             Cancel
           </button>
@@ -498,7 +502,7 @@ export default function Orders() {
       )}
 
       {alert && (
-        <IconModal id="alertModal" type={alert.type} title={alert.title} message={alert.message}>
+        <IconModal id="alertModal" type={alert.type} title={alert.title} message={alert.message} onClose={() => setAlert(null)}>
           <OkButton onClick={() => setAlert(null)} />
         </IconModal>
       )}

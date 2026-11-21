@@ -1,6 +1,8 @@
 import { Wallet } from 'lucide-react'
-import { useEffect, useState } from 'react'
+import { useRef, useState } from 'react'
+import { useDialog } from '../../hooks/useDialog'
 import { fieldClass, labelClass } from '../../utils/adminForm'
+import { cancelButton, confirmButton } from '../../utils/dialogButtons'
 import { methodLabel } from '../../utils/storePayments'
 import PaymentMethodPicker from './PaymentMethodPicker'
 
@@ -14,11 +16,9 @@ export default function BalanceModal({ orderId, total, paid, balance, busy, onCo
   const [method, setMethod] = useState('CASH')
   const [reference, setReference] = useState('')
 
-  useEffect(() => {
-    const onKey = (e) => e.key === 'Escape' && !busy && onCancel()
-    document.addEventListener('keydown', onKey)
-    return () => document.removeEventListener('keydown', onKey)
-  }, [busy, onCancel])
+  const box = useRef(null)
+  // Escape = Cancel, focus stays inside; an error message opened on top of it handles Escape first
+  useDialog(box, () => !busy && onCancel())
 
   const choose = (value) => {
     setMethod(value)
@@ -32,15 +32,17 @@ export default function BalanceModal({ orderId, total, paid, balance, busy, onCo
   return (
     <div
       id="balanceModal"
-      className="fixed inset-0 bg-black/50 z-[9999] flex items-center justify-center p-3 sm:p-4"
+      className="fixed inset-0 bg-[#22306a]/30 backdrop-blur-[2px] z-[9999] flex items-center justify-center p-3 sm:p-4"
       onClick={(e) => e.target === e.currentTarget && !busy && onCancel()}
     >
       <form
+        ref={box}
+        tabIndex={-1}
         onSubmit={submit}
         role="dialog"
         aria-modal="true"
         aria-labelledby="balanceTitle"
-        className="bg-white rounded-2xl shadow-2xl w-full max-w-md max-h-[calc(100dvh-1.5rem)] overflow-y-auto overscroll-contain p-5 sm:p-6"
+        className="bg-white rounded-[18px] border border-[#eef0f5] shadow-[0_12px_40px_rgba(34,48,106,0.18)] w-full max-w-md max-h-[calc(100dvh-1.5rem)] overflow-y-auto overscroll-contain p-5 sm:p-6 outline-none"
       >
         <div className="flex items-center gap-3">
           <div className="w-11 h-11 flex-shrink-0 rounded-full bg-emerald-500 flex items-center justify-center">
@@ -89,7 +91,7 @@ export default function BalanceModal({ orderId, total, paid, balance, busy, onCo
             id="balanceCancelBtn"
             onClick={onCancel}
             disabled={busy}
-            className="h-11 px-5 rounded-[10px] bg-gray-200 [@media(hover:hover)]:hover:bg-gray-300 text-gray-800 font-semibold transition-colors"
+            className={cancelButton}
           >
             Cancel
           </button>
@@ -97,7 +99,7 @@ export default function BalanceModal({ orderId, total, paid, balance, busy, onCo
             type="submit"
             id="balanceConfirmBtn"
             disabled={busy}
-            className="min-h-11 px-4 py-2 rounded-[10px] bg-emerald-600 [@media(hover:hover)]:hover:bg-emerald-700 text-white font-semibold leading-tight transition-colors disabled:opacity-60"
+            className={confirmButton}
           >
             {busy ? 'Saving...' : 'Record and complete'}
           </button>
