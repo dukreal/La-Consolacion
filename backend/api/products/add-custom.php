@@ -1,7 +1,7 @@
 <?php
 // Adds a custom order from the admin "Add Custom Order" form. SuperAdmin only
 // (only SuperAdmins see the Add Custom button; the old page did not check this on the server).
-// POST form: customerName, customerEmail, productName, customPrice, stock, customDescription, customImage (file, optional)
+// POST form: customerName, customerEmail, customerPhone (optional), productName, customPrice, stock, customDescription, customImage (file, optional)
 //
 // Same steps as before, all in one transaction:
 //   1. a products row (type 'custom') and a custom_orders row with the same id
@@ -34,8 +34,8 @@ try {
     $stmt->execute([$c['product_name'], $c['price'], $c['stock'], $c['description'], $image]);
     $product_id = (int) $pdo->lastInsertId();
 
-    $stmt = $pdo->prepare("INSERT INTO custom_orders (id, customer_name, email, description, status, created_at, deleted) VALUES (?, ?, ?, ?, 'pending', NOW(), 0)");
-    $stmt->execute([$product_id, $c['customer_name'], $c['email'], $c['description']]);
+    $stmt = $pdo->prepare("INSERT INTO custom_orders (id, customer_name, email, phone, description, status, created_at, deleted) VALUES (?, ?, ?, ?, ?, 'pending', NOW(), 0)");
+    $stmt->execute([$product_id, $c['customer_name'], $c['email'], $c['phone'], $c['description']]);
 
     $stmt = $pdo->prepare('SELECT id FROM users WHERE email = ? LIMIT 1');
     $stmt->execute([$c['email']]);
@@ -88,7 +88,8 @@ $customer_sent = send_mail(
 send_mail(
     $config['admin_email'],
     'New Custom Order Received - La Consolacion Jewelry',
-    "A new custom order has been received!\n\nCustomer Details:\nName: {$c['customer_name']}\nEmail: {$c['email']}\n\n"
+    "A new custom order has been received!\n\nCustomer Details:\nName: {$c['customer_name']}\nEmail: {$c['email']}\n"
+        . ($c['phone'] ? "Phone: {$c['phone']}\n" : '') . "\n"
         . "Order Details:\nProduct Name: {$c['product_name']}\nDescription: {$c['description']}\nPrice: ₱$price\nStock: {$c['stock']}\n\n"
         . "Order ID: $product_id\n\nView order details in admin panel.",
     '/send-order-notification'

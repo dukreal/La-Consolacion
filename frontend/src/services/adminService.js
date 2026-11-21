@@ -8,8 +8,9 @@ export async function getOverview() {
 }
 
 // One page (8 rows) of activity logs: { logs, page, perPage, total, totalPages }
-export async function getLogs(page = 1) {
-  const data = await api(`/admin/logs.php?page=${page}`)
+// type: '' (all), 'orders', 'products' or 'users' (filters across all logs, on the server)
+export async function getLogs(page = 1, type = '') {
+  const data = await api(`/admin/logs.php?page=${page}${type ? `&type=${type}` : ''}`)
   if (!data.success) throw new Error(data.message || data.error || 'Could not load logs')
   return data
 }
@@ -81,6 +82,7 @@ function customForm(fields, image) {
   const form = new FormData()
   form.append('customerName', fields.customerName)
   form.append('customerEmail', fields.email)
+  form.append('customerPhone', fields.phone)
   form.append('productName', fields.productName)
   form.append('customPrice', fields.price)
   form.append('stock', fields.stock)

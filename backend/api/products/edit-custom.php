@@ -1,7 +1,7 @@
 <?php
 // The admin "Edit Custom Order" page. Any admin can use it (same as before).
 //   GET  ?id=N  → the custom product and its custom order
-//   POST form   → saves it: customerName, customerEmail, productName, customPrice, stock,
+//   POST form   → saves it: customerName, customerEmail, customerPhone (optional), productName, customPrice, stock,
 //                 customStatus, customDescription, customImage (file, optional)
 require_once __DIR__ . '/../../helpers/admin.php';
 require_once __DIR__ . '/../../helpers/upload.php';
@@ -16,7 +16,7 @@ $id = (int) ($_GET['id'] ?? $_POST['id'] ?? 0);
 
 try {
     $stmt = $pdo->prepare(
-        "SELECT p.name, p.price, p.stock, p.image, c.customer_name, c.email, c.description, c.status
+        "SELECT p.name, p.price, p.stock, p.image, c.customer_name, c.email, c.phone, c.description, c.status
          FROM products p
          JOIN custom_orders c ON c.id = p.id
          WHERE p.id = ? AND p.type = 'custom' AND p.deleted = 0"
@@ -38,6 +38,7 @@ if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
             'id'           => $id,
             'customerName' => $order['customer_name'],
             'email'        => $order['email'],
+            'phone'        => $order['phone'] ?? '',
             'productName'  => $order['name'],
             'price'        => (float) $order['price'],
             'stock'        => (int) $order['stock'],
@@ -63,8 +64,8 @@ try {
     $pdo->beginTransaction();
     $pdo->prepare('UPDATE products SET name = ?, price = ?, stock = ?, description = ?, image = ? WHERE id = ?')
         ->execute([$c['product_name'], $c['price'], $c['stock'], $c['description'], $image, $id]);
-    $pdo->prepare('UPDATE custom_orders SET customer_name = ?, email = ?, description = ?, status = ? WHERE id = ?')
-        ->execute([$c['customer_name'], $c['email'], $c['description'], $status, $id]);
+    $pdo->prepare('UPDATE custom_orders SET customer_name = ?, email = ?, phone = ?, description = ?, status = ? WHERE id = ?')
+        ->execute([$c['customer_name'], $c['email'], $c['phone'], $c['description'], $status, $id]);
     $pdo->commit();
 } catch (PDOException $e) {
     if ($pdo->inTransaction()) {

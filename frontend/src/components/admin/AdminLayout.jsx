@@ -1,6 +1,9 @@
 import { Activity, BarChart3, LogOut, Package, ShoppingCart, Users } from 'lucide-react'
+import { Suspense, useCallback, useState } from 'react'
 import { Link, Outlet, useLocation, useNavigate } from 'react-router-dom'
+import { AdminBusyContext } from '../../context/admin-busy-context'
 import { useAuth } from '../../hooks/useAuth'
+import Skeleton, { LoadingArea } from './Skeleton'
 import '../../styles/admin.css'
 
 // Sidebar entries. `match` lists the addresses that light up the entry
@@ -16,10 +19,36 @@ const NAV = [
 const itemClass = 'w-full flex items-center space-x-3 px-4 py-3 rounded-xl text-left transition-all duration-200'
 
 // The admin frame: top bar and left sidebar (was layout-header.php), with the page in the middle.
+// Shown while the admin pages download (once per visit): a title and a card of grey lines, where the page will be
+function PageSkeleton() {
+  return (
+    <LoadingArea label="Loading…">
+      <div className="mb-6 sm:mb-8">
+        <Skeleton className="h-7 sm:h-10 w-48 sm:w-72" />
+        <Skeleton className="mt-2 h-4 sm:h-5 w-64 sm:w-96 max-w-full" />
+      </div>
+      <div className="bg-white rounded-2xl shadow-lg border border-blue-100 p-4 sm:p-5 space-y-4">
+        {[1, 2, 3, 4, 5].map((n) => (
+          <div key={n} className="flex items-center gap-3">
+            <Skeleton className="w-10 h-10 flex-shrink-0 !rounded-full" />
+            <div className="flex-1 min-w-0">
+              <Skeleton className="h-4 w-1/3" />
+              <Skeleton className="mt-2 h-3 w-2/3" />
+            </div>
+          </div>
+        ))}
+      </div>
+    </LoadingArea>
+  )
+}
+
 export default function AdminLayout() {
   const { user, logout } = useAuth()
   const { pathname } = useLocation()
   const navigate = useNavigate()
+  // How many pages are reloading right now (see hooks/useRefreshing.js); above 0 the thin bar shows
+  const [busy, setBusy] = useState(0)
+  const markBusy = useCallback((change) => setBusy((n) => Math.max(0, n + change)), [])
 
   const initials = (user?.firstName || '').slice(0, 2).toUpperCase()
   const photo = user?.profileImage ? `/uploads/profile/${user.profileImage}` : ''
@@ -30,8 +59,10 @@ export default function AdminLayout() {
   }
 
   return (
-    <div className="admin-page min-h-screen overflow-hidden">
-      <header className="glass sticky top-0 z-50 px-6 py-4 border-b border-gray-200">
+    // One screen tall: the top bar stays on top, and only the page area (and the sidebar, if its links ever
+    // do not fit) scrolls. No fixed heights, so the frame never ends up taller than the screen.
+    <div className="admin-page h-dvh flex flex-col overflow-hidden">
+      <header className="glass relative flex-none z-50 px-4 sm:px-6 py-4 border-b border-gray-200">
         <div className="flex items-center justify-between">
           <div className="flex items-center space-x-4">
             <div className="flex items-center space-x-3">
@@ -40,8 +71,8 @@ export default function AdminLayout() {
               </Link>
             </div>
           </div>
-          <div className="flex items-center space-x-4">
-            <span className="text-sm text-gray-600">Dashboard | Welcome {user?.username || 'Admin'}</span>
+          <div className="flex items-center space-x-3 sm:space-x-4">
+            <span className="hidden sm:inline text-sm text-gray-600">Dashboard | Welcome {user?.username || 'Admin'}</span>
             <div className="relative" style={{ zIndex: 9999 }}>
               <Link
                 to="/profile"
@@ -57,12 +88,24 @@ export default function AdminLayout() {
                 )}
               </Link>
             </div>
+            {/* Phones and tablets: the sidebar becomes the bottom bar, so Log Out moves up here */}
+            <button
+              type="button"
+              onClick={handleLogout}
+              aria-label="Log out"
+              title="Log out"
+              className="lg:hidden w-9 h-9 flex-shrink-0 rounded-xl flex items-center justify-center text-red-600 hover:bg-red-50 transition-colors duration-200"
+            >
+              <LogOut className="w-5 h-5" />
+            </button>
           </div>
         </div>
+        {/* A page is reloading: a thin blue bar slides along the bottom edge of the top bar */}
+        {busy > 0 && <div className="refresh-bar" role="progressbar" aria-label="Loading" />}
       </header>
 
-      <div className="flex h-[calc(100vh-80px)] overflow-hidden">
-        <aside className="fixed top-[80px] left-0 w-72 h-[calc(100vh-80px)] glass p-6 border-r border-gray-200 overflow-y-auto">
+      <div className="flex flex-1 min-h-0">
+        <aside className="hidden lg:block w-72 flex-none glass p-6 border-r border-gray-200 overflow-y-auto overscroll-contain">
           <nav className="space-y-2">
             {NAV.map(({ to, label, icon: Icon, match }) => (
               <Link
@@ -87,10 +130,46 @@ export default function AdminLayout() {
           </div>
         </aside>
 
-        <main className="flex-1 p-8 ml-72 overflow-y-auto h-[calc(100vh-80px)]">
-          <Outlet />
+        {/* Below 1024px the page uses the full width and leaves room for the bottom bar (3.125rem + 12px tall).
+            Every page ends with the same space as its sides: 16px on phones, 24px on tablets, 32px on desktop.
+            scrollbar-gutter: stable keeps the scrollbar's space even when a page is too short to scroll, so the
+            content does not get wider or narrower (and jump) when the scrollbar comes and goes. */}
+        <main className="flex-1 min-w-0 overflow-y-auto overscroll-contain [scrollbar-gutter:stable] px-4 pt-6 pb-[calc(3.125rem+12px+1rem+env(safe-area-inset-bottom))] sm:px-6 sm:pb-[calc(3.125rem+12px+1.5rem+env(safe-area-inset-bottom))] lg:p-8">
+          <AdminBusyContext.Provider value={markBusy}>
+            {/* The admin pages are a separate download (see App.jsx); the first time, placeholders show until it is in */}
+            <Suspense fallback={<PageSkeleton />}>
+              <Outlet />
+            </Suspense>
+          </AdminBusyContext.Provider>
         </main>
       </div>
+
+      {/* Phones and tablets (under 1024px): the sidebar links as a bar along the bottom */}
+      <nav
+        aria-label="Admin sections"
+        className="lg:hidden fixed bottom-0 inset-x-0 z-40 bg-white/90 backdrop-blur-md border-t border-gray-200 pb-[env(safe-area-inset-bottom)]"
+      >
+        <div className="grid grid-cols-5 max-w-xl mx-auto">
+          {NAV.map(({ to, label, icon: Icon, match }) => {
+            const active = match(pathname)
+            return (
+              <Link
+                key={to}
+                to={to}
+                aria-current={active ? 'page' : undefined}
+                className={`flex flex-col items-center gap-1 pt-2 pb-2.5 text-[11px] leading-none transition-colors duration-200 ${
+                  active ? 'text-[#1f488a] font-semibold' : 'text-gray-500 font-medium hover:text-gray-700'
+                }`}
+              >
+                <span className={`flex items-center justify-center w-12 h-7 rounded-full ${active ? 'gradient-deep-blue text-white shadow' : ''}`}>
+                  <Icon className="w-5 h-5" />
+                </span>
+                {label}
+              </Link>
+            )
+          })}
+        </div>
+      </nav>
     </div>
   )
 }

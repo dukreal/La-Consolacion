@@ -2,6 +2,7 @@ import { Gem, Mail, Phone, User } from 'lucide-react'
 import { useEffect, useState } from 'react'
 import { getOrderDetails, updateOrderStatus } from '../../services/adminService'
 import { ADMIN_STATUS_OPTIONS, orderStatus } from '../../utils/orderStatus'
+import { cancelButton, confirmButton } from '../../utils/dialogButtons'
 import IconModal, { OkButton } from './IconModal'
 
 // Status names (admin wording) and dot colors come from utils/orderStatus.js, shared with the customer side
@@ -9,24 +10,35 @@ const statusLabel = (status) => orderStatus(status, { admin: true }).label
 // Completed and Cancelled are final: they need the extra "Confirm Order" step
 const isFinal = (status) => status === 'completed' || status === 'cancelled'
 const peso = (n) => '₱' + Number(n).toLocaleString('en-US', { minimumFractionDigits: 2 })
-const formatDateTime = (value) =>
-  new Date(value.replace(' ', 'T')).toLocaleDateString('en-US', {
-    year: 'numeric', month: 'long', day: 'numeric', hour: '2-digit', minute: '2-digit',
-  })
+// "2026-11-19 10:00:00" -> "Nov 19, 2026 · 10:00 AM"
+const formatDateTime = (value) => {
+  const d = new Date(value.replace(' ', 'T'))
+  const day = d.toLocaleDateString('en-US', { year: 'numeric', month: 'short', day: 'numeric' })
+  const time = d.toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit' })
+  return `${day} · ${time}`
+}
 
-const sky = 'bg-gradient-to-r from-sky-500 to-sky-600 hover:from-sky-600 hover:to-sky-700'
-const emerald = 'bg-gradient-to-r from-emerald-500 to-emerald-600 hover:from-emerald-600 hover:to-emerald-700'
-const buttonBase = 'text-white px-6 py-2 rounded-lg font-semibold transition-all duration-200 shadow-md hover:shadow-lg'
+// Long emails may wrap only before "@" or a dot, never in the middle of a word
+const breakableEmail = (email) =>
+  String(email ?? '')
+    .split(/(?=[@.])/)
+    .flatMap((part, i) => (i ? [<wbr key={i} />, part] : [part]))
+
+// Site palette: navy for the main action, green for the permanent "Confirm Order" step, navy outline for Close
+const navyButton = 'bg-[#22306a] hover:bg-[#1a2550] text-white'
+const greenButton = 'bg-emerald-600 hover:bg-emerald-700 text-white'
+const buttonBase = 'h-11 px-5 rounded-[10px] font-semibold whitespace-nowrap transition-colors duration-200 outline-none focus-visible:ring-4 focus-visible:ring-[#2474b6]/25'
+const outlineButton = 'border-[1.5px] border-[#d8dce8] bg-white text-[#22306a] hover:border-[#22306a] hover:bg-[#f5f6fa]'
 
 function ProductImage({ product }) {
   const [failed, setFailed] = useState(false)
   return (
-    <div className="w-16 h-16 rounded-lg overflow-hidden bg-gray-100 flex-shrink-0">
+    <div className="w-12 h-12 sm:w-14 sm:h-14 rounded-lg overflow-hidden bg-gray-100 flex-shrink-0">
       {product.image && !failed ? (
         <img src={`/uploads/${product.folder}/${product.image}`} alt={product.name} onError={() => setFailed(true)} className="w-full h-full object-cover" />
       ) : (
         <div className="w-full h-full bg-gradient-to-br from-violet-400 to-violet-500 flex items-center justify-center">
-          <Gem className="w-8 h-8 text-white" />
+          <Gem className="w-6 h-6 text-white" />
         </div>
       )}
     </div>
@@ -58,14 +70,14 @@ export default function OrderDetailsModal({ orderId, onClose, onStatusChange }) 
   const unpaid = order && !order.paid
   const locked = order && order.paid && order.dateCompleted && isFinal(current)
 
-  // What the Update Status button says, and whether it can be clicked
+  // Completed / Cancelled picked: only the green Confirm Order button shows (it asks before saving).
+  // Otherwise: the Update Status button, with what it says and whether it can be clicked.
+  const showConfirm = order && !unpaid && !locked && isFinal(selected)
   let updateLabel = 'Update Status'
   let updateEnabled = true
   if (unpaid) [updateLabel, updateEnabled] = ['Payment Required', false]
   else if (locked) [updateLabel, updateEnabled] = ['Order Completed', false]
-  else if (isFinal(selected)) [updateLabel, updateEnabled] = ['Use Confirm Order', false]
   else if (selected === current) [updateLabel, updateEnabled] = ['No Change Needed', false]
-  const showConfirm = order && !unpaid && !locked && isFinal(selected)
 
   const saveStatus = async (status, successAlert) => {
     setBusy(true)
@@ -98,167 +110,162 @@ export default function OrderDetailsModal({ orderId, onClose, onStatusChange }) 
   const statusInfo = orderStatus(current, { admin: true, unpaid })
   const customer = data?.customer
 
+  const sectionTitle = 'text-sm font-semibold uppercase tracking-wider text-gray-500'
+
+  // Phones: one column (status, products, buyer). From 640px: the status row on top, then products and buyer as
+  // two equal columns of the same height. The buyer column sets that height (at least 17rem); a long product list
+  // scrolls inside its column with Total pinned at the bottom, so neither side is left half empty.
   return (
     <div
       id="orderDetailsModal"
-      className="fixed inset-0 bg-black bg-opacity-60 z-50 flex items-center justify-center p-4"
+      className="fixed inset-0 bg-[#22306a]/30 backdrop-blur-[2px] z-50 flex items-center justify-center p-3 sm:p-4"
       onClick={(e) => e.target === e.currentTarget && onClose()}
     >
-      <div className="bg-white rounded-2xl shadow-2xl max-w-4xl w-full max-h-[90vh] overflow-y-auto relative">
-        <button type="button" id="closeOrderDetailsModal" onClick={onClose} className="absolute top-4 right-4 text-gray-400 hover:text-gray-700 text-2xl z-10" title="Close">
-          &times;
-        </button>
-
-        {/* Header */}
-        <div className="bg-gradient-to-r from-slate-50 to-sky-50 px-8 py-6 border-b border-gray-200 rounded-t-2xl">
-          <h2 className="text-3xl font-bold text-gray-900" id="modalOrderTitle">{order ? `Order #${order.id}` : 'Loading...'}</h2>
-          <p className="text-gray-600 mt-1" id="modalOrderDate">Order Date: {order ? formatDateTime(order.dateOrdered) : 'Loading...'}</p>
+      <div className="bg-white rounded-[18px] border border-[#eef0f5] shadow-[0_12px_40px_rgba(34,48,106,0.18)] w-full max-w-3xl max-h-[calc(100dvh-1.5rem)] sm:max-h-[90vh] flex flex-col overflow-hidden">
+        {/* Header: order number, date, current status */}
+        <div className="flex items-start justify-between gap-3 px-5 py-4 sm:px-6 border-b border-gray-100">
+          <div className="min-w-0">
+            <h2 className="text-xl sm:text-2xl font-bold text-[#22306a]" id="modalOrderTitle">{order ? `Order #${order.id}` : 'Loading...'}</h2>
+            <p className="text-sm text-gray-500 mt-0.5" id="modalOrderDate">{order ? formatDateTime(order.dateOrdered) : 'Loading...'}</p>
+          </div>
+          <div className="flex items-center gap-2 flex-shrink-0">
+            {order && (
+              <span className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-md text-xs sm:text-sm font-medium border ${statusInfo.badge}`}>
+                <span id="modalStatusDot" className={`w-2 h-2 rounded-full ${statusInfo.dot}`} />
+                <span id="modalStatusLabel">{statusInfo.label}</span>
+              </span>
+            )}
+            <button
+              type="button"
+              id="closeOrderDetailsModal"
+              onClick={onClose}
+              title="Close"
+              aria-label="Close"
+              className="w-9 h-9 -mr-1.5 rounded-full flex items-center justify-center text-2xl leading-none text-gray-400 hover:bg-[#f5f6fa] hover:text-[#22306a] transition-colors outline-none focus-visible:ring-4 focus-visible:ring-[#2474b6]/25"
+            >
+              &times;
+            </button>
+          </div>
         </div>
 
-        <div className="p-8">
-          <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
-            {/* Left: products */}
-            <div>
-              <div className="flex items-center justify-between mb-4">
-                <h3 className="text-xl font-bold text-gray-900">Products</h3>
-                <span id="modalProductCount" className="text-sm text-gray-500 bg-gray-100 px-3 py-1 rounded-full">
+        <div className="flex-1 min-h-0 overflow-y-auto">
+          {/* Change status: right under the header */}
+          <div className="bg-[#f5f7fb] px-5 py-4 sm:px-6 border-b border-gray-100">
+            <label htmlFor="modalStatusSelect" className="block text-sm font-semibold text-gray-700 mb-2">Change Status</label>
+            <div className="flex flex-col sm:flex-row gap-2 sm:gap-3">
+              <select
+                id="modalStatusSelect"
+                value={selected}
+                onChange={(e) => setSelected(e.target.value)}
+                disabled={!order || unpaid || locked || busy}
+                className="h-11 w-full sm:flex-1 min-w-0 px-3 bg-white border border-[#d8dce8] rounded-[10px] text-gray-900 outline-none focus:border-[#2474b6] focus:ring-4 focus:ring-[#2474b6]/15 disabled:bg-gray-100 disabled:text-gray-500"
+              >
+                {ADMIN_STATUS_OPTIONS.map((s) => (
+                  <option key={s.value} value={s.value}>{s.label}</option>
+                ))}
+              </select>
+              {!showConfirm && (
+                <button
+                  type="button"
+                  id="modalUpdateStatusBtn"
+                  onClick={handleUpdate}
+                  disabled={!order || !updateEnabled || busy}
+                  className={`${navyButton} ${buttonBase} ${!order || !updateEnabled ? 'opacity-50 cursor-not-allowed' : ''}`}
+                >
+                  {busy && updateEnabled ? 'Updating...' : updateLabel}
+                </button>
+              )}
+              {showConfirm && (
+                <button
+                  type="button"
+                  id="modalConfirmOrderBtn"
+                  onClick={() => setAskConfirm(true)}
+                  disabled={busy}
+                  className={`${greenButton} ${buttonBase} disabled:opacity-75`}
+                >
+                  {busy ? 'Confirming...' : 'Confirm Order'}
+                </button>
+              )}
+            </div>
+          </div>
+
+          <div className="grid grid-cols-1 sm:grid-cols-2 sm:min-h-[17rem] sm:divide-x divide-gray-100">
+            {/* Products */}
+            <div className="flex flex-col px-5 py-5 sm:px-6 sm:h-0 sm:min-h-full">
+              <div className="flex items-center justify-between mb-3 flex-shrink-0">
+                <h3 className={sectionTitle}>Products</h3>
+                <span id="modalProductCount" className="text-xs text-gray-500 bg-gray-100 px-2.5 py-1 rounded-full">
                   {data ? `${data.products.length} item${data.products.length !== 1 ? 's' : ''}` : '0 items'}
                 </span>
               </div>
-              <div className="relative">
-                <div id="modalProducts" className="space-y-4 max-h-96 overflow-y-auto pr-2 scrollbar-thin">
-                  {error && <div className="text-center py-8 text-red-500">{error}</div>}
-                  {!data && !error && (
-                    <div className="text-center py-8">
-                      <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-sky-500 mx-auto" />
-                    </div>
-                  )}
-                  {data?.products.map((p) => (
-                    <div key={p.id} className="bg-white border border-gray-200 rounded-xl p-4">
-                      <div className="flex items-center space-x-4">
-                        <ProductImage product={p} />
-                        <div className="flex-1">
-                          <h4 className="font-semibold text-gray-900 text-lg">{p.name}</h4>
-                          <p className="text-gray-600 text-sm mb-2">{p.description || 'No description available'}</p>
-                          <div className="flex items-center justify-between">
-                            <div className="text-sm text-gray-500">
-                              <span className="font-medium">Qty: {p.quantity}</span>
-                              <span className="mx-2">•</span>
-                              <span className="font-medium">{peso(p.price)} each</span>
-                            </div>
-                            <p className="font-bold text-gray-900">{peso(p.total)}</p>
-                          </div>
-                        </div>
+              <div id="modalProducts" className="divide-y divide-gray-100 sm:flex-1 sm:min-h-0 sm:overflow-y-auto sm:-mr-2 sm:pr-2">
+                {error && <div className="text-center py-8 text-red-500">{error}</div>}
+                {!data && !error && (
+                  <div className="text-center py-8">
+                    <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-[#2474b6] mx-auto" />
+                  </div>
+                )}
+                {data?.products.map((p) => (
+                  <div key={p.id} className="flex items-start gap-3 py-3 first:pt-0">
+                    <ProductImage product={p} />
+                    <div className="flex-1 min-w-0">
+                      <h4 className="font-semibold text-gray-900 leading-snug">{p.name}</h4>
+                      <p className="text-gray-500 text-sm line-clamp-2">{p.description || 'No description available'}</p>
+                      {/* The line total sits at the end of this line; it drops below it only when there is no room */}
+                      <div className="mt-1 flex flex-wrap items-baseline justify-between gap-x-3">
+                        <span className="text-sm text-gray-500">Qty {p.quantity} · {peso(p.price)} each</span>
+                        <span className="font-bold text-gray-900 whitespace-nowrap">{peso(p.total)}</span>
                       </div>
                     </div>
-                  ))}
-                </div>
-                <div className="absolute bottom-0 left-0 right-2 h-8 bg-gradient-to-t from-white to-transparent pointer-events-none" />
-              </div>
-              <div className="mt-6 pt-6 border-t border-gray-200">
-                <h4 className="text-lg font-semibold text-gray-900 mb-3">Order Summary</h4>
-                <div className="bg-gray-50 rounded-xl p-4">
-                  <div className="flex justify-between items-center">
-                    <span className="font-semibold text-gray-900">Total:</span>
-                    <span className="font-bold text-2xl text-gray-900" id="modalTotal">{peso(data?.total ?? 0)}</span>
                   </div>
+                ))}
+              </div>
+              <div className="mt-auto pt-4 flex-shrink-0">
+                <div className="flex justify-between items-center border-t border-gray-200 pt-4">
+                  <span className="font-semibold text-gray-700">Total</span>
+                  <span className="font-bold text-xl sm:text-2xl text-[#22306a]" id="modalTotal">{peso(data?.total ?? 0)}</span>
                 </div>
               </div>
             </div>
 
-            {/* Right: buyer and status */}
-            <div>
-              <div className="mb-8">
-                <h3 className="text-xl font-bold text-gray-900 mb-4">Buyer Profile</h3>
-                <div className="bg-gray-50 rounded-xl p-6">
-                  <div className="flex items-center space-x-4 mb-4">
-                    <div className="w-12 h-12 rounded-full flex items-center justify-center shadow-md bg-gradient-to-br from-slate-400 to-slate-500 relative overflow-hidden">
-                      {customer?.profileImage ? (
-                        <img src={`/uploads/profile/${customer.profileImage}`} alt="Profile" className="w-12 h-12 rounded-full object-cover absolute inset-0" />
-                      ) : (
-                        <User className="w-6 h-6 text-white z-10" />
-                      )}
-                    </div>
-                    <div>
-                      <p className="font-semibold text-gray-900 text-lg" id="modalCustomerName">
-                        {customer ? (customer.isWalkIn ? 'Walk-in Customer' : customer.name) : 'Loading...'}
-                      </p>
-                      <p className="text-gray-600">Customer</p>
-                    </div>
-                  </div>
-                  <div className="space-y-3">
-                    <div className="flex items-center space-x-3">
-                      <Mail className="w-4 h-4 text-gray-500" />
-                      <span className="text-gray-700" id="modalCustomerEmail">
-                        {customer ? (customer.isWalkIn ? 'Walk-in (Physical Sale)' : customer.email) : 'Loading...'}
-                      </span>
-                    </div>
-                    <div className="flex items-center space-x-3">
-                      <Phone className="w-4 h-4 text-gray-500" />
-                      <span className="text-gray-700" id="modalCustomerMobile">{customer ? customer.mobile : 'Loading...'}</span>
-                    </div>
-                  </div>
+            {/* Buyer */}
+            <div className="px-5 py-5 sm:px-6 border-t border-gray-100 sm:border-t-0">
+              <h3 className={`${sectionTitle} mb-3`}>Buyer Profile</h3>
+              <div className="flex items-center gap-3 mb-4">
+                <div className="w-12 h-12 flex-shrink-0 rounded-full flex items-center justify-center shadow-md bg-gradient-to-br from-slate-400 to-slate-500 relative overflow-hidden">
+                  {customer?.profileImage ? (
+                    <img src={`/uploads/profile/${customer.profileImage}`} alt="Profile" className="w-12 h-12 rounded-full object-cover absolute inset-0" />
+                  ) : (
+                    <User className="w-6 h-6 text-white z-10" />
+                  )}
+                </div>
+                <div className="min-w-0">
+                  <p className="font-semibold text-gray-900 text-lg leading-tight truncate" id="modalCustomerName">
+                    {customer ? (customer.isWalkIn ? 'Walk-in Customer' : customer.name) : 'Loading...'}
+                  </p>
+                  <p className="text-sm text-gray-500">Customer</p>
                 </div>
               </div>
-
-              <div>
-                <h3 className="text-xl font-bold text-gray-900 mb-4">Order Status</h3>
-                <div className="bg-white border border-gray-200 rounded-xl p-6">
-                  <div className="mb-4">
-                    <span className="block text-sm font-semibold text-gray-700 mb-2">Current Status</span>
-                    <div className="flex items-center space-x-2 mb-4">
-                      <div id="modalStatusDot" className={`w-3 h-3 rounded-full ${order ? statusInfo.dot : ''}`} />
-                      <span id="modalStatusLabel" className="font-semibold text-gray-900">{order ? statusInfo.label : 'Loading...'}</span>
-                    </div>
-                  </div>
-                  <div className="mb-4">
-                    <label htmlFor="modalStatusSelect" className="block text-sm font-semibold text-gray-700 mb-2">Change Status</label>
-                    <select
-                      id="modalStatusSelect"
-                      value={selected}
-                      onChange={(e) => setSelected(e.target.value)}
-                      disabled={!order || unpaid || locked || busy}
-                      className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-sky-500 focus:border-sky-500"
-                    >
-                      {ADMIN_STATUS_OPTIONS.map((s) => (
-                        <option key={s.value} value={s.value}>{s.label}</option>
-                      ))}
-                    </select>
-                  </div>
-                  <div className="flex items-center space-x-3">
-                    <button
-                      type="button"
-                      id="modalUpdateStatusBtn"
-                      onClick={handleUpdate}
-                      disabled={!order || !updateEnabled || busy}
-                      className={`${sky} ${buttonBase} ${!order || !updateEnabled ? 'opacity-50 cursor-not-allowed' : ''}`}
-                    >
-                      {busy && updateEnabled ? 'Updating...' : updateLabel}
-                    </button>
-                    {showConfirm && (
-                      <button
-                        type="button"
-                        id="modalConfirmOrderBtn"
-                        onClick={() => setAskConfirm(true)}
-                        disabled={busy}
-                        className={`${emerald} ${buttonBase} disabled:opacity-75`}
-                      >
-                        {busy ? 'Confirming...' : 'Confirm Order'}
-                      </button>
-                    )}
-                  </div>
+              <div className="space-y-2.5 text-sm">
+                <div className="flex items-start gap-3">
+                  <Mail className="w-4 h-4 mt-0.5 flex-shrink-0 text-gray-400" />
+                  <span className="text-gray-700 min-w-0 [overflow-wrap:anywhere]" id="modalCustomerEmail">
+                    {customer ? (customer.isWalkIn ? 'Walk-in (Physical Sale)' : breakableEmail(customer.email)) : 'Loading...'}
+                  </span>
+                </div>
+                <div className="flex items-start gap-3">
+                  <Phone className="w-4 h-4 mt-0.5 flex-shrink-0 text-gray-400" />
+                  <span className="text-gray-700" id="modalCustomerMobile">{customer ? customer.mobile : 'Loading...'}</span>
                 </div>
               </div>
             </div>
           </div>
         </div>
 
-        <div className="bg-gray-50 px-8 py-4 border-t border-gray-200 rounded-b-2xl">
-          <div className="flex justify-end">
-            <button type="button" id="modalCloseBtn" onClick={onClose} className="bg-gray-500 hover:bg-gray-600 text-white px-6 py-2 rounded-lg font-semibold transition-colors duration-200">
-              Close
-            </button>
-          </div>
+        <div className="px-5 py-3 sm:px-6 border-t border-gray-100 flex justify-end">
+          <button type="button" id="modalCloseBtn" onClick={onClose} className={`${outlineButton} ${buttonBase} w-full sm:w-auto`}>
+            Close
+          </button>
         </div>
       </div>
 
@@ -268,18 +275,19 @@ export default function OrderDetailsModal({ orderId, onClose, onStatusChange }) 
           type="warning"
           title="Please confirm it"
           message={`Are you sure you want to mark this order as ${statusLabel(selected).toLowerCase()}? This action is permanent and cannot be undone.`}
+          onClose={() => setAskConfirm(false)}
         >
-          <button type="button" id="confirmPermanentYesBtn" onClick={handleConfirm} className={`${emerald} ${buttonBase}`}>
+          <button type="button" id="confirmPermanentYesBtn" onClick={handleConfirm} className={confirmButton}>
             Confirm
           </button>
-          <button type="button" id="confirmPermanentCancelBtn" onClick={() => setAskConfirm(false)} className="bg-gray-200 hover:bg-gray-300 text-gray-800 px-6 py-2 rounded-lg font-semibold transition-colors duration-200">
+          <button type="button" id="confirmPermanentCancelBtn" onClick={() => setAskConfirm(false)} data-autofocus className={cancelButton}>
             Cancel
           </button>
         </IconModal>
       )}
 
       {alert && (
-        <IconModal id="alertModal" type={alert.type} title={alert.title} message={alert.message}>
+        <IconModal id="alertModal" type={alert.type} title={alert.title} message={alert.message} onClose={() => setAlert(null)}>
           <OkButton onClick={() => setAlert(null)} />
         </IconModal>
       )}

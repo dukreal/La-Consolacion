@@ -1,9 +1,8 @@
-import { PlusCircle } from 'lucide-react'
 import { useNavigate } from 'react-router-dom'
 import PremadeProductForm from '../../components/admin/PremadeProductForm'
 import { addProduct } from '../../services/adminService'
 
-// "Add New Premade Product" (was add-product.php). Back to the Inventory after saving.
+// "Add Premade Product" (was add-product.php, at /admin/inventory/add-premade). Back to the Inventory after saving.
 export default function AddProduct() {
   const navigate = useNavigate()
 
@@ -15,8 +14,8 @@ export default function AddProduct() {
 
   return (
     <PremadeProductForm
-      title="Add New Premade Product"
-      icon={PlusCircle}
+      title="Add Premade Product"
+      subtitle="Add a ready-made piece to the shop"
       submitLabel="Add Product"
       variant="add"
       initial={{}}

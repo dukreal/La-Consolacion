@@ -1,12 +1,14 @@
-import { Edit3 } from 'lucide-react'
 import { useEffect, useState } from 'react'
 import { useNavigate, useParams } from 'react-router-dom'
 import PremadeProductForm from '../../components/admin/PremadeProductForm'
+import ProductFormSkeleton from '../../components/admin/ProductFormSkeleton'
+import { useAuth } from '../../hooks/useAuth'
 import { getProduct, updateProduct } from '../../services/adminService'
 
-// "Edit Product" for premade products (was edit-product.php).
+// "Edit Premade Product" (was edit-product.php, at /admin/inventory/edit-premade/:id).
 // SuperAdmins can change everything; Admins only the stock.
 export default function EditProduct() {
+  const { user: me } = useAuth()
   const { id } = useParams()
   const navigate = useNavigate()
   const [data, setData] = useState(null)
@@ -29,13 +31,27 @@ export default function EditProduct() {
   }
 
   if (error) return <p className="text-red-600">{error}</p>
-  if (!data) return null
+  if (!data) {
+    // Loading: the form's outline with grey placeholders (Admins also get the "stock only" message)
+    return (
+      <ProductFormSkeleton
+        label="Loading product…"
+        title="Edit Premade Product"
+        submitLabel="Save Changes"
+        notice={Number(me?.adminLevel) < 2}
+        details={[{ label: 'Product Name' }, { label: 'Product Type' }, { label: 'Material', span: true }, { label: 'Description', span: true, tall: true }]}
+        asideTitle="Price and stock"
+        asideGrid="sm:grid-cols-2 xl:grid-cols-1"
+        asideFields={['Price (₱)', 'Stock']}
+      />
+    )
+  }
 
   return (
     <PremadeProductForm
       key={data.product.id}
-      title="Edit Product"
-      icon={Edit3}
+      title="Edit Premade Product"
+      subtitle={data.product.name}
       submitLabel="Save Changes"
       variant="edit"
       initial={data.product}

@@ -44,12 +44,14 @@ function check_stock(string $stock): void
 const CUSTOM_STATUSES = ['pending', 'processing', 'completed', 'cancelled'];
 
 // Fields of the Add Custom Order / Edit Custom Order forms (same rules and messages as the old pages).
-// Returns ['customer_name', 'email', 'product_name', 'price', 'stock', 'description'] or answers with an error.
+// Returns ['customer_name', 'email', 'phone', 'product_name', 'price', 'stock', 'description'] or answers with an error.
+// phone is optional (null when empty); when given it must be 11 digits, the same rule as the customer profile.
 function read_custom_fields(): array
 {
     $fields = [
         'customer_name' => trim($_POST['customerName'] ?? ''),
         'email'         => trim($_POST['customerEmail'] ?? ''),
+        'phone'         => trim($_POST['customerPhone'] ?? ''),
         'product_name'  => trim($_POST['productName'] ?? ''),
         'price'         => trim($_POST['customPrice'] ?? ''),
         'stock'         => trim($_POST['stock'] ?? '1'),
@@ -64,6 +66,10 @@ function read_custom_fields(): array
     if (!filter_var($fields['email'], FILTER_VALIDATE_EMAIL)) {
         json_response(['success' => false, 'error' => 'Invalid email address.'], 422);
     }
+    if ($fields['phone'] !== '' && !preg_match('/^\d{11}$/', $fields['phone'])) {
+        json_response(['success' => false, 'error' => 'Phone number must be exactly 11 digits.'], 422);
+    }
+    $fields['phone'] = $fields['phone'] === '' ? null : $fields['phone'];
     if (!is_numeric($fields['price']) || $fields['price'] < 0) {
         json_response(['success' => false, 'error' => 'Price must be a positive number.'], 422);
     }
