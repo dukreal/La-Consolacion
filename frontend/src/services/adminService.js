@@ -82,6 +82,7 @@ function customForm(fields, image) {
   const form = new FormData()
   form.append('customerName', fields.customerName)
   form.append('customerEmail', fields.email)
+  form.append('customerPhone', fields.phone)
   form.append('productName', fields.productName)
   form.append('customPrice', fields.price)
   form.append('stock', fields.stock)

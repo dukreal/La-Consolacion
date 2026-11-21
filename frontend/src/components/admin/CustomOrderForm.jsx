@@ -19,6 +19,7 @@ export default function CustomOrderForm({ mode, title, subtitle, submitLabel, in
   const [form, setForm] = useState({
     customerName: initial.customerName ?? '',
     email: initial.email ?? '',
+    phone: initial.phone ?? '',
     productName: initial.productName ?? '',
     productType: '',
     price: initial.price ?? '',
@@ -30,6 +31,8 @@ export default function CustomOrderForm({ mode, title, subtitle, submitLabel, in
   const [error, setError] = useState('')
   const [saving, setSaving] = useState(false)
   const set = (key) => (e) => setForm({ ...form, [key]: e.target.value })
+  // Phone: digits only (spaces and dashes are dropped as you type), at most 11
+  const setPhone = (e) => setForm({ ...form, phone: e.target.value.replace(/\D/g, '').slice(0, 11) })
 
   const handleSubmit = async (e) => {
     e.preventDefault()
@@ -106,7 +109,24 @@ export default function CustomOrderForm({ mode, title, subtitle, submitLabel, in
           Email
           <input type="email" name="customerEmail" placeholder="name@gmail.com" value={form.email} onChange={set('email')} required className={fieldClass} />
         </label>
-        <label className={`${labelClass} sm:col-span-2`}>
+        <label className={labelClass}>
+          <span>
+            Phone <span className="font-normal text-gray-400">(optional)</span>
+          </span>
+          <input
+            type="tel"
+            name="customerPhone"
+            inputMode="numeric"
+            autoComplete="tel"
+            placeholder="09171234567"
+            pattern="\d{11}"
+            title="11 digits, like 09171234567"
+            value={form.phone}
+            onChange={setPhone}
+            className={fieldClass}
+          />
+        </label>
+        <label className={labelClass}>
           Product Name
           <input type="text" name="productName" placeholder="e.g. Engraved Name Pendant" value={form.productName} onChange={set('productName')} required className={fieldClass} />
         </label>

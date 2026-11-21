@@ -35,7 +35,7 @@ export default function EditCustomOrder() {
         label="Loading custom order…"
         title="Edit Custom Order"
         submitLabel="Update Custom Order"
-        details={[{ label: 'Customer Name' }, { label: 'Email' }, { label: 'Product Name', span: true }, { label: 'Description', span: true, tall: true }]}
+        details={[{ label: 'Customer Name' }, { label: 'Email' }, { label: 'Phone (optional)' }, { label: 'Product Name' }, { label: 'Description', span: true, tall: true }]}
         asideTitle="Price, stock and status"
         asideGrid="sm:grid-cols-3 xl:grid-cols-1"
         asideFields={['Price (₱)', 'Stock', 'Custom Order Status']}
