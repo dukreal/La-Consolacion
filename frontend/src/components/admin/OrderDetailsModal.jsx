@@ -69,14 +69,14 @@ export default function OrderDetailsModal({ orderId, onClose, onStatusChange }) 
   const unpaid = order && !order.paid
   const locked = order && order.paid && order.dateCompleted && isFinal(current)
 
-  // What the Update Status button says, and whether it can be clicked
+  // Completed / Cancelled picked: only the green Confirm Order button shows (it asks before saving).
+  // Otherwise: the Update Status button, with what it says and whether it can be clicked.
+  const showConfirm = order && !unpaid && !locked && isFinal(selected)
   let updateLabel = 'Update Status'
   let updateEnabled = true
   if (unpaid) [updateLabel, updateEnabled] = ['Payment Required', false]
   else if (locked) [updateLabel, updateEnabled] = ['Order Completed', false]
-  else if (isFinal(selected)) [updateLabel, updateEnabled] = ['Use Confirm Order', false]
   else if (selected === current) [updateLabel, updateEnabled] = ['No Change Needed', false]
-  const showConfirm = order && !unpaid && !locked && isFinal(selected)
 
   const saveStatus = async (status, successAlert) => {
     setBusy(true)
@@ -163,15 +163,17 @@ export default function OrderDetailsModal({ orderId, onClose, onStatusChange }) 
                   <option key={s.value} value={s.value}>{s.label}</option>
                 ))}
               </select>
-              <button
-                type="button"
-                id="modalUpdateStatusBtn"
-                onClick={handleUpdate}
-                disabled={!order || !updateEnabled || busy}
-                className={`${navyButton} ${buttonBase} ${!order || !updateEnabled ? 'opacity-50 cursor-not-allowed' : ''}`}
-              >
-                {busy && updateEnabled ? 'Updating...' : updateLabel}
-              </button>
+              {!showConfirm && (
+                <button
+                  type="button"
+                  id="modalUpdateStatusBtn"
+                  onClick={handleUpdate}
+                  disabled={!order || !updateEnabled || busy}
+                  className={`${navyButton} ${buttonBase} ${!order || !updateEnabled ? 'opacity-50 cursor-not-allowed' : ''}`}
+                >
+                  {busy && updateEnabled ? 'Updating...' : updateLabel}
+                </button>
+              )}
               {showConfirm && (
                 <button
                   type="button"
