@@ -140,9 +140,11 @@ if ($new_status !== 'pending' && $order['username'] !== 'walkin_guest') {
             'Your Order is Completed - LA Consolacion Jewelry',
             "Dear {$name},\n\nThe order #{$order_id} is completed.\n\nYour order includes:\n{$products}\n{$completed_paid}Thank you for choosing LA Consolacion Jewelry!\n\n{$sign_off}",
         ],
+        // Only sent when the shop cancels (a customer cancelling their own order gets no email), so it does not
+        // say who cancelled it
         'cancelled' => [
             'Your Order Has Been Cancelled - LA Consolacion Jewelry',
-            "Dear {$name},\n\nYou cancelled your order #{$order_id}.\n\nYour order included:\n{$products}\nIf you have any questions, please contact us.\n\nThank you for considering LA Consolacion Jewelry!\n\n{$sign_off}",
+            "Dear {$name},\n\nYour order #{$order_id} has been cancelled.\n\nYour order included:\n{$products}\nIf you have any questions, please contact us:\n{$reach}\nThank you for considering LA Consolacion Jewelry!\n\n{$sign_off}",
         ],
     ];
     [$subject, $text] = $emails[$new_status];
