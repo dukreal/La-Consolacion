@@ -1,7 +1,8 @@
 <?php
 // One order for the Details pop-up on the admin Orders page.
-// GET ?order_id=N → the order, its customer and its products.
+// GET ?order_id=N → the order, its customer and its products, and how much is paid and still owed.
 require_once __DIR__ . '/../../helpers/admin.php';
+require_once __DIR__ . '/../../helpers/payments.php';
 
 require_admin();
 
@@ -34,6 +35,8 @@ try {
     );
     $stmt->execute([$order_id]);
     $items = $stmt->fetchAll(PDO::FETCH_ASSOC);
+
+    $amounts = order_amounts($pdo, $order_id);
 } catch (PDOException $e) {
     error_log('get-order-details.php database error: ' . $e->getMessage());
     json_response(['success' => false, 'error' => 'Database error. Please try again.'], 500);
@@ -77,4 +80,7 @@ json_response([
         'total'       => $item['price_at_purchase'] * $item['quantity'],
     ], $items),
     'total'    => $total,
+    // paid: downpayment (+ balance once recorded); balance: what is left, collected with Confirm Order → Completed
+    'paid'     => $amounts['paid'],
+    'balance'  => $amounts['balance'],
 ]);

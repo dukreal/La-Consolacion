@@ -1,11 +1,15 @@
 <?php
 // Changes an order's status from the Details pop-up on the admin Orders page. Any admin can do it.
 // POST form: order_id, new_status (pending, processing, waiting_for_buyer, completed, cancelled)
+//            balance_method (CASH, GCASH, PAYMAYA, GOTYME) and balance_reference (e-wallets only):
+//            needed for Completed when the customer still owes part of the price (the 70% after the downpayment);
+//            that payment is saved as a second payments row (orders.balance_payment_id), in the same step.
 //
 // Completed and Cancelled are final: they also set date_completed, and after that the order is locked.
-// The customer gets an email for every status except Pending (same texts as before).
+// The customer gets an email for every status except Pending.
 require_once __DIR__ . '/../../helpers/admin.php';
 require_once __DIR__ . '/../../helpers/mailer.php';
+require_once __DIR__ . '/../../helpers/payments.php';
 
 $admin = require_admin();
 
@@ -46,17 +50,55 @@ if ($order['date_completed'] && in_array($old_status, FINAL_STATUSES, true)) {
 }
 
 try {
-    if (in_array($new_status, FINAL_STATUSES, true)) {
-        $pdo->prepare('UPDATE orders SET status = ?, date_completed = NOW() WHERE id = ?')->execute([$new_status, $order_id]);
-    } else {
-        $pdo->prepare('UPDATE orders SET status = ? WHERE id = ?')->execute([$new_status, $order_id]);
-    }
+    $amounts = order_amounts($pdo, $order_id);
 } catch (PDOException $e) {
     error_log('update-order-status.php database error: ' . $e->getMessage());
     json_response(['success' => false, 'error' => 'Failed to update order status'], 500);
 }
 
-log_action($pdo, $admin['username'], 'Change Order Status', "Order ID: {$order_id}; Status changed from '{$old_status}' to '{$new_status}'");
+// Completing an order that is not fully paid: the admin says how the balance was paid at the store
+$balance_paid = null; // ['service' => ..., 'amount' => ...] when it is recorded now
+if ($new_status === 'completed' && $amounts['balance'] > 0) {
+    $method = $_POST['balance_method'] ?? '';
+    $reference = trim($_POST['balance_reference'] ?? '');
+    if (!isset(STORE_PAYMENT_METHODS[$method])) {
+        json_response(['success' => false, 'error' => 'Please choose how the balance of ' . peso_text($amounts['balance']) . ' was paid.'], 422);
+    }
+    if ($method !== 'CASH' && $reference === '') {
+        json_response(['success' => false, 'error' => 'Please enter the e-wallet reference number for the balance.'], 422);
+    }
+    if ($method === 'CASH') {
+        $reference = 'CASH-' . time();
+    }
+    $balance_paid = ['service' => STORE_PAYMENT_METHODS[$method]['service'], 'amount' => $amounts['balance']];
+}
+
+try {
+    $pdo->beginTransaction();
+    if ($balance_paid) {
+        $stmt = $pdo->prepare("INSERT INTO payments (reference_number, service, image, mobile, amount) VALUES (?, ?, ?, 'In store', ?)");
+        $stmt->execute([$reference, $balance_paid['service'], STORE_PAYMENT_METHODS[$method]['image'], $balance_paid['amount']]);
+        $pdo->prepare('UPDATE orders SET status = ?, date_completed = NOW(), balance_payment_id = ? WHERE id = ?')
+            ->execute([$new_status, (int) $pdo->lastInsertId(), $order_id]);
+    } elseif (in_array($new_status, FINAL_STATUSES, true)) {
+        $pdo->prepare('UPDATE orders SET status = ?, date_completed = NOW() WHERE id = ?')->execute([$new_status, $order_id]);
+    } else {
+        $pdo->prepare('UPDATE orders SET status = ? WHERE id = ?')->execute([$new_status, $order_id]);
+    }
+    $pdo->commit();
+} catch (PDOException $e) {
+    if ($pdo->inTransaction()) {
+        $pdo->rollBack();
+    }
+    error_log('update-order-status.php database error: ' . $e->getMessage());
+    json_response(['success' => false, 'error' => 'Failed to update order status'], 500);
+}
+
+$log = "Order ID: {$order_id}; Status changed from '{$old_status}' to '{$new_status}'";
+if ($balance_paid) {
+    $log .= '; balance of ' . peso_text($balance_paid['amount']) . " paid by {$balance_paid['service']}";
+}
+log_action($pdo, $admin['username'], 'Change Order Status', $log);
 
 // Email the customer (not for Pending, and not for the walk-in account, which has no real inbox)
 $email_sent = null;
@@ -70,8 +112,21 @@ if ($new_status !== 'pending' && $order['username'] !== 'walkin_guest') {
 
     $config = require __DIR__ . '/../../config/app.php';
     $name = $order['first_name'];
-    $contact = $config['admin_email'];
     $sign_off = "Best regards,\nThe LA Consolacion Jewelry Team";
+    // How to reach the shop. The old text put the admin email in the Phone line too; the phone line now only
+    // shows when the config has a store_phone (optional, e.g. 'store_phone' => '0917 123 4567').
+    $reach = '';
+    if (!empty($config['store_phone'])) {
+        $reach .= "• Phone: {$config['store_phone']}\n";
+    }
+    $reach .= "• Email: {$config['admin_email']}\n• Visit our store\n";
+    // Ready for pickup: what is left to pay. Completed: confirms the balance that was just recorded.
+    $pickup_balance = $amounts['balance'] > 0
+        ? 'Balance to pay at pickup: ' . peso_text($amounts['balance']) . ' (total ' . peso_text($amounts['total']) . ', paid ' . peso_text($amounts['paid']) . ").\n\n"
+        : "Your order is fully paid.\n\n";
+    $completed_paid = $balance_paid
+        ? 'We received your balance of ' . peso_text($balance_paid['amount']) . " ({$balance_paid['service']}). Your order is fully paid.\n\n"
+        : '';
     $emails = [
         'processing' => [
             'Your Order is Being Processed - LA Consolacion Jewelry',
@@ -79,11 +134,11 @@ if ($new_status !== 'pending' && $order['username'] !== 'walkin_guest') {
         ],
         'waiting_for_buyer' => [
             'Your Order is Ready for Pickup - LA Consolacion Jewelry',
-            "Dear {$name},\n\nReady for pickup! Your order #{$order_id} is ready.\n\nYour order includes:\n{$products}\nContact us or go to the location to collect your jewelry items.\n\nYou can reach us through:\n• Phone: [{$contact}]\n• Email: [{$contact}]\n• Visit our store\n\nThank you for choosing LA Consolacion Jewelry!\n\n{$sign_off}",
+            "Dear {$name},\n\nReady for pickup! Your order #{$order_id} is ready.\n\nYour order includes:\n{$products}\n{$pickup_balance}Contact us or go to the location to collect your jewelry items.\n\nYou can reach us through:\n{$reach}\nThank you for choosing LA Consolacion Jewelry!\n\n{$sign_off}",
         ],
         'completed' => [
             'Your Order is Completed - LA Consolacion Jewelry',
-            "Dear {$name},\n\nThe order #{$order_id} is completed.\n\nYour order includes:\n{$products}\nThank you for choosing LA Consolacion Jewelry!\n\n{$sign_off}",
+            "Dear {$name},\n\nThe order #{$order_id} is completed.\n\nYour order includes:\n{$products}\n{$completed_paid}Thank you for choosing LA Consolacion Jewelry!\n\n{$sign_off}",
         ],
         'cancelled' => [
             'Your Order Has Been Cancelled - LA Consolacion Jewelry',
@@ -101,4 +156,4 @@ if ($new_status !== 'pending' && $order['username'] !== 'walkin_guest') {
     }
 }
 
-json_response(['success' => true, 'status' => $new_status, 'emailSent' => $email_sent]);
+json_response(['success' => true, 'status' => $new_status, 'emailSent' => $email_sent, 'balanceRecorded' => $balance_paid !== null]);

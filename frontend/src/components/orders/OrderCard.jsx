@@ -40,10 +40,19 @@ export default function OrderCard({ order, onViewDetails, onCancel }) {
               <span>Payment: {(order.service || '').toUpperCase()}</span>
               <span>Ref: {order.reference_number}</span>
             </div>
-            {/* Custom orders: the customer paid a 30% downpayment of the total above */}
-            {order.is_custom && (
-              <div className="mt-1 text-xs text-gray-600">
-                Downpayment paid: <span className="font-semibold text-gray-800">₱{formatMoney(order.payment_amount)}</span>
+            {/* Paid with a 30% downpayment: what was paid, and the balance to pay at pickup (or that it is paid) */}
+            {(order.balance > 0 || order.balance_paid) && (
+              <div className="mt-1 flex flex-wrap justify-between gap-x-3 gap-y-0.5 text-xs text-gray-600">
+                <span>
+                  Downpayment paid: <span className="font-semibold text-gray-800">₱{formatMoney(order.payment_amount)}</span>
+                </span>
+                {order.balance_paid ? (
+                  <span className="font-semibold text-emerald-700">Fully paid</span>
+                ) : (
+                  <span>
+                    Balance at pickup: <span className="font-semibold text-orange-700">₱{formatMoney(order.balance)}</span>
+                  </span>
+                )}
               </div>
             )}
           </div>
