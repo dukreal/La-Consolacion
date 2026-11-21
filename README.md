@@ -31,6 +31,17 @@ To secure it: log in, open **Users**, edit this account and set your real email,
 
 The database login is in `backend/config/db.php` (XAMPP default: user `root`, no password).
 
+#### Updating an existing database
+`database/lcj.sql` always has the latest structure, so a fresh import needs nothing else.
+If your `lcj` database was made **before** a change, run each file in `database/migrations/` that you have not run yet,
+**once**, oldest first (the date is in the file name): in phpMyAdmin select **`lcj`**, open the **SQL** tab, paste the file and click **Go**.
+
+| File | Since | What it adds |
+|---|---|---|
+| `2026-11-21-order-balance-payment.sql` | v1.2.0 | `orders.balance_payment_id`: the balance a customer pays at pickup |
+
+Without it, the Orders details, the Payment pop-up and the customer order list show database errors.
+
 ### 2. Mailer
 ```bash
 cd mailer
@@ -73,6 +84,7 @@ Then open **http://localhost:5173**. While developing, Vite forwards `/api` and 
 | `frontend_url` | Address of the website, used in email links (verify, reset password, custom order payment) |
 | `mailer_url` | Address of the mailer |
 | `admin_email` | Gets a copy of every new custom order, and is the shop contact in "ready for pickup" emails |
+| `store_phone` | Optional. The shop's phone number for the "ready for pickup" email (left out of the email when not set) |
 
 ## Roles
 
@@ -90,10 +102,11 @@ The server checks the role on every request, so a demoted admin loses access rig
 backend/
   api/        JSON endpoints, grouped by area (admin, auth, cart, orders, products, users)
   config/     db.php (database) and app.php (addresses, admin email)
-  helpers/    shared PHP: json responses, admin check, mailer, uploads, form checks
+  helpers/    shared PHP: json responses, admin check, mailer, uploads, form checks, store payments
   uploads/    pictures: products/, custom/, payments/, profile/
 database/
-  lcj.sql     database structure + first SuperAdmin
+  lcj.sql     database structure + first SuperAdmin (always the latest structure)
+  migrations/ changes for databases made before a release (see "Updating an existing database")
 frontend/
   public/     static images (logo, banners, e-wallet logos)
   src/
