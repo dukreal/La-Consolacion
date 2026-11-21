@@ -2,6 +2,7 @@ import { Gem, Mail, Phone, User } from 'lucide-react'
 import { useEffect, useState } from 'react'
 import { getOrderDetails, updateOrderStatus } from '../../services/adminService'
 import { ADMIN_STATUS_OPTIONS, orderStatus } from '../../utils/orderStatus'
+import { cancelButton, confirmButton } from '../../utils/dialogButtons'
 import IconModal, { OkButton } from './IconModal'
 
 // Status names (admin wording) and dot colors come from utils/orderStatus.js, shared with the customer side
@@ -274,18 +275,19 @@ export default function OrderDetailsModal({ orderId, onClose, onStatusChange }) 
           type="warning"
           title="Please confirm it"
           message={`Are you sure you want to mark this order as ${statusLabel(selected).toLowerCase()}? This action is permanent and cannot be undone.`}
+          onClose={() => setAskConfirm(false)}
         >
-          <button type="button" id="confirmPermanentYesBtn" onClick={handleConfirm} className="bg-emerald-600 hover:bg-emerald-700 text-white px-6 py-2 rounded-lg font-semibold transition-colors duration-200">
+          <button type="button" id="confirmPermanentYesBtn" onClick={handleConfirm} className={confirmButton}>
             Confirm
           </button>
-          <button type="button" id="confirmPermanentCancelBtn" onClick={() => setAskConfirm(false)} className="bg-gray-200 hover:bg-gray-300 text-gray-800 px-6 py-2 rounded-lg font-semibold transition-colors duration-200">
+          <button type="button" id="confirmPermanentCancelBtn" onClick={() => setAskConfirm(false)} data-autofocus className={cancelButton}>
             Cancel
           </button>
         </IconModal>
       )}
 
       {alert && (
-        <IconModal id="alertModal" type={alert.type} title={alert.title} message={alert.message}>
+        <IconModal id="alertModal" type={alert.type} title={alert.title} message={alert.message} onClose={() => setAlert(null)}>
           <OkButton onClick={() => setAlert(null)} />
         </IconModal>
       )}

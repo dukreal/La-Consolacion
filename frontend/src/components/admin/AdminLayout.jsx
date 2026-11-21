@@ -1,8 +1,9 @@
 import { Activity, BarChart3, LogOut, Package, ShoppingCart, Users } from 'lucide-react'
-import { useCallback, useState } from 'react'
+import { Suspense, useCallback, useState } from 'react'
 import { Link, Outlet, useLocation, useNavigate } from 'react-router-dom'
 import { AdminBusyContext } from '../../context/admin-busy-context'
 import { useAuth } from '../../hooks/useAuth'
+import Skeleton, { LoadingArea } from './Skeleton'
 import '../../styles/admin.css'
 
 // Sidebar entries. `match` lists the addresses that light up the entry
@@ -18,6 +19,29 @@ const NAV = [
 const itemClass = 'w-full flex items-center space-x-3 px-4 py-3 rounded-xl text-left transition-all duration-200'
 
 // The admin frame: top bar and left sidebar (was layout-header.php), with the page in the middle.
+// Shown while the admin pages download (once per visit): a title and a card of grey lines, where the page will be
+function PageSkeleton() {
+  return (
+    <LoadingArea label="Loading…">
+      <div className="mb-6 sm:mb-8">
+        <Skeleton className="h-7 sm:h-10 w-48 sm:w-72" />
+        <Skeleton className="mt-2 h-4 sm:h-5 w-64 sm:w-96 max-w-full" />
+      </div>
+      <div className="bg-white rounded-2xl shadow-lg border border-blue-100 p-4 sm:p-5 space-y-4">
+        {[1, 2, 3, 4, 5].map((n) => (
+          <div key={n} className="flex items-center gap-3">
+            <Skeleton className="w-10 h-10 flex-shrink-0 !rounded-full" />
+            <div className="flex-1 min-w-0">
+              <Skeleton className="h-4 w-1/3" />
+              <Skeleton className="mt-2 h-3 w-2/3" />
+            </div>
+          </div>
+        ))}
+      </div>
+    </LoadingArea>
+  )
+}
+
 export default function AdminLayout() {
   const { user, logout } = useAuth()
   const { pathname } = useLocation()
@@ -112,7 +136,10 @@ export default function AdminLayout() {
             content does not get wider or narrower (and jump) when the scrollbar comes and goes. */}
         <main className="flex-1 min-w-0 overflow-y-auto overscroll-contain [scrollbar-gutter:stable] px-4 pt-6 pb-[calc(3.125rem+12px+1rem+env(safe-area-inset-bottom))] sm:px-6 sm:pb-[calc(3.125rem+12px+1.5rem+env(safe-area-inset-bottom))] lg:p-8">
           <AdminBusyContext.Provider value={markBusy}>
-            <Outlet />
+            {/* The admin pages are a separate download (see App.jsx); the first time, placeholders show until it is in */}
+            <Suspense fallback={<PageSkeleton />}>
+              <Outlet />
+            </Suspense>
           </AdminBusyContext.Provider>
         </main>
       </div>

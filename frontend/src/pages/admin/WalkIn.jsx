@@ -175,7 +175,7 @@ export default function WalkIn() {
             <h2 id="payLabel" className="mb-3 text-xs font-semibold uppercase tracking-wider text-[#2474b6]">Payment</h2>
             <div role="radiogroup" aria-labelledby="payLabel" className="grid grid-cols-4 gap-2 sm:gap-3">
               {METHODS.map((m) => (
-                <label key={m.value} className="cursor-pointer min-w-0">
+                <label key={m.value} className="relative cursor-pointer min-w-0">
                   <input
                     type="radio"
                     name="payment_method"

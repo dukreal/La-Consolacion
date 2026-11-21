@@ -1,11 +1,13 @@
 import { Edit3, Package, Plus, Search, Trash2 } from 'lucide-react'
-import { useCallback, useEffect, useState } from 'react'
+import { useCallback, useEffect, useRef, useState } from 'react'
 import { Link, useLocation, useNavigate } from 'react-router-dom'
 import Skeleton, { LoadingArea } from '../../components/admin/Skeleton'
 import Toast from '../../components/admin/Toast'
 import { useAuth } from '../../hooks/useAuth'
+import { useDialog } from '../../hooks/useDialog'
 import { refreshingClass, useRefreshing } from '../../hooks/useRefreshing'
 import { deleteProduct, getInventory } from '../../services/adminService'
+import { cancelButton, dangerButton } from '../../utils/dialogButtons'
 
 const PREMADE_TYPES = ['ring', 'charm', 'earring', 'bracelet']
 const TYPE_FILTERS = [
@@ -105,29 +107,33 @@ function ProductCardSkeleton({ canDelete }) {
 }
 
 function DeleteModal({ product, deleting, onCancel, onConfirm }) {
+  const box = useRef(null)
+  useDialog(box, () => !deleting && onCancel()) // Escape = Cancel; focus starts on Cancel
   return (
     <div
       id="deleteModal"
       className="fixed inset-0 bg-[#22306a]/30 backdrop-blur-[2px] z-50 flex items-center justify-center p-4"
-      onClick={(e) => e.target === e.currentTarget && onCancel()} // click outside closes it
+      onClick={(e) => e.target === e.currentTarget && !deleting && onCancel()} // click outside closes it
     >
-      <div className="bg-white rounded-[18px] border border-[#eef0f5] p-6 max-w-md w-full shadow-[0_12px_40px_rgba(34,48,106,0.18)]">
-        <h3 className="text-lg font-semibold text-gray-900 mb-4">Confirm Delete</h3>
-        <p className="text-gray-600 mb-6">
+      <div
+        ref={box}
+        role="alertdialog"
+        aria-modal="true"
+        aria-labelledby="deleteModalTitle"
+        aria-describedby="deleteModalText"
+        tabIndex={-1}
+        className="bg-white rounded-[18px] border border-[#eef0f5] p-6 max-w-md w-full shadow-[0_12px_40px_rgba(34,48,106,0.18)] outline-none"
+      >
+        <h3 id="deleteModalTitle" className="text-lg font-semibold text-gray-900 mb-4">Confirm Delete</h3>
+        <p id="deleteModalText" className="text-gray-600 mb-6">
           Are you sure you want to delete <span id="deleteProductName" className="font-semibold text-red-600">{product.name}</span>?
         </p>
         <div className="flex justify-end gap-3">
-          <button id="cancelDelete" type="button" onClick={onCancel} className="h-10 px-4 rounded-[10px] border-[1.5px] border-[#d8dce8] bg-white text-[#22306a] font-semibold hover:border-[#22306a] hover:bg-[#f5f6fa] transition-colors">
+          <button id="cancelDelete" type="button" onClick={onCancel} disabled={deleting} data-autofocus className={cancelButton}>
             Cancel
           </button>
-          <button
-            id="confirmDelete"
-            type="button"
-            onClick={onConfirm}
-            disabled={deleting}
-            className="h-10 px-4 rounded-[10px] bg-red-600 text-white font-semibold hover:bg-red-700 transition-colors disabled:opacity-60"
-          >
-            Delete
+          <button id="confirmDelete" type="button" onClick={onConfirm} disabled={deleting} className={dangerButton}>
+            {deleting ? 'Deleting...' : 'Delete'}
           </button>
         </div>
       </div>
