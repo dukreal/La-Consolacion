@@ -2,6 +2,7 @@ import { useState } from 'react'
 import { useCart } from '../../hooks/useCart'
 import { cartErrorMessage } from '../../utils/cartMessages'
 import SiteDialog from '../common/SiteDialog'
+import { formatMoney } from '../../utils/formatMoney'
 
 const stepperClass =
   'w-9 h-9 flex items-center justify-center text-gray-600 hover:text-blue-600 hover:bg-white rounded-md transition-all duration-200'
@@ -49,7 +50,7 @@ export default function CartItem({ item }) {
             <p className="inter text-[11px] text-gray-500 uppercase tracking-wider mt-0.5">
               {item.type} · {item.stock} in stock
             </p>
-            <p className="cormorant font-bold gradient-text text-lg leading-tight mt-1">₱{item.price.toLocaleString('en-US')}</p>
+            <p className="cormorant font-bold gradient-text text-lg leading-tight mt-1">₱{formatMoney(item.price)}</p>
           </div>
           <button
             onClick={() => setAskRemove(true)}
@@ -84,7 +85,7 @@ export default function CartItem({ item }) {
           <div className="text-right min-w-0">
             <span className="block inter text-[11px] text-gray-500">Subtotal</span>
             <span className="cormorant font-bold gradient-text text-xl leading-tight whitespace-nowrap">
-              ₱{(item.price * item.quantity).toLocaleString('en-US')}
+              ₱{formatMoney(item.price * item.quantity)}
             </span>
           </div>
         </div>
