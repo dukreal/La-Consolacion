@@ -96,6 +96,7 @@ CREATE TABLE `order_items` (
 CREATE TABLE `orders` (
   `id` int(11) NOT NULL AUTO_INCREMENT,
   `payment_id` int(11) DEFAULT NULL,
+  `balance_payment_id` int(11) DEFAULT NULL,
   `user_id` int(11) NOT NULL,
   `status` varchar(20) NOT NULL DEFAULT 'pending',
   `date_ordered` timestamp NOT NULL DEFAULT current_timestamp(),
@@ -104,8 +105,10 @@ CREATE TABLE `orders` (
   PRIMARY KEY (`id`),
   KEY `user_id` (`user_id`),
   KEY `orders_ibfk_1` (`payment_id`),
+  KEY `orders_balance_payment` (`balance_payment_id`),
   CONSTRAINT `orders_ibfk_1` FOREIGN KEY (`payment_id`) REFERENCES `payments` (`id`) ON DELETE SET NULL,
-  CONSTRAINT `orders_ibfk_2` FOREIGN KEY (`user_id`) REFERENCES `users` (`id`)
+  CONSTRAINT `orders_ibfk_2` FOREIGN KEY (`user_id`) REFERENCES `users` (`id`),
+  CONSTRAINT `orders_ibfk_3` FOREIGN KEY (`balance_payment_id`) REFERENCES `payments` (`id`) ON DELETE SET NULL
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
 /*!40101 SET character_set_client = @saved_cs_client */;
 /*!40101 SET @saved_cs_client     = @@character_set_client */;

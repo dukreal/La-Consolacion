@@ -2,6 +2,12 @@ import { AlertCircle, AlertTriangle, Banknote, CreditCard, X, ZoomIn } from 'luc
 import { useEffect, useState } from 'react'
 import { getPaymentDetails } from '../../services/adminService'
 
+// The balance box when money is still owed, for orders that are already closed (title, small text)
+const BALANCE_TEXT = {
+  completed: ['Balance not recorded', 'This order was completed before balances were recorded.'],
+  cancelled: ['Balance not collected', 'This order was cancelled.'],
+}
+
 const peso = (n) => '₱' + Number(n).toLocaleString('en-US', { minimumFractionDigits: 2 })
 
 // "2026-11-19 10:00:00" -> "Nov 19, 2026 · 10:00 AM" (anything else, like "Waiting", is shown as is)
@@ -112,7 +118,9 @@ export default function PaymentModal({ paymentId, onClose }) {
     // The old pop-up showed "Waiting" when the upload time equaled the order time, but a payment
     // and its order are saved in the same second, so the real date never showed. Now it always shows.
     const uploaded = p.uploadedAt ? formatDateTime(p.uploadedAt) : 'Waiting'
-    const balance = Math.max(p.orderTotal - p.amount, 0)
+    // What is still owed (the server adds the balance payment once it is recorded at pickup)
+    const balance = p.balance ?? Math.max(p.orderTotal - p.amount, 0)
+    const bp = p.balancePayment
 
     content = (
       <div className={`flex-1 min-h-0 grid grid-cols-1 sm:grid-cols-2 gap-4 sm:gap-5 p-4 sm:p-5 [@media(max-height:500px)]:gap-3 [@media(max-height:500px)]:p-3 ${p.imageUrl ? 'grid-rows-[minmax(0,1fr)_auto] sm:grid-rows-1' : ''}`}>
@@ -144,18 +152,43 @@ export default function PaymentModal({ paymentId, onClose }) {
               <span id="paymentTotal" className="font-semibold text-gray-900">{peso(p.orderTotal)}</span>
             </div>
             <div className="flex items-center justify-between px-3 py-2 [@media(max-height:500px)]:py-1.5">
-              <span className="text-gray-600">Downpayment</span>
+              <span className="text-gray-600">{p.amount < p.orderTotal ? 'Downpayment' : 'Amount Paid'}</span>
               <span id="paymentAmount" className="font-semibold text-gray-900">{peso(p.amount)}</span>
             </div>
+            {/* The balance paid at pickup, recorded with Confirm Order → Completed */}
+            {bp && (
+              <div id="paymentBalanceRow" className="flex items-start justify-between gap-3 px-3 py-2 [@media(max-height:500px)]:py-1.5">
+                <div className="min-w-0">
+                  <div className="text-gray-600">Balance paid</div>
+                  <div className="text-xs text-gray-500 [overflow-wrap:anywhere]">
+                    {bp.service.toUpperCase()}
+                    {bp.service.toUpperCase() !== 'CASH' && <> · Ref {bp.referenceNumber}</>} · {formatDateTime(bp.paidAt)}
+                  </div>
+                </div>
+                <span className="font-semibold text-gray-900 whitespace-nowrap">{peso(bp.amount)}</span>
+              </div>
+            )}
           </div>
 
-          <div className="rounded-xl bg-[#22306a] text-white px-4 py-3 [@media(max-height:500px)]:py-2 flex items-center justify-between gap-3">
-            <div className="min-w-0">
-              <h3 className="font-semibold">Remaining Balance</h3>
-              <p className="text-xs text-white/75 leading-snug max-sm:[@media(max-height:680px)]:hidden [@media(max-height:500px)]:hidden">This is the amount to be collected upon delivery/pickup.</p>
+          {balance > 0 ? (
+            <div className="rounded-xl bg-[#22306a] text-white px-4 py-3 [@media(max-height:500px)]:py-2 flex items-center justify-between gap-3">
+              <div className="min-w-0">
+                <h3 className="font-semibold">{BALANCE_TEXT[p.orderStatus]?.[0] ?? 'Remaining Balance'}</h3>
+                <p className="text-xs text-white/75 leading-snug max-sm:[@media(max-height:680px)]:hidden [@media(max-height:500px)]:hidden">
+                  {BALANCE_TEXT[p.orderStatus]?.[1] ?? 'To collect at pickup.'}
+                </p>
+              </div>
+              <p id="paymentBalance" className="text-xl sm:text-2xl font-bold whitespace-nowrap">{peso(balance)}</p>
             </div>
-            <p id="paymentBalance" className="text-xl sm:text-2xl font-bold whitespace-nowrap">{peso(balance)}</p>
-          </div>
+          ) : (
+            <div className="rounded-xl bg-emerald-600 text-white px-4 py-3 [@media(max-height:500px)]:py-2 flex items-center justify-between gap-3">
+              <div className="min-w-0">
+                <h3 className="font-semibold">Fully Paid</h3>
+                <p className="text-xs text-white/80 leading-snug max-sm:[@media(max-height:680px)]:hidden [@media(max-height:500px)]:hidden">Nothing left to collect.</p>
+              </div>
+              <p id="paymentBalance" className="text-xl sm:text-2xl font-bold whitespace-nowrap">{peso(0)}</p>
+            </div>
+          )}
         </div>
       </div>
     )

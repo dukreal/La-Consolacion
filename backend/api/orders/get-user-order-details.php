@@ -1,6 +1,7 @@
 <?php
 session_start();
 require_once __DIR__ . '/../../config/db.php';
+require_once __DIR__ . '/../../helpers/payments.php'; // order_amounts()
 
 // Check if user is logged in
 if (!isset($_SESSION['user_id'])) {
@@ -52,6 +53,9 @@ try {
         $total += $item['price_at_purchase'] * $item['quantity'];
     }
 
+    // Downpayment + balance (if recorded at pickup) and what is still owed
+    $amounts = order_amounts($pdo, $order_id);
+
     // The status color and wording are decided by the website (frontend/src/utils/orderStatus.js)
     $currentStatus = $order['status'] ?? 'pending';
 
@@ -90,6 +94,9 @@ try {
             'mobile' => $order['mobile']
         ],
         'total' => $total,
+        // The balance paid at pickup ({service, reference_number, amount, uploaded_at}) or null, and what is still owed
+        'balance_payment' => $amounts['balancePayment'],
+        'balance' => $currentStatus === 'cancelled' ? 0 : $amounts['balance'], // nothing more to pay on a cancelled order
         'can_cancel' => in_array($currentStatus, ['pending', 'processing', 'confirmed', 'waiting_for_buyer'])
     ];
 

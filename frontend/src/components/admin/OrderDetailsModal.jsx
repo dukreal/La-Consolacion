@@ -2,6 +2,7 @@ import { Gem, Mail, Phone, User } from 'lucide-react'
 import { useEffect, useState } from 'react'
 import { getOrderDetails, updateOrderStatus } from '../../services/adminService'
 import { ADMIN_STATUS_OPTIONS, orderStatus } from '../../utils/orderStatus'
+import BalanceModal from './BalanceModal'
 import IconModal, { OkButton } from './IconModal'
 
 // Status names (admin wording) and dot colors come from utils/orderStatus.js, shared with the customer side
@@ -52,6 +53,7 @@ export default function OrderDetailsModal({ orderId, onClose, onStatusChange }) 
   const [selected, setSelected] = useState('pending') // the "Change Status" dropdown
   const [busy, setBusy] = useState(false)
   const [askConfirm, setAskConfirm] = useState(false) // "Please confirm it" pop-up
+  const [askBalance, setAskBalance] = useState(false) // "Collect the balance" pop-up (Completed with money still owed)
   const [alert, setAlert] = useState(null)
 
   useEffect(() => {
@@ -78,15 +80,18 @@ export default function OrderDetailsModal({ orderId, onClose, onStatusChange }) 
   else if (locked) [updateLabel, updateEnabled] = ['Order Completed', false]
   else if (selected === current) [updateLabel, updateEnabled] = ['No Change Needed', false]
 
-  const saveStatus = async (status, successAlert) => {
+  // balance: { method, reference } when the balance paid at pickup is recorded with Completed
+  const saveStatus = async (status, successAlert, balance) => {
     setBusy(true)
     try {
-      const res = await updateOrderStatus(orderId, status)
+      const res = await updateOrderStatus(orderId, status, balance)
       if (res.success) {
         setData((d) => ({
           ...d,
           order: { ...d.order, status, dateCompleted: isFinal(status) ? new Date().toISOString() : d.order.dateCompleted },
+          ...(res.balanceRecorded ? { paid: d.total, balance: 0 } : {}),
         }))
+        setAskBalance(false)
         onStatusChange(orderId, status)
         setAlert(successAlert)
       } else {
@@ -105,6 +110,15 @@ export default function OrderDetailsModal({ orderId, onClose, onStatusChange }) 
     setAskConfirm(false)
     saveStatus(selected, { type: 'success', title: 'Success', message: 'Order confirmed successfully!' })
   }
+
+  // Confirm Order: Completed while the customer still owes money asks how the balance was paid first
+  const needsBalance = selected === 'completed' && (data?.balance ?? 0) > 0
+  const handleBalance = (balance) =>
+    saveStatus('completed', {
+      type: 'success',
+      title: 'Order Completed',
+      message: `Balance of ${peso(data.balance)} recorded. The order is fully paid.`,
+    }, balance)
 
   const statusInfo = orderStatus(current, { admin: true, unpaid })
   const customer = data?.customer
@@ -178,7 +192,7 @@ export default function OrderDetailsModal({ orderId, onClose, onStatusChange }) 
                 <button
                   type="button"
                   id="modalConfirmOrderBtn"
-                  onClick={() => setAskConfirm(true)}
+                  onClick={() => (needsBalance ? setAskBalance(true) : setAskConfirm(true))}
                   disabled={busy}
                   className={`${greenButton} ${buttonBase} disabled:opacity-75`}
                 >
@@ -224,6 +238,17 @@ export default function OrderDetailsModal({ orderId, onClose, onStatusChange }) 
                   <span className="font-semibold text-gray-700">Total</span>
                   <span className="font-bold text-xl sm:text-2xl text-[#22306a]" id="modalTotal">{peso(data?.total ?? 0)}</span>
                 </div>
+                {/* Paid orders: what is paid so far and what is left to collect at pickup */}
+                {order?.paid && typeof data.balance === 'number' && (
+                  <div id="modalPaidLine" className="mt-1 flex justify-between gap-3 text-sm">
+                    <span className="text-gray-500">Paid {peso(data.paid ?? 0)}</span>
+                    {data.balance > 0 ? (
+                      <span className="font-semibold text-amber-700">Balance {peso(data.balance)}</span>
+                    ) : (
+                      <span className="font-semibold text-emerald-700">Fully paid</span>
+                    )}
+                  </div>
+                )}
               </div>
             </div>
 
@@ -267,6 +292,18 @@ export default function OrderDetailsModal({ orderId, onClose, onStatusChange }) 
           </button>
         </div>
       </div>
+
+      {askBalance && data && (
+        <BalanceModal
+          orderId={orderId}
+          total={data.total}
+          paid={data.paid ?? 0}
+          balance={data.balance}
+          busy={busy}
+          onConfirm={handleBalance}
+          onCancel={() => setAskBalance(false)}
+        />
+      )}
 
       {askConfirm && (
         <IconModal

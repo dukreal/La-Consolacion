@@ -82,7 +82,6 @@ function customForm(fields, image) {
   const form = new FormData()
   form.append('customerName', fields.customerName)
   form.append('customerEmail', fields.email)
-  form.append('customerPhone', fields.phone)
   form.append('productName', fields.productName)
   form.append('customPrice', fields.price)
   form.append('stock', fields.stock)
@@ -144,8 +143,14 @@ export function getOrderDetails(orderId) {
 }
 
 // Changes an order's status. Returns { success, status, emailSent } or { success: false, error }
-export function updateOrderStatus(orderId, status) {
-  return api('/orders/update-order-status.php', { method: 'POST', form: { order_id: orderId, new_status: status } })
+// balance: { method, reference } when Completed also records the balance paid at pickup (see BalanceModal)
+export function updateOrderStatus(orderId, status, balance) {
+  const form = { order_id: orderId, new_status: status }
+  if (balance) {
+    form.balance_method = balance.method
+    form.balance_reference = balance.reference
+  }
+  return api('/orders/update-order-status.php', { method: 'POST', form })
 }
 
 // One payment for the Payment pop-up (screenshot, reference, amounts)

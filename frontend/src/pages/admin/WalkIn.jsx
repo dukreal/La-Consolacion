@@ -1,17 +1,11 @@
-import { Banknote, Minus, Plus } from 'lucide-react'
+import { Minus, Plus } from 'lucide-react'
 import { useEffect, useState } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
+import PaymentMethodPicker from '../../components/admin/PaymentMethodPicker'
 import { FormSection } from '../../components/admin/ProductFormLayout'
 import { getWalkInProducts, recordWalkInSale } from '../../services/adminService'
 import { fieldClass, labelClass } from '../../utils/adminForm'
-
-// The four ways to pay (same values the server expects)
-const METHODS = [
-  { value: 'CASH', label: 'Cash' },
-  { value: 'GCASH', label: 'GCash', logo: '/images/gcash-logo.png' },
-  { value: 'PAYMAYA', label: 'Maya', logo: '/images/maya-logo.png' },
-  { value: 'GOTYME', label: 'GoTyme', logo: '/images/gotyme-logo.png' },
-]
+import { methodLabel } from '../../utils/storePayments'
 
 // ₱5,000 for whole amounts, ₱5,499.50 when there are centavos (the same way everywhere on the page)
 const peso = (n) => `₱${n.toLocaleString('en-US', { minimumFractionDigits: n % 1 ? 2 : 0, maximumFractionDigits: 2 })}`
@@ -61,7 +55,7 @@ export default function WalkIn() {
   const stock = product?.stock ?? 0
   const qty = parseInt(quantity, 10) || 0
   const total = product ? product.price * qty : 0
-  const methodLabel = METHODS.find((m) => m.value === method).label
+  const payLabel = methodLabel(method)
 
   const chooseProduct = (id) => {
     setProductId(id)
@@ -173,33 +167,12 @@ export default function WalkIn() {
 
           <section>
             <h2 id="payLabel" className="mb-3 text-xs font-semibold uppercase tracking-wider text-[#2474b6]">Payment</h2>
-            <div role="radiogroup" aria-labelledby="payLabel" className="grid grid-cols-4 gap-2 sm:gap-3">
-              {METHODS.map((m) => (
-                <label key={m.value} className="cursor-pointer min-w-0">
-                  <input
-                    type="radio"
-                    name="payment_method"
-                    value={m.value}
-                    checked={method === m.value}
-                    onChange={() => chooseMethod(m.value)}
-                    className="peer sr-only"
-                  />
-                  <span className="flex flex-col items-center justify-center gap-1.5 h-full min-h-[4.25rem] px-1 py-2.5 rounded-[10px] border-[1.5px] border-[#e5e7eb] bg-white text-center transition-colors [@media(hover:hover)]:hover:border-[#c5cde0] peer-checked:border-[#2474b6] peer-checked:bg-[#eef5fc] peer-focus-visible:ring-4 peer-focus-visible:ring-[#2474b6]/15">
-                    {m.logo ? (
-                      <img src={m.logo} alt="" className="w-7 h-7 object-contain rounded-md" />
-                    ) : (
-                      <Banknote className="w-7 h-7 text-emerald-600" />
-                    )}
-                    <span className="text-xs sm:text-sm font-semibold text-gray-800 leading-tight break-words">{m.label}</span>
-                  </span>
-                </label>
-              ))}
-            </div>
+            <PaymentMethodPicker name="payment_method" value={method} onChange={chooseMethod} labelledBy="payLabel" />
 
             {/* Reference number, only for e-wallets */}
             {method !== 'CASH' && (
               <div id="refField" className="mt-4">
-                <label htmlFor="reference_number" className={labelClass}>{methodLabel} reference number</label>
+                <label htmlFor="reference_number" className={labelClass}>{payLabel} reference number</label>
                 <input
                   type="text"
                   id="reference_number"
@@ -223,7 +196,7 @@ export default function WalkIn() {
             <SummaryRow label="Item"><span id="summary_item">{product ? product.name : <span className="text-gray-400">None yet</span>}</span></SummaryRow>
             <SummaryRow label="Price each"><span id="summary_price">{product ? peso(product.price) : '—'}</span></SummaryRow>
             <SummaryRow label="Quantity"><span id="summary_qty">× {qty}</span></SummaryRow>
-            <SummaryRow label="Payment"><span id="summary_method">{methodLabel}</span></SummaryRow>
+            <SummaryRow label="Payment"><span id="summary_method">{payLabel}</span></SummaryRow>
           </div>
           <div className="mt-4 pt-4 border-t border-gray-100 flex items-baseline justify-between gap-3">
             <span className="font-semibold text-gray-800">Total</span>
