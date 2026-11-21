@@ -23,6 +23,11 @@ try {
          JOIN products p ON oi.product_id = p.id
          ORDER BY oi.id'
     )->fetchAll(PDO::FETCH_ASSOC);
+
+    // "This week" on the Total Orders card, counted exactly like the Overview page (YEARWEEK, not WEEK)
+    $this_week = (int) $pdo->query(
+        'SELECT COUNT(*) FROM orders WHERE deleted = 0 AND YEARWEEK(date_ordered) = YEARWEEK(NOW())'
+    )->fetchColumn();
 } catch (PDOException $e) {
     error_log('orders.php database error: ' . $e->getMessage());
     json_response(['success' => false, 'error' => 'Database error. Please try again.'], 500);
@@ -38,6 +43,7 @@ $profile_dir = __DIR__ . '/../../uploads/profile/';
 json_response([
     'success'    => true,
     'adminLevel' => $admin['admin_level'], // 2 = SuperAdmin: sees the Delete button
+    'thisWeek'   => $this_week,
     'orders'     => array_map(function ($o) use ($items_by_order, $profile_dir) {
         $order_items = $items_by_order[$o['id']] ?? [];
         $total = 0;

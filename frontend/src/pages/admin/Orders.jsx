@@ -1,46 +1,26 @@
-import { CheckCircle, Clock, Gem, Package, PlusCircle, Settings, ShoppingBag, ShoppingCart, Trash2, User, X } from 'lucide-react'
+import { CheckCircle, Clock, Gem, Hourglass, Package, PackageCheck, PlusCircle, Settings, ShoppingBag, ShoppingCart, Store, Trash2, TrendingUp, User, X } from 'lucide-react'
 import { useCallback, useEffect, useState } from 'react'
 import { Link, useLocation, useNavigate } from 'react-router-dom'
 import IconModal, { OkButton } from '../../components/admin/IconModal'
 import OrderDetailsModal from '../../components/admin/OrderDetailsModal'
 import PaymentModal from '../../components/admin/PaymentModal'
 import Skeleton, { LoadingArea } from '../../components/admin/Skeleton'
+import StatCard from '../../components/admin/StatCard'
 import { useAuth } from '../../hooks/useAuth'
 import { refreshingClass, useRefreshing } from '../../hooks/useRefreshing'
 import { deleteOrder, getOrders } from '../../services/adminService'
 import { orderStatus } from '../../utils/orderStatus'
 
+// note: the bottom line of each card, like on Overview (Processing also counts orders waiting for the buyer)
 const STAT_CARDS = [
-  { key: 'total', label: 'Total Orders', icon: ShoppingCart, colors: 'from-violet-400 via-violet-500 to-violet-600' },
-  { key: 'pending', label: 'Pending', icon: Clock, colors: 'from-amber-400 via-amber-500 to-amber-600' },
-  { key: 'processing', label: 'Processing', icon: Settings, colors: 'from-sky-400 via-sky-500 to-sky-600' },
-  { key: 'completed', label: 'Completed', icon: CheckCircle, colors: 'from-emerald-400 via-emerald-500 to-emerald-600' },
+  { key: 'total', label: 'Total Orders', icon: ShoppingCart, colors: 'from-violet-400 via-violet-500 to-violet-600', noteIcon: TrendingUp },
+  { key: 'pending', label: 'Pending', icon: Clock, colors: 'from-amber-400 via-amber-500 to-amber-600', note: 'Awaiting processing', noteIcon: Hourglass },
+  { key: 'processing', label: 'Processing', icon: Settings, colors: 'from-sky-400 via-sky-500 to-sky-600', note: 'Incl. ready for pickup', noteIcon: Store },
+  { key: 'completed', label: 'Completed', icon: CheckCircle, colors: 'from-emerald-400 via-emerald-500 to-emerald-600', note: 'Handed to buyer', noteIcon: PackageCheck },
 ]
 
 const formatDate = (value) =>
   new Date(value.replace(' ', 'T')).toLocaleDateString('en-US', { month: 'short', day: '2-digit', year: 'numeric' })
-
-// Phones: compact, two per row, with the label under the icon and number. Wider screens: as before.
-function StatCard({ label, value, icon: Icon, colors, stat }) {
-  return (
-    <div className={`relative overflow-hidden bg-gradient-to-br ${colors} rounded-2xl p-3.5 sm:p-6 text-white shadow-xl hover:shadow-2xl transition-shadow duration-300`}>
-      <div className="absolute top-0 right-0 w-32 h-32 bg-white opacity-10 rounded-full -translate-y-16 translate-x-16" />
-      <div className="absolute bottom-0 left-0 w-24 h-24 bg-white opacity-5 rounded-full translate-y-12 -translate-x-12" />
-      <div className="relative z-10">
-        <div className="flex items-center justify-between mb-2 sm:mb-4">
-          <div className="w-9 h-9 sm:w-14 sm:h-14 flex-shrink-0 bg-white bg-opacity-30 rounded-lg sm:rounded-xl flex items-center justify-center backdrop-blur-sm shadow-lg">
-            <Icon className="w-5 h-5 sm:w-7 sm:h-7 text-white drop-shadow-lg" />
-          </div>
-          <div className="text-right">
-            <div className="text-2xl sm:text-4xl font-bold text-white drop-shadow-lg" data-stat={stat}>{value}</div>
-            <div className="hidden sm:block text-white text-base font-semibold drop-shadow-md">{label}</div>
-          </div>
-        </div>
-        <div className="sm:hidden text-white text-sm font-semibold leading-tight drop-shadow-md">{label}</div>
-      </div>
-    </div>
-  )
-}
 
 // The product picture (or a placeholder). Never squeezed.
 function ProductThumb({ item, size = 'w-12 h-12' }) {
@@ -386,7 +366,9 @@ export default function Orders() {
             label={c.label}
             value={loading ? <Skeleton tone="light" className="inline-block align-middle w-9 h-6 sm:w-12 sm:h-8" /> : stats[c.key]}
             icon={c.icon}
-            colors={c.colors}
+            gradient={c.colors}
+            note={c.key === 'total' ? <>This week: {loading ? <Skeleton tone="light" className="inline-block align-middle w-5 h-3.5" /> : (data?.thisWeek ?? 0)}</> : c.note}
+            noteIcon={c.noteIcon}
           />
         ))}
       </div>

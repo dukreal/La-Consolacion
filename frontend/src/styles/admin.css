@@ -71,13 +71,14 @@
 }
 
 /* Counter cards (Overview, Orders): 2 per row, 4 per row only once each card has room for its label.
-   In em so it follows the browser's text size. Orders' labels are shorter, so it goes 4-wide sooner. */
+   In em so it follows the browser's text size. Orders' labels are shorter, so it goes 4-wide sooner
+   (85em = 1360px at normal text size: from there its notes, e.g. "Incl. ready for pickup", fit on one line). */
 @media (min-width: 96em) {
   .admin-page .stat-grid {
     grid-template-columns: repeat(4, minmax(0, 1fr));
   }
 }
-@media (min-width: 80em) {
+@media (min-width: 85em) {
   .admin-page .stat-grid-short {
     grid-template-columns: repeat(4, minmax(0, 1fr));
   }
