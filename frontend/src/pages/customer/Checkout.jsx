@@ -26,6 +26,7 @@ export default function Checkout() {
 
   const subtotal = items.length > 0 ? items.reduce((sum, item) => sum + item.price * item.qty, 0) : total
   const downpayment = downpaymentOf(subtotal)
+  const balance = Math.max(0, subtotal - parseFloat(downpayment)) // paid at the store when the order is picked up
 
   const handleSubmit = async ({ mobile, reference, screenshot }) => {
     setError('')
@@ -122,17 +123,25 @@ export default function Checkout() {
                   <span className="pay-muted">Downpayment</span>
                   <span className="font-semibold text-[#2474b6]">30%</span>
                 </div>
+                <div className="flex justify-between items-center gap-4">
+                  <span className="pay-muted">Balance at pickup</span>
+                  <span id="summaryBalance" className="font-semibold text-[#22306a] whitespace-nowrap">₱{formatMoney(balance)}</span>
+                </div>
               </div>
 
-              <div className="pay-panel flex justify-between items-center gap-4 px-4 py-3.5 mt-4">
-                <div>
-                  <span className="text-lg font-bold text-[#22306a]">Total</span>
-                  <p className="text-xs sm:text-sm pay-muted">(fees might be applied)</p>
+              {/* What is paid now: the 30% downpayment (the rest is paid at the store, see "Balance at pickup").
+                  When the label and the amount do not fit side by side (small phones, large text), the amount moves
+                  to its own line, on the right */}
+              <div className="pay-panel flex flex-wrap justify-between items-center gap-x-4 gap-y-1 px-4 py-3.5 mt-4">
+                <div className="min-w-0">
+                  <span className="text-lg font-bold text-[#22306a] whitespace-nowrap">Amount to Pay</span>
+                  <p className="text-xs sm:text-sm pay-muted">(30% downpayment)</p>
                 </div>
-                <span id="summaryTotal" className="text-xl min-[360px]:text-2xl font-bold text-[#22306a] whitespace-nowrap">
+                <span id="summaryTotal" className="ml-auto text-xl min-[360px]:text-2xl font-bold text-[#22306a] whitespace-nowrap">
                   ₱{formatMoney(downpayment)}
                 </span>
               </div>
+              <p className="mt-2 text-xs pay-muted">E-wallet fees might apply.</p>
 
               <button id="continueBtn" onClick={() => goToStep(2)} className="pay-btn w-full mt-5">
                 Continue to Payment

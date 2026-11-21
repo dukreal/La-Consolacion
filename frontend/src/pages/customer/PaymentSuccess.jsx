@@ -1,6 +1,5 @@
 import { useEffect, useRef, useState } from 'react'
 import { Link, useNavigate, useSearchParams } from 'react-router-dom'
-import LoadingOverlay from '../../components/common/LoadingOverlay'
 import { formatMoney } from '../../utils/formatMoney'
 import '../../styles/payment.css'
 
@@ -8,6 +7,8 @@ const COUNTDOWN_SECONDS = 30
 
 // The receipt shown after paying (was payment/payment_success.php).
 // It reads amount, mobile and reference from the address, then goes back to Home after 30 seconds.
+// The payment is already saved when this page opens, so it shows right away (the old page first showed
+// "Loading..." for 3 seconds, which only hid the confirmation).
 export default function PaymentSuccess() {
   const navigate = useNavigate()
   const [params] = useSearchParams()
@@ -15,15 +16,9 @@ export default function PaymentSuccess() {
   const mobile = params.get('mobile') || 'N/A'
   const reference = params.get('reference') || 'N/A'
 
-  const [loading, setLoading] = useState(true) // the old page showed "Loading..." for 3 seconds
   const [secondsLeft, setSecondsLeft] = useState(COUNTDOWN_SECONDS)
   const receiptRef = useRef(null)
   const downloadButtonRef = useRef(null)
-
-  useEffect(() => {
-    const timer = setTimeout(() => setLoading(false), 3000)
-    return () => clearTimeout(timer)
-  }, [])
 
   // Count down one second at a time
   useEffect(() => {
@@ -73,7 +68,6 @@ export default function PaymentSuccess() {
   return (
     // One card in the middle of the screen; the countdown and the continue link sit under it
     <div className="payment-page flex items-center justify-center px-5 py-5">
-      {loading && <LoadingOverlay />}
 
       <div className="w-full max-w-md">
         {/* The receipt (this part is saved by "Download Screenshot") */}

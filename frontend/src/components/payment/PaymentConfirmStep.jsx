@@ -1,4 +1,5 @@
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
+import { getProfileMobile } from '../../services/profileService'
 import { formatMoney } from '../../utils/formatMoney'
 import ScreenshotUpload from './ScreenshotUpload'
 
@@ -11,6 +12,17 @@ export default function PaymentConfirmStep({ amount, onSubmit, onBack, error, su
   const [reference, setReference] = useState('')
   const [screenshot, setScreenshot] = useState(null)
   const [missingScreenshot, setMissingScreenshot] = useState(false)
+
+  // Start with the number from the profile (if any), unless the customer already typed one
+  useEffect(() => {
+    let cancelled = false
+    getProfileMobile().then((saved) => {
+      if (!cancelled && saved) setMobile((typed) => typed || saved)
+    })
+    return () => {
+      cancelled = true
+    }
+  }, [])
 
   // Digits only, at most 11 (same as the old page)
   const handleMobile = (e) => setMobile(e.target.value.replace(/\D/g, '').slice(0, 11))
