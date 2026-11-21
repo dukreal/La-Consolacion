@@ -1,6 +1,7 @@
 <?php
 // Paginated activity logs for the admin Logs page (was the PHP at the top of admin-logs.php).
 // GET ?page=N  → 8 logs per page, newest first.
+// GET ?type=orders|products|users  → only that kind of action (across all logs; anything else means all).
 require_once __DIR__ . '/../../helpers/admin.php';
 
 require_admin();
@@ -8,8 +9,20 @@ require_admin();
 $perPage = 8; // same as the old page: fits the screen without scrolling
 $page    = isset($_GET['page']) ? max(1, (int) $_GET['page']) : 1;
 
+// The action names each Type chip covers (these are every name the backend writes with log_action)
+$TYPES = [
+    'orders'   => ['Change Order Status', 'Delete Order', 'Email Notification', 'Email Notification Failed'],
+    'products' => ['Add Product', 'Edit Product', 'Delete Product', 'Add Custom Order', 'Edit Custom Order'],
+    'users'    => ['Register User', 'Admin Create User', 'Edit User', 'Soft Delete User', 'Resend Verification'],
+];
+$type    = isset($_GET['type'], $TYPES[$_GET['type']]) ? $_GET['type'] : '';
+$actions = $type ? $TYPES[$type] : [];
+$where   = $actions ? 'WHERE logs.action IN (' . implode(',', array_fill(0, count($actions), '?')) . ')' : '';
+
 try {
-    $total      = (int) $pdo->query('SELECT COUNT(*) FROM logs')->fetchColumn();
+    $count = $pdo->prepare("SELECT COUNT(*) FROM logs $where");
+    $count->execute($actions);
+    $total      = (int) $count->fetchColumn();
     $totalPages = (int) ceil($total / $perPage);
 
     // Asking for a page past the end shows the last page instead of an empty table
@@ -25,11 +38,16 @@ try {
                 users.username AS current_username, users.first_name, users.profile_image
          FROM logs
          LEFT JOIN users ON logs.user = users.username
+         ' . $where . '
          ORDER BY logs.created_at DESC, logs.id DESC
          LIMIT ? OFFSET ?'
     );
-    $stmt->bindValue(1, $perPage, PDO::PARAM_INT);
-    $stmt->bindValue(2, $offset, PDO::PARAM_INT);
+    $n = 1;
+    foreach ($actions as $action) {
+        $stmt->bindValue($n++, $action);
+    }
+    $stmt->bindValue($n++, $perPage, PDO::PARAM_INT);
+    $stmt->bindValue($n, $offset, PDO::PARAM_INT);
     $stmt->execute();
     $logs = $stmt->fetchAll(PDO::FETCH_ASSOC);
 } catch (PDOException $e) {
@@ -39,6 +57,7 @@ try {
 
 json_response([
     'success'    => true,
+    'type'       => $type,
     'page'       => $page,
     'perPage'    => $perPage,
     'total'      => $total,

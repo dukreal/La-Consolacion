@@ -6,6 +6,7 @@
 // A sale is saved as a completed order for the "walkin_guest" account, with a payment row,
 // and the stock goes down at once. All of it in one transaction.
 require_once __DIR__ . '/../../helpers/admin.php';
+require_once __DIR__ . '/../../helpers/payments.php'; // STORE_PAYMENT_METHODS
 
 require_admin();
 
@@ -26,13 +27,6 @@ if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
     ], $products)]);
 }
 
-// Same payment names and pictures the old page saved
-const PAYMENT_METHODS = [
-    'CASH'    => ['service' => 'Cash',    'image' => 'cash_default.png'],
-    'GCASH'   => ['service' => 'GCash',   'image' => 'gcash-logo.png'],
-    'PAYMAYA' => ['service' => 'PayMaya', 'image' => 'maya-logo.png'],
-    'GOTYME'  => ['service' => 'GoTyme',  'image' => 'gotyme-logo.png'],
-];
 
 $product_id = (int) ($_POST['product_id'] ?? 0);
 $quantity_text = trim($_POST['quantity'] ?? '');
@@ -47,7 +41,7 @@ if (!preg_match('/^\d+$/', $quantity_text) || (int) $quantity_text < 1) {
     json_response(['success' => false, 'error' => 'Quantity must be at least 1.'], 422);
 }
 $quantity = (int) $quantity_text;
-if (!isset(PAYMENT_METHODS[$method])) {
+if (!isset(STORE_PAYMENT_METHODS[$method])) {
     json_response(['success' => false, 'error' => 'Please choose a payment method.'], 422);
 }
 if ($method !== 'CASH' && $reference === '') {
@@ -83,7 +77,7 @@ try {
         $walkin_id = (int) $pdo->lastInsertId();
     }
 
-    $payment = PAYMENT_METHODS[$method];
+    $payment = STORE_PAYMENT_METHODS[$method];
     $stmt = $pdo->prepare("INSERT INTO payments (reference_number, service, image, mobile, amount) VALUES (?, ?, ?, 'Walk-in', ?)");
     $stmt->execute([$reference, $payment['service'], $payment['image'], $total]);
     $payment_id = (int) $pdo->lastInsertId();

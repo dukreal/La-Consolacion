@@ -79,10 +79,11 @@ export default function OrderDetailsModal({ orderId, onClose, onCancel }) {
 
   const data = state.status === 'ready' ? state.data : null
 
-  const isCustom = data ? data.products.some((p) => p.type === 'custom') : false
   const itemCount = data ? data.products.reduce((sum, p) => sum + Number(p.quantity), 0) : 0
-  // Custom orders are paid with a 30% downpayment; the rest is paid at pickup
-  const balance = data ? Math.max(0, Number(data.total) - Number(data.payment.amount || 0)) : 0
+  // Orders are paid with a 30% downpayment; the rest is paid at pickup (the shop records it when the order is completed)
+  const balancePayment = data?.balance_payment ?? null
+  const balance = data ? Number(data.balance ?? Math.max(0, Number(data.total) - Number(data.payment.amount || 0))) : 0
+  const isDownpayment = data ? Number(data.payment.amount || 0) < Number(data.total) : false
 
   return (
     <div id="orderDetailsModal" className="fixed inset-0 z-[9999]">
@@ -186,13 +187,21 @@ export default function OrderDetailsModal({ orderId, onClose, onCancel }) {
                       <PaymentRow iconBox="bg-green-100 text-green-600" icon="bx-hash" label="Reference No.">
                         <span className="font-mono text-xs text-green-700 bg-green-50 px-2 py-1 rounded break-all">{data.payment.reference_number}</span>
                       </PaymentRow>
-                      <PaymentRow iconBox="bg-purple-100 text-purple-600" icon="bx-money" label={isCustom ? 'Downpayment' : 'Amount Paid'}>
+                      <PaymentRow iconBox="bg-purple-100 text-purple-600" icon="bx-money" label={isDownpayment ? 'Downpayment' : 'Amount Paid'}>
                         <span className="font-bold text-purple-700 text-sm">{money(data.payment.amount)}</span>
                       </PaymentRow>
-                      {isCustom && balance > 0 && (
-                        <PaymentRow iconBox="bg-orange-100 text-orange-600" icon="bx-wallet" label="Balance">
-                          <span className="font-bold text-orange-700 text-sm">{money(balance)}</span>
+                      {balancePayment ? (
+                        <PaymentRow iconBox="bg-emerald-100 text-emerald-600" icon="bx-check-circle" label="Balance Paid">
+                          <span className="font-bold text-emerald-700 text-sm text-right">
+                            <span className="whitespace-nowrap">{money(balancePayment.amount)}</span> · {balancePayment.service}
+                          </span>
                         </PaymentRow>
+                      ) : (
+                        balance > 0 && (
+                          <PaymentRow iconBox="bg-orange-100 text-orange-600" icon="bx-wallet" label="Due at pickup">
+                            <span className="font-bold text-orange-700 text-sm whitespace-nowrap">{money(balance)}</span>
+                          </PaymentRow>
+                        )
                       )}
                       <PaymentRow iconBox="bg-amber-100 text-amber-600" icon="bx-calendar" label="Paid On">
                         <span className="text-gray-900 text-sm">{data.payment.uploaded_at ? formatDate(data.payment.uploaded_at) : '-'}</span>

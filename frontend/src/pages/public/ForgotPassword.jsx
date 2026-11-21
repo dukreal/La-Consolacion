@@ -41,7 +41,7 @@ export default function ForgotPassword() {
         </div>
         <button type="submit" disabled={submitting}>Send Reset Link</button>
       </form>
-      <div style={{ marginTop: '20px', textAlign: 'center' }}>
+      <div className="form-back">
         <Link to="/login">Back to Login</Link>
       </div>
     </AuthCard>

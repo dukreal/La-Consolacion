@@ -13,12 +13,13 @@ try {
         'totalOrders'      => $count(''),
         'pendingOrders'    => $count("AND status = 'pending'"),
         'processingOrders' => $count("AND status = 'processing'"),
+        'waitingOrders'    => $count("AND status = 'waiting_for_buyer'"),
         // YEARWEEK (not WEEK) so the same week number of an earlier year is not counted
         'thisWeek'         => $count('AND YEARWEEK(date_ordered) = YEARWEEK(NOW())'),
     ];
 
     $recent = $pdo->query(
-        'SELECT logs.id, logs.user, logs.action, logs.details, logs.created_at, users.profile_image, users.first_name
+        'SELECT logs.id, logs.user, logs.action, logs.details, logs.created_at, users.profile_image, users.first_name, users.role
          FROM logs
          LEFT JOIN users ON logs.user = users.username
          ORDER BY logs.created_at DESC, logs.id DESC
@@ -42,6 +43,8 @@ json_response([
             'createdAt'    => $log['created_at'],
             'profileImage' => $log['profile_image'],
             'firstName'    => $log['first_name'],
+            // 'admin' or 'user'; null if the account no longer exists
+            'role'         => $log['role'],
         ];
     }, $recent),
 ]);

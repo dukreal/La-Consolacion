@@ -8,8 +8,9 @@ export async function getOverview() {
 }
 
 // One page (8 rows) of activity logs: { logs, page, perPage, total, totalPages }
-export async function getLogs(page = 1) {
-  const data = await api(`/admin/logs.php?page=${page}`)
+// type: '' (all), 'orders', 'products' or 'users' (filters across all logs, on the server)
+export async function getLogs(page = 1, type = '') {
+  const data = await api(`/admin/logs.php?page=${page}${type ? `&type=${type}` : ''}`)
   if (!data.success) throw new Error(data.message || data.error || 'Could not load logs')
   return data
 }
@@ -142,8 +143,14 @@ export function getOrderDetails(orderId) {
 }
 
 // Changes an order's status. Returns { success, status, emailSent } or { success: false, error }
-export function updateOrderStatus(orderId, status) {
-  return api('/orders/update-order-status.php', { method: 'POST', form: { order_id: orderId, new_status: status } })
+// balance: { method, reference } when Completed also records the balance paid at pickup (see BalanceModal)
+export function updateOrderStatus(orderId, status, balance) {
+  const form = { order_id: orderId, new_status: status }
+  if (balance) {
+    form.balance_method = balance.method
+    form.balance_reference = balance.reference
+  }
+  return api('/orders/update-order-status.php', { method: 'POST', form })
 }
 
 // One payment for the Payment pop-up (screenshot, reference, amounts)

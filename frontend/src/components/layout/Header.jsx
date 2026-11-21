@@ -40,7 +40,7 @@ function MenuLink({ to, icon, label, color = 'blue', extraClass = '', onClick })
     <Link
       to={to}
       onClick={onClick}
-      className={`flex items-center px-4 py-3 text-sm text-gray-700 hover:bg-gray-50 rounded-xl transition-all duration-200 group mx-1 ${extraClass}`}
+      className={`flex items-center px-4 py-3 text-sm text-gray-700 hover:bg-[#2474b6]/10 rounded-xl transition-all duration-200 group mx-1 ${extraClass}`}
     >
       <div className={`w-8 h-8 rounded-lg flex items-center justify-center mr-3 ${tints[color].box}`}>
         <i className={`bx ${icon} text-base ${tints[color].icon}`}></i>
@@ -129,7 +129,7 @@ export default function Header({ sticky = false }) {
                   setMobileOpen(false)
                 }}
                 aria-label="Account menu"
-                className="w-10 h-10 rounded-full flex items-center justify-center hover:scale-105 transition-transform cursor-pointer border-2 border-white shadow-md"
+                className="w-10 h-10 rounded-full flex items-center justify-center hover:shadow-lg transition-shadow cursor-pointer border-2 border-white shadow-md"
                 style={{ background: 'linear-gradient(135deg, #2474b6 0%, #1e5a8a 100%)' }}
               >
                 {profileImg ? (
@@ -141,7 +141,7 @@ export default function Header({ sticky = false }) {
 
               <div
                 style={{ right: menuShift, width: 'min(18rem, calc(100vw - 32px))' }}
-                className={`absolute mt-3 max-h-[calc(100vh-96px)] overflow-y-auto bg-white rounded-2xl shadow-2xl border border-gray-100 py-2 z-50 transform transition-all duration-300 ease-out backdrop-blur-sm ${
+                className={`absolute mt-3 max-h-[calc(100vh-96px)] overflow-y-auto bg-white rounded-2xl shadow-2xl border border-gray-100 pb-2 z-50 transform transition-all duration-300 ease-out backdrop-blur-sm ${
                   open ? 'opacity-100 scale-100 visible' : 'opacity-0 scale-95 invisible pointer-events-none'
                 }`}
               >
@@ -178,10 +178,10 @@ export default function Header({ sticky = false }) {
                       <MenuLink to="/shop?openCart=true" icon="bx-cart" label="My Cart" extraClass="mt-1" onClick={close} />
                       <MenuLink to="/shop?openOrderHistory=true" icon="bx-history" label="Order History" color="green" extraClass="mt-1" onClick={close} />
 
-                      <div className="border-t border-gray-100 mt-2 pt-2 px-2">
+                      <div className="border-t border-gray-100 mt-2 pt-2 px-1">
                         <button
                           onClick={handleLogout}
-                          className="w-full flex items-center px-4 py-3 text-sm text-red-600 hover:bg-red-50 rounded-xl transition-all duration-200 group mx-1"
+                          className="w-full flex items-center px-4 py-3 text-sm text-red-600 hover:bg-red-100 rounded-xl transition-all duration-200 group"
                         >
                           <div className={`w-8 h-8 rounded-lg flex items-center justify-center mr-3 ${tints.red.box}`}>
                             <i className={`bx bx-log-out text-base ${tints.red.icon}`}></i>

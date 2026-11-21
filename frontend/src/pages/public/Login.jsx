@@ -24,6 +24,9 @@ export default function Login() {
   const [password, setPassword] = useState('')
   const [error, setError] = useState('')
   const [submitting, setSubmitting] = useState(false)
+  // The account exists but its email is not verified yet: offer to send the link again
+  const [needsVerification, setNeedsVerification] = useState(false)
+  const [resend, setResend] = useState({ status: 'idle', message: '' }) // 'idle' | 'sending' | 'sent' | 'error'
 
   const from = location.state?.from
   // Opened the payment link from a custom order email without being logged in
@@ -35,6 +38,8 @@ export default function Login() {
   const handleSubmit = async (e) => {
     e.preventDefault()
     setError('')
+    setNeedsVerification(false)
+    setResend({ status: 'idle', message: '' })
     setSubmitting(true)
     try {
       const data = await api('/auth/login.php', { method: 'POST', body: { email, password } })
@@ -45,11 +50,23 @@ export default function Login() {
         navigate(from || (data.role === 'admin' ? '/admin' : '/'), { replace: Boolean(from) })
       } else {
         setError(data.error)
+        setNeedsVerification(Boolean(data.needsVerification))
       }
     } catch {
       setError('Could not reach the server. Please try again.')
     } finally {
       setSubmitting(false)
+    }
+  }
+
+  // Sends the verification email again (needs the same email and password as the login)
+  const resendEmail = async () => {
+    setResend({ status: 'sending', message: '' })
+    try {
+      const data = await api('/auth/resend-verification.php', { method: 'POST', body: { email, password } })
+      setResend({ status: data.success ? 'sent' : 'error', message: data.message || data.error })
+    } catch {
+      setResend({ status: 'error', message: 'Could not reach the server. Please try again.' })
     }
   }
 
@@ -63,6 +80,20 @@ export default function Login() {
           order was sent to.
         </Notice>
       )}
+      {/* Every message shows at the top of the card (like Register) */}
+      {message && resend.status !== 'sent' && (
+        <Notice type="error">
+          <div role="alert">{message}</div>
+          {needsVerification && resend.status !== 'sent' && (
+            <button type="button" className="notice-action" onClick={resendEmail} disabled={resend.status === 'sending'}>
+              {resend.status === 'sending' ? 'Sending...' : 'Resend verification email'}
+            </button>
+          )}
+        </Notice>
+      )}
+      {resend.status === 'sent' && <Notice type="success">{resend.message}</Notice>}
+      {resend.status === 'error' && <Notice type="error">{resend.message}</Notice>}
+
       <form onSubmit={handleSubmit}>
         <div className="input-group">
           <input
@@ -84,7 +115,7 @@ export default function Login() {
             onChange={(e) => setPassword(e.target.value)}
           />
         </div>
-        <div style={{ textAlign: 'right', marginBottom: '10px' }}>
+        <div className="form-aside">
           <Link to="/forgot-password">Forgot Password?</Link>
         </div>
         <button type="submit" disabled={submitting}>Login</button>
@@ -93,11 +124,6 @@ export default function Login() {
           Don&apos;t have an account? <Link to="/register" state={from ? { from } : undefined}>Register here</Link>.
         </p>
       </form>
-      {message && (
-        <div id="error-message" style={{ color: 'red', marginTop: '10px', textAlign: 'center' }}>
-          {message}
-        </div>
-      )}
     </AuthCard>
   )
 }

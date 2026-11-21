@@ -27,11 +27,13 @@ try {
             MAX(p.type = 'custom') as is_custom,
             pay.reference_number,
             pay.service,
-            pay.amount as payment_amount
+            pay.amount as payment_amount,
+            bal.amount as balance_amount
         FROM orders o
         LEFT JOIN order_items oi ON o.id = oi.order_id
         LEFT JOIN products p ON oi.product_id = p.id
         LEFT JOIN payments pay ON o.payment_id = pay.id
+        LEFT JOIN payments bal ON o.balance_payment_id = bal.id
         WHERE o.user_id = ? AND o.deleted = 0 AND o.payment_id IS NOT NULL
         GROUP BY o.id
         ORDER BY o.date_ordered DESC
@@ -57,7 +59,11 @@ try {
             'service' => $order['service'],
             'payment_amount' => $order['payment_amount'],
             // Custom orders are paid with a 30% downpayment, so the card shows both amounts
-            'is_custom' => (bool) $order['is_custom']
+            'is_custom' => (bool) $order['is_custom'],
+            // What is still owed (paid at pickup); 0 once the balance is recorded, when it was paid in full,
+            // or when the order was cancelled (nothing more to pay)
+            'balance' => $order['status'] === 'cancelled' ? 0 : max(0, round((float) $order['total_amount'] - (float) $order['payment_amount'] - (float) $order['balance_amount'], 2)),
+            'balance_paid' => $order['balance_amount'] !== null
         ];
     }
     

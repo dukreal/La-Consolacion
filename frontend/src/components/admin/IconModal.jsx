@@ -1,9 +1,13 @@
 import { AlertTriangle, CheckCircle, Info, Trash2, XCircle } from 'lucide-react'
+import { useRef } from 'react'
+import { useDialog } from '../../hooks/useDialog'
+import { navyButton } from '../../utils/dialogButtons'
 
-// The small centered pop-up with a round icon on top, used by the Orders page for
+// The small centered pop-up with a round icon on top, used by the Orders page and the Order Details pop-up for
 // messages ("Order Deleted") and questions ("Delete Order?").
 //   type: 'success' | 'error' | 'warning' | 'info' | 'delete' (picks the icon and its color)
-//   children: the buttons
+//   onClose: what Escape and a click outside do (usually the same as Cancel / OK); leave it out to require a button
+//   children: the buttons (mark the safe one, e.g. Cancel, with data-autofocus so it gets the keyboard focus)
 const TYPES = {
   success: { icon: CheckCircle, color: 'bg-emerald-500' },
   error: { icon: XCircle, color: 'bg-red-500' },
@@ -12,37 +16,44 @@ const TYPES = {
   delete: { icon: Trash2, color: 'bg-red-500' },
 }
 
-export default function IconModal({ id, type = 'info', title, message, children }) {
+export default function IconModal({ id, type = 'info', title, message, onClose, children }) {
   const { icon: Icon, color } = TYPES[type] || TYPES.info
+  const box = useRef(null)
+  useDialog(box, onClose)
   return (
-    <div id={id} className="fixed inset-0 bg-black bg-opacity-50 z-[9999] flex items-center justify-center">
-      <div className="bg-white rounded-2xl shadow-2xl max-w-md w-full mx-4">
-        <div className="p-6">
-          <div className="flex items-center justify-center mb-4">
-            <div className={`w-16 h-16 rounded-full flex items-center justify-center ${color}`}>
-              <Icon className="w-8 h-8 text-white" />
-            </div>
+    <div
+      id={id}
+      className="fixed inset-0 bg-[#22306a]/30 backdrop-blur-[2px] z-[9999] flex items-center justify-center p-4"
+      onClick={(e) => onClose && e.target === e.currentTarget && onClose()}
+    >
+      <div
+        ref={box}
+        role="alertdialog"
+        aria-modal="true"
+        aria-labelledby={`${id}-title`}
+        aria-describedby={`${id}-message`}
+        tabIndex={-1}
+        className="bg-white rounded-[18px] border border-[#eef0f5] shadow-[0_12px_40px_rgba(34,48,106,0.18)] max-w-md w-full max-h-[calc(100dvh-2rem)] overflow-y-auto p-6 outline-none"
+      >
+        <div className="flex items-center justify-center mb-4">
+          <div className={`w-16 h-16 rounded-full flex items-center justify-center ${color}`}>
+            <Icon className="w-8 h-8 text-white" />
           </div>
-          <div className="text-center">
-            <h3 className="text-xl font-bold text-gray-900 mb-2">{title}</h3>
-            <p className="text-gray-600 mb-6">{message}</p>
-            <div className="flex justify-center gap-4">{children}</div>
-          </div>
+        </div>
+        <div className="text-center">
+          <h3 id={`${id}-title`} className="text-xl font-bold text-gray-900 mb-2">{title}</h3>
+          <p id={`${id}-message`} className="text-gray-600 mb-6">{message}</p>
+          <div className="flex flex-wrap justify-center gap-3">{children}</div>
         </div>
       </div>
     </div>
   )
 }
 
-// The blue OK button of the message pop-up
+// The OK button of the message pop-up (navy, like the other main buttons)
 export function OkButton({ onClick }) {
   return (
-    <button
-      type="button"
-      id="alertCloseBtn"
-      onClick={onClick}
-      className="bg-gradient-to-r from-sky-500 to-sky-600 hover:from-sky-600 hover:to-sky-700 text-white px-6 py-2 rounded-lg font-semibold transition-all duration-200 shadow-md hover:shadow-lg"
-    >
+    <button type="button" id="alertCloseBtn" onClick={onClick} className={`${navyButton} min-w-[6rem]`}>
       OK
     </button>
   )

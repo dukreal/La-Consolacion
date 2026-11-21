@@ -1,18 +1,19 @@
 import { UploadCloud } from 'lucide-react'
 import { useRef, useState } from 'react'
 
-// The picture box of the admin product forms: a dashed "Click to upload or drag and drop" box,
-// and after a picture is chosen, a small preview with a remove (×) button.
+// The photo of the admin product forms: a square "Upload photo" box, and once there is a picture, a square
+// preview with Replace and Remove under it.
 //   currentUrl: the saved picture when editing (shown until it is removed or replaced)
 //   file / onChange: the newly chosen file (null when none)
-//   editable: false for Admins on Edit Product (they only see the picture)
-//   variant: 'add' or 'edit' (the old Add and Edit pages had slightly different remove buttons)
+//   editable: false for Admins on Edit Premade (they only see the picture)
+//   required: Add Premade needs a picture
+//   variant: 'add' or 'edit' (only changes the picture's alt text, as before)
 export default function ProductImageField({ currentUrl = '', file, onChange, editable = true, required = false, variant = 'add' }) {
   const inputRef = useRef(null)
   const [preview, setPreview] = useState('')
   const [currentRemoved, setCurrentRemoved] = useState(false)
 
-  // Show the chosen file without uploading it yet (same FileReader way as the old page)
+  // Show the chosen file without uploading it yet (same FileReader way as before)
   const pick = (picked) => {
     onChange(picked)
     setPreview('')
@@ -30,60 +31,44 @@ export default function ProductImageField({ currentUrl = '', file, onChange, edi
     setCurrentRemoved(true)
   }
 
-  const removeButton =
-    variant === 'add' ? (
-      <button
-        type="button"
-        id="removeImageBtn"
-        onClick={remove}
-        title="Remove image"
-        className="absolute top-0 right-0 flex items-center justify-center w-8 h-8 bg-white bg-opacity-80 rounded-full text-xl font-bold leading-none text-gray-700 hover:bg-red-100 hover:text-red-600 transition"
-      >
-        ×
-      </button>
-    ) : (
-      <button
-        type="button"
-        id="removeImageBtn"
-        onClick={remove}
-        title="Remove image"
-        className="absolute -top-3 -right-3 w-7 h-7 flex items-center justify-center bg-red-500 text-white rounded-full shadow hover:bg-red-600 transition border-2 border-white z-10"
-      >
-        <svg width="12" height="12" viewBox="0 0 12 12" fill="none" className="block">
-          <line x1="3" y1="3" x2="9" y2="9" stroke="white" strokeWidth="2" strokeLinecap="round" />
-          <line x1="9" y1="3" x2="3" y2="9" stroke="white" strokeWidth="2" strokeLinecap="round" />
-        </svg>
-      </button>
-    )
+  // Replace / Remove. Their hover colour only applies with a mouse, so a tap on a phone leaves no tint behind.
+  const smallButton =
+    'flex-1 h-9 rounded-lg border-[1.5px] border-[#d8dce8] bg-white text-sm font-semibold transition-colors outline-none focus-visible:ring-2 focus-visible:ring-[#2474b6]/40'
 
   return (
-    <div className="flex flex-col items-center">
+    <div>
       {shownUrl && (
-        <div id="imagePreviewContainer" className="relative mb-2">
+        <div id="imagePreviewContainer">
           <img
             id="imagePreview"
             src={shownUrl}
             alt={variant === 'add' ? 'Preview' : 'Current Image'}
-            className={
-              variant === 'add'
-                ? 'w-32 h-32 object-cover rounded-xl shadow-lg border-2 border-blue-100 bg-white'
-                : 'w-32 h-32 object-cover rounded-xl mb-2 shadow'
-            }
+            className="w-full aspect-square object-cover rounded-xl border border-gray-100 bg-[#f5f7fb]"
           />
-          {editable && removeButton}
+          {editable && (
+            <div className="mt-2 flex gap-2">
+              <button type="button" onClick={() => inputRef.current?.click()} className={`${smallButton} text-[#22306a] [@media(hover:hover)]:hover:border-[#22306a] [@media(hover:hover)]:hover:bg-[#f5f6fa]`}>
+                Replace
+              </button>
+              <button type="button" id="removeImageBtn" onClick={remove} title="Remove image" className={`${smallButton} text-red-600 [@media(hover:hover)]:hover:border-red-300 [@media(hover:hover)]:hover:bg-red-50`}>
+                Remove
+              </button>
+            </div>
+          )}
         </div>
       )}
-      {/* The file input stays on the page (hidden) so the browser's "required" check still works */}
+      {/* The file input stays on the page (hidden while a picture shows) so Replace and the browser's "required" check work */}
       {editable && (
         <label
           id="uploadBox"
-          className={`w-full flex flex-col items-center justify-center border-2 border-dashed border-gray-300 rounded-lg p-8 bg-gray-50 text-gray-600 cursor-pointer transition hover:bg-gray-100 relative ${shownUrl ? 'hidden' : ''}`}
+          className={`relative w-full aspect-square flex flex-col items-center justify-center gap-1 rounded-xl border-2 border-dashed border-[#b9c3d6] bg-[#f8fafc] p-4 text-center cursor-pointer transition-colors hover:border-[#2474b6] hover:bg-[#f2f7fd] ${
+            shownUrl ? 'hidden' : ''
+          }`}
         >
-          <span className="text-4xl mb-2">
-            <UploadCloud className={`${variant === 'add' ? 'w-12 h-12' : 'w-10 h-10'} mx-auto text-gray-400`} />
-          </span>
-          <span className="font-medium text-base mb-1">Click to upload or drag and drop</span>
-          <span className="text-xs text-gray-400 mb-2">PNG, JPG, GIF up to 10MB</span>
+          <UploadCloud className="w-9 h-9 text-[#2474b6] mb-1" />
+          <span className="font-semibold text-[#22306a]">Upload photo</span>
+          <span className="text-xs text-gray-500">or drag and drop</span>
+          <span className="text-xs text-gray-400">PNG, JPG, GIF up to 10MB</span>
           <input
             ref={inputRef}
             type="file"
@@ -95,9 +80,7 @@ export default function ProductImageField({ currentUrl = '', file, onChange, edi
           />
         </label>
       )}
-      <div style={{ fontSize: 11, color: '#64748b', textAlign: 'left', marginTop: 4 }}>
-        For best results, upload a 1x1 (square) image.
-      </div>
+      <p className="mt-2 text-xs text-gray-500 text-center sm:text-left">For best results, upload a 1x1 (square) image.</p>
     </div>
   )
 }
