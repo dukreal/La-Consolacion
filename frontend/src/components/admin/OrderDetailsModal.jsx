@@ -100,7 +100,17 @@ export default function OrderDetailsModal({ orderId, onClose, onStatusChange }) 
         }))
         setAskBalance(false)
         onStatusChange(orderId, status)
-        setAlert(successAlert)
+        // emailSent is false when the customer should have been emailed but the mailer failed (not running, Gmail
+        // refused it...). The status is saved either way; say so, so the shop can tell the customer itself.
+        setAlert(
+          res.emailSent === false
+            ? {
+                type: 'warning',
+                title: 'Saved, but email not sent',
+                message: `${successAlert.message.replace(/[.!]?$/, '.')} The email to the customer could not be sent. Check that the mailer is running, or contact the customer yourself.`,
+              }
+            : successAlert,
+        )
       } else {
         setAlert({ type: 'error', title: 'Error', message: res.message || res.error || 'Failed to update order status' })
       }
