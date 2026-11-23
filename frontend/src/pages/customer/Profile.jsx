@@ -1,16 +1,19 @@
 import { useEffect, useMemo, useRef, useState } from 'react'
-import { Link, useNavigate, useSearchParams } from 'react-router-dom'
+import { useNavigate, useSearchParams } from 'react-router-dom'
 import SavedAddressCard from '../../components/delivery/SavedAddressCard'
+import OrderHistoryList from '../../components/orders/OrderHistoryList'
 import { useAuth } from '../../hooks/useAuth'
 import { getProfile, updateProfile } from '../../services/profileService'
 import '../../styles/profile.css'
 
 const EMPTY = { firstName: '', lastName: '', username: '', email: '', mobileNumber: '' }
 
-// The sections of the page. ?tab=address opens the delivery address directly.
+// The sections of the page. ?tab=address and ?tab=orders open those directly (the header's "Order History" link
+// uses ?tab=orders). `short` is the phone tab's label.
 const SECTIONS = [
-  { id: 'info', label: 'Personal info', icon: 'bx-user', hint: 'Your name, contact details and photo' },
-  { id: 'address', label: 'Delivery address', icon: 'bx-package', hint: 'Used when you choose delivery by courier at checkout' },
+  { id: 'info', label: 'Personal info', short: 'Profile', icon: 'bx-user', hint: 'Your name, contact details and photo' },
+  { id: 'address', label: 'Delivery address', short: 'Address', icon: 'bx-package', hint: 'Used when you choose delivery by courier at checkout' },
+  { id: 'orders', label: 'Order history', short: 'Orders', icon: 'bx-receipt', hint: 'Your orders and where they are' },
 ]
 
 // Photo shown in the circle: the saved photo, or an avatar made from the first two letters
@@ -35,15 +38,15 @@ function Field({ icon, label, htmlFor, className = '', children }) {
 
 const inputClass = 'input-field w-full px-4 py-2.5 lg:py-2 rounded-xl text-base shadow-sm'
 
-// My Account (was profile.php): Personal info and Delivery address, one at a time.
+// My Account (was profile.php): Personal info, Delivery address and Order history, one at a time.
 // Desktop (lg): a sidebar with the photo, name and menu on the left, the chosen section on the right, so the page
-// fits a laptop screen without scrolling. Phones and tablets: the name on top, then two tabs, and the Save button
-// stays at the bottom of the screen.
+// fits a laptop screen without scrolling (a long order history scrolls inside its card). Phones and tablets: the
+// name on top, then three tabs, and the Save button stays at the bottom of the screen.
 export default function Profile() {
   const navigate = useNavigate()
   const { refresh } = useAuth()
   const [params, setParams] = useSearchParams()
-  const section = params.get('tab') === 'address' ? 'address' : 'info'
+  const section = SECTIONS.some((s) => s.id === params.get('tab')) ? params.get('tab') : 'info'
   const current = SECTIONS.find((s) => s.id === section)
 
   const [form, setForm] = useState(EMPTY)
@@ -183,7 +186,7 @@ export default function Profile() {
               </div>
 
               <nav aria-label="Account" className="mt-4 lg:mt-0">
-                <ul className="grid grid-cols-2 gap-1 p-1 rounded-xl bg-[#e9edf5] lg:bg-transparent lg:p-0 lg:grid-cols-1 lg:gap-1.5">
+                <ul className="grid grid-cols-3 gap-1 p-1 rounded-xl bg-[#e9edf5] lg:bg-transparent lg:p-0 lg:grid-cols-1 lg:gap-1.5">
                   {SECTIONS.map((s) => {
                     const active = s.id === section
                     return (
@@ -193,26 +196,18 @@ export default function Profile() {
                           id={`section-${s.id}`}
                           aria-current={active ? 'page' : undefined}
                           onClick={() => openSection(s.id)}
-                          className={`profile-nav w-full min-h-11 flex items-center justify-center lg:justify-start gap-3 px-3 lg:px-3.5 rounded-lg lg:rounded-xl text-sm lg:text-[15px] transition-colors ${
+                          className={`profile-nav w-full min-h-11 flex items-center justify-center lg:justify-start gap-3 px-2 lg:px-3.5 rounded-lg lg:rounded-xl text-sm lg:text-[15px] transition-colors ${
                             active ? 'bg-[#22306a] text-white font-semibold' : 'text-gray-700 font-medium [@media(hover:hover)]:hover:bg-white lg:[@media(hover:hover)]:hover:bg-[#f1f4f9]'
                           }`}
                         >
                           <i className={`bx ${s.icon} text-xl hidden lg:inline`} aria-hidden="true"></i>
-                          <span className="whitespace-nowrap">{s.label}</span>
+                          {/* Phones and tablets: the short label, so three tabs fit side by side */}
+                          <span className="whitespace-nowrap lg:hidden">{s.short}</span>
+                          <span className="whitespace-nowrap hidden lg:inline">{s.label}</span>
                         </button>
                       </li>
                     )
                   })}
-                  {/* Desktop only: the order history (the panel on the Shop page) */}
-                  <li className="hidden lg:block">
-                    <Link
-                      to="/shop?openOrderHistory=true"
-                      className="w-full min-h-11 flex items-center gap-3 px-3.5 rounded-xl text-[15px] font-medium text-gray-700 transition-colors [@media(hover:hover)]:hover:bg-[#f1f4f9]"
-                    >
-                      <i className="bx bx-receipt text-xl" aria-hidden="true"></i>
-                      Order history
-                    </Link>
-                  </li>
                 </ul>
               </nav>
             </aside>
@@ -307,6 +302,11 @@ export default function Profile() {
                     </button>
                   </div>
                 </form>
+              ) : section === 'orders' ? (
+                // Desktop: a long list scrolls inside the card, so the page itself still fits the screen
+                <div className="lg:max-h-[calc(100dvh-17.5rem)] lg:overflow-y-auto lg:-mr-3 lg:pr-3">
+                  <OrderHistoryList />
+                </div>
               ) : (
                 <SavedAddressCard
                   initial={saved.address}
