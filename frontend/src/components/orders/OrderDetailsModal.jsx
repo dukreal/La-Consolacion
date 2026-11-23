@@ -1,4 +1,5 @@
 import { useEffect, useState } from 'react'
+import { Link } from 'react-router-dom'
 import { useAnimatedModal } from '../../hooks/useAnimatedModal'
 import { useBodyScrollLock } from '../../hooks/useBodyScrollLock'
 import { useEscapeKey } from '../../hooks/useEscapeKey'
@@ -259,6 +260,17 @@ export default function OrderDetailsModal({ orderId, onClose, onCancel }) {
                     </div>
                   )}
                 </div>
+
+                {/* Customers can only cancel a Pending order; once the shop has started, they contact the shop */}
+                {!data.can_cancel && (status === 'processing' || status === 'waiting_for_buyer') && (
+                  <p id="cancelHint" className="text-sm text-gray-600">
+                    Need to cancel? We have already started on this order, so please{' '}
+                    <Link to="/#contact" onClick={requestClose} className="font-semibold text-[#2474b6] underline underline-offset-2 [@media(hover:hover)]:hover:text-[#22306a]">
+                      contact us
+                    </Link>
+                    .
+                  </p>
+                )}
 
                 {/* How they get it */}
                 <div id="orderFulfillment" className="flex items-start gap-3 rounded-2xl bg-[#f5f7fb] px-4 py-3.5 text-sm">
