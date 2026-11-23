@@ -14,13 +14,12 @@ const money = (amount) => `₱${parseFloat(amount).toLocaleString('en-US', { min
 
 // MySQL sends "2026-11-04 10:30:00"; the "T" makes every browser (including Safari) read it.
 const toDate = (value) => new Date(String(value).replace(' ', 'T'))
-// "Nov 23, 2026 · 11:30 PM"
-const dateTime = (value) =>
-  `${toDate(value).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })} · ${toDate(value).toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit' })}`
+// "Nov 23, 2026"
+const longDate = (value) => toDate(value).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })
 // "Nov 23"
 const shortDate = (value) => toDate(value).toLocaleDateString('en-US', { month: 'short', day: 'numeric' })
 
-const STORE = '170 Capistrano St, Cagayan de Oro · Mon–Sat, 9 AM – 5 PM'
+const STORE = { address: '170 Capistrano St, Cagayan de Oro', hours: 'Mon–Sat, 9 AM – 5 PM' }
 
 // 'gcash' / 'GCASH' -> 'GCash'
 const wallet = (service) => methodLabel(String(service || '').toUpperCase())
@@ -152,7 +151,7 @@ export default function OrderDetailsModal({ orderId, onClose, onCancel }) {
                   )}
                 </div>
                 <p id="orderDetailsDate" className="mt-1 text-sm text-gray-600">
-                  {data ? `Ref. ${orderRef(data.order.id)} · Ordered ${dateTime(data.order.date_ordered)}` : 'Loading...'}
+                  {data ? `Ref. ${orderRef(data.order.id)} · ${longDate(data.order.date_ordered)}` : 'Loading...'}
                 </p>
               </div>
               <button
@@ -261,17 +260,6 @@ export default function OrderDetailsModal({ orderId, onClose, onCancel }) {
                   )}
                 </div>
 
-                {/* Customers can only cancel a Pending order; once the shop has started, they contact the shop */}
-                {!data.can_cancel && (status === 'processing' || status === 'waiting_for_buyer') && (
-                  <p id="cancelHint" className="text-sm text-gray-600">
-                    Need to cancel? We have already started on this order, so please{' '}
-                    <Link to="/#contact" onClick={requestClose} className="font-semibold text-[#2474b6] underline underline-offset-2 [@media(hover:hover)]:hover:text-[#22306a]">
-                      contact us
-                    </Link>
-                    .
-                  </p>
-                )}
-
                 {/* How they get it */}
                 <div id="orderFulfillment" className="flex items-start gap-3 rounded-2xl bg-[#f5f7fb] px-4 py-3.5 text-sm">
                   <i className={`bx ${delivery ? 'bx-package' : 'bx-store'} text-xl text-[#2474b6] mt-0.5`} aria-hidden="true"></i>
@@ -285,7 +273,10 @@ export default function OrderDetailsModal({ orderId, onClose, onCancel }) {
                         {delivery.notes && <div className="text-gray-500">Landmark/notes: {delivery.notes}</div>}
                       </div>
                     ) : (
-                      <p className="text-gray-600">{STORE}</p>
+                      <p className="text-gray-600">
+                        {STORE.address}
+                        <span className="block whitespace-nowrap">{STORE.hours}</span>
+                      </p>
                     )}
                   </div>
                 </div>
@@ -293,32 +284,41 @@ export default function OrderDetailsModal({ orderId, onClose, onCancel }) {
             )}
           </div>
 
-          {/* Footer: always visible */}
+          {/* Footer: always visible. Customers can only cancel a Pending order; once the shop has started
+              (Processing or Ready) they get a quiet "Need to cancel? Contact us" instead of the button. */}
           <div
             id="orderActions"
-            className={`flex-shrink-0 grid gap-2.5 px-5 sm:px-7 pt-3 pb-[max(0.75rem,env(safe-area-inset-bottom))] sm:pb-4 border-t border-gray-100 ${
-              data?.can_cancel ? 'grid-cols-2 sm:flex sm:justify-between' : 'grid-cols-1 sm:flex sm:justify-end'
-            }`}
+            className="flex-shrink-0 flex flex-col sm:flex-row sm:items-center gap-2.5 sm:gap-4 px-5 sm:px-7 pt-3 pb-[max(0.75rem,env(safe-area-inset-bottom))] sm:pb-4 border-t border-gray-100"
           >
-            {data?.can_cancel && (
+            {data && !data.can_cancel && (status === 'processing' || status === 'waiting_for_buyer') && (
+              <p id="cancelHint" className="text-center sm:text-left text-[13px] text-gray-600">
+                Need to cancel?{' '}
+                <Link to="/#contact" onClick={requestClose} className="font-semibold text-[#2474b6] underline underline-offset-2 [@media(hover:hover)]:hover:text-[#22306a]">
+                  Contact us
+                </Link>
+              </p>
+            )}
+            <div className="flex gap-2.5 sm:ml-auto w-full sm:w-auto [&>*]:flex-1 sm:[&>*]:flex-none">
+              {data?.can_cancel && (
+                <button
+                  type="button"
+                  onClick={() => {
+                    requestClose()
+                    onCancel(data.order.id)
+                  }}
+                  className="min-h-11 px-4 sm:px-5 rounded-xl border border-red-200 bg-white text-red-600 font-semibold transition-colors [@media(hover:hover)]:hover:bg-red-50"
+                >
+                  Cancel order
+                </button>
+              )}
               <button
                 type="button"
-                onClick={() => {
-                  requestClose()
-                  onCancel(data.order.id)
-                }}
-                className="min-h-11 px-4 sm:px-5 rounded-xl border border-red-200 bg-white text-red-600 font-semibold transition-colors [@media(hover:hover)]:hover:bg-red-50"
+                onClick={requestClose}
+                className="min-h-11 px-6 sm:px-8 rounded-xl bg-[#22306a] text-white font-bold transition-colors [@media(hover:hover)]:hover:bg-[#1a2550]"
               >
-                Cancel order
+                Close
               </button>
-            )}
-            <button
-              type="button"
-              onClick={requestClose}
-              className="min-h-11 px-6 sm:px-8 rounded-xl bg-[#22306a] text-white font-bold transition-colors [@media(hover:hover)]:hover:bg-[#1a2550]"
-            >
-              Close
-            </button>
+            </div>
           </div>
         </div>
       </div>
