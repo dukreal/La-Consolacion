@@ -3,6 +3,7 @@
 // GET ?order_id=N → the order, its customer and its products, and how much is paid and still owed.
 require_once __DIR__ . '/../../helpers/admin.php';
 require_once __DIR__ . '/../../helpers/payments.php';
+require_once __DIR__ . '/../../helpers/delivery.php';
 
 require_admin();
 
@@ -13,7 +14,7 @@ if (!$order_id) {
 
 try {
     $stmt = $pdo->prepare(
-        'SELECT o.id, o.status, o.payment_id, o.date_ordered, o.date_completed,
+        'SELECT o.id, o.status, o.payment_id, o.date_ordered, o.date_completed, o.fulfillment, ' . implode(', ', address_columns('o.delivery_')) . ',
                 u.username, u.email, u.profile_image, pay.reference_number, pay.service, pay.mobile
          FROM orders o
          JOIN users u ON o.user_id = u.id
@@ -52,6 +53,8 @@ try {
     json_response(['success' => false, 'error' => 'Database error. Please try again.'], 500);
 }
 
+$delivery = address_from_row($order, 'delivery_');
+
 $total = 0;
 foreach ($items as $item) {
     $total += $item['price_at_purchase'] * $item['quantity'];
@@ -69,6 +72,10 @@ json_response([
         'dateOrdered'   => $order['date_ordered'],
         'dateCompleted' => $order['date_completed'],
         'service'       => $order['service'],
+        'fulfillment'   => $order['fulfillment'], // 'pickup' or 'delivery'
+        // Delivery orders: where it goes, and the same address as text for the Copy address button
+        'delivery'      => $delivery,
+        'deliveryText'  => $delivery ? address_text($delivery) : null,
     ],
     'customer' => [
         'name'         => $order['username'],

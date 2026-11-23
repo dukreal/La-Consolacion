@@ -1,10 +1,12 @@
 import { useState } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
 import LoadingOverlay from '../../components/common/LoadingOverlay'
+import DeliveryChoice from '../../components/payment/DeliveryChoice'
 import EwalletOptions from '../../components/payment/EwalletOptions'
 import PaymentConfirmStep from '../../components/payment/PaymentConfirmStep'
 import PaymentHeader from '../../components/payment/PaymentHeader'
 import { useCart } from '../../hooks/useCart'
+import { useDelivery } from '../../hooks/useDelivery'
 import { submitPayment } from '../../services/paymentService'
 import { clearCheckout, readCheckout } from '../../utils/checkoutStorage'
 import { downpaymentOf, formatMoney } from '../../utils/formatMoney'
@@ -20,6 +22,7 @@ export default function Checkout() {
   const [{ items, fromCart, total }] = useState(readCheckout) // read once, when the page opens
 
   const [service, setService] = useState('gcash')
+  const delivery = useDelivery() // store pickup or delivery by courier, kept while going to step 2 and back
   const [step, setStep] = useState(1)
   const [submitting, setSubmitting] = useState(false)
   const [error, setError] = useState('')
@@ -43,6 +46,7 @@ export default function Checkout() {
           fromCart,
           // one entry per item: quantity 2 sends the product id twice (same as the old page)
           productIds: items.flatMap((item) => Array(item.qty).fill(item.id)),
+          delivery: delivery.payload,
         }),
         sleep(3000),
       ])
@@ -89,8 +93,9 @@ export default function Checkout() {
           </div>
         ) : step === 1 ? (
           <div id="step1" className="grid grid-cols-1 lg:grid-cols-5 gap-5 sm:gap-6 items-start">
-            {/* E-wallet selection (left) */}
-            <div className="lg:col-span-2">
+            {/* Pickup or delivery, then the e-wallet (left) */}
+            <div className="lg:col-span-2 space-y-5 sm:space-y-6">
+              <DeliveryChoice delivery={delivery} />
               <EwalletOptions value={service} onChange={setService} />
             </div>
 
@@ -127,7 +132,15 @@ export default function Checkout() {
                   <span className="pay-muted">Balance to pay later</span>
                   <span id="summaryBalance" className="font-semibold text-[#22306a] whitespace-nowrap">₱{formatMoney(balance)}</span>
                 </div>
-                <p className="text-xs pay-muted -mt-1">Paid at pickup, or before we ship your order by courier.</p>
+                <p className="text-xs pay-muted -mt-1">
+                  {delivery.fulfillment === 'delivery' ? 'Paid with the shipping fee, before we ship your order.' : 'Paid when you pick up your order.'}
+                </p>
+                <div className="flex justify-between items-start gap-4">
+                  <span className="pay-muted">{delivery.fulfillment === 'delivery' ? 'Delivery' : 'Pickup'}</span>
+                  <span id="summaryFulfillment" className="font-semibold text-[#22306a] text-right">
+                    {delivery.fulfillment === 'delivery' ? 'By courier, fee added later' : 'At our CDO store'}
+                  </span>
+                </div>
               </div>
 
               {/* What is paid now: the 30% downpayment (the rest is paid at pickup or before shipping, see "Balance to pay later").
@@ -144,7 +157,7 @@ export default function Checkout() {
               </div>
               <p className="mt-2 text-xs pay-muted">E-wallet fees might apply.</p>
 
-              <button id="continueBtn" onClick={() => goToStep(2)} className="pay-btn w-full mt-5">
+              <button id="continueBtn" onClick={() => delivery.check() && goToStep(2)} className="pay-btn w-full mt-5">
                 Continue to Payment
               </button>
             </div>

@@ -2,9 +2,13 @@
 // Records a payment and creates the order. React's checkout page sends its form here.
 // Everything is saved in ONE transaction: either the payment, the order and its items are all
 // saved (and the stock is reduced), or nothing is.
+// fulfillment: 'pickup' (default) or 'delivery'. Delivery also sends delivery_name, delivery_mobile,
+// delivery_street, delivery_barangay, delivery_city, delivery_province, delivery_zip, delivery_notes
+// (helpers/delivery.php), and save_address=1 to keep that address on the customer's profile.
 session_start();
 require_once __DIR__ . '/../../config/db.php';
 require_once __DIR__ . '/../../helpers/json.php';
+require_once __DIR__ . '/../../helpers/delivery.php';
 
 if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
     json_response(['success' => false, 'error' => 'Method not allowed.'], 405);
@@ -32,6 +36,22 @@ if (!preg_match('/^\d{1,10}(\.\d{1,2})?$/', $amount)) {
 if (!preg_match('/^\d{11}$/', $mobile)) {
     json_response(['success' => false, 'error' => 'Mobile number must be exactly 11 digits.'], 422);
 }
+
+// Store pickup or delivery by courier
+$fulfillment = $_POST['fulfillment'] ?? 'pickup';
+if (!in_array($fulfillment, FULFILLMENTS, true)) {
+    json_response(['success' => false, 'error' => 'Please choose store pickup or delivery.'], 422);
+}
+$address = array_fill_keys(array_keys(ADDRESS_FIELDS), null); // pickup: no address
+$save_address = false;
+if ($fulfillment === 'delivery') {
+    [$address, $address_errors] = read_address($_POST, 'delivery_');
+    if ($address_errors) {
+        json_response(['success' => false, 'error' => implode(' ', $address_errors)], 422);
+    }
+    $save_address = ($_POST['save_address'] ?? '') === '1';
+}
+$delivery_columns = address_columns('delivery_');
 
 // What is being bought: a list of [product_id, qty]
 $lines = [];
@@ -138,12 +158,16 @@ try {
 
     $stock_stmt = $pdo->prepare('UPDATE products SET stock = stock - ? WHERE id = ?');
     if ($existing_order_id) {
-        $pdo->prepare('UPDATE orders SET payment_id = ? WHERE id = ?')->execute([$payment_id, $existing_order_id]);
+        $set = implode(', ', array_map(fn ($c) => "$c = ?", $delivery_columns));
+        $pdo->prepare("UPDATE orders SET payment_id = ?, fulfillment = ?, $set WHERE id = ?")
+            ->execute([$payment_id, $fulfillment, ...array_values($address), $existing_order_id]);
         $order_id = $existing_order_id;
         $stock_stmt->execute([$lines[0]['qty'], $lines[0]['product_id']]); // its order item is already there
     } else {
-        $stmt = $pdo->prepare("INSERT INTO orders (payment_id, user_id, status) VALUES (?, ?, 'pending')");
-        $stmt->execute([$payment_id, $user_id]);
+        $columns = implode(', ', $delivery_columns);
+        $marks = implode(', ', array_fill(0, count($delivery_columns), '?'));
+        $stmt = $pdo->prepare("INSERT INTO orders (payment_id, user_id, status, fulfillment, $columns) VALUES (?, ?, 'pending', ?, $marks)");
+        $stmt->execute([$payment_id, $user_id, $fulfillment, ...array_values($address)]);
         $order_id = $pdo->lastInsertId();
 
         $item_stmt = $pdo->prepare('INSERT INTO order_items (order_id, product_id, quantity, price_at_purchase) VALUES (?, ?, ?, ?)');
@@ -151,6 +175,12 @@ try {
             $item_stmt->execute([$order_id, $line['product_id'], $line['qty'], $products[$line['product_id']]['price']]);
             $stock_stmt->execute([$line['qty'], $line['product_id']]);
         }
+    }
+
+    // "Save this address for next time"
+    if ($save_address) {
+        $set = implode(', ', array_map(fn ($c) => "$c = ?", address_columns('address_')));
+        $pdo->prepare("UPDATE users SET $set WHERE id = ?")->execute([...array_values($address), $user_id]);
     }
 
     if ($from_cart) {

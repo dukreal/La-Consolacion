@@ -8,10 +8,12 @@
 // Completed and Cancelled are final: they also set date_completed, and after that the order is locked.
 // The customer gets an email for every status except Pending.
 // Cancelled puts the order's items back into stock (helpers/stock.php), the same as when the customer cancels.
+// Delivery orders (helpers/delivery.php) get their own Ready and Completed emails, with the delivery address.
 require_once __DIR__ . '/../../helpers/admin.php';
 require_once __DIR__ . '/../../helpers/mailer.php';
 require_once __DIR__ . '/../../helpers/payments.php';
 require_once __DIR__ . '/../../helpers/stock.php';
+require_once __DIR__ . '/../../helpers/delivery.php';
 
 $admin = require_admin();
 
@@ -29,7 +31,8 @@ if (!$order_id || !in_array($new_status, ORDER_STATUSES, true)) {
 }
 
 try {
-    $stmt = $pdo->prepare('SELECT o.status, o.payment_id, o.date_completed, u.email, u.first_name, u.username
+    $stmt = $pdo->prepare('SELECT o.status, o.payment_id, o.date_completed, o.fulfillment, ' . implode(', ', address_columns('o.delivery_')) . ',
+                                  u.email, u.first_name, u.username
                            FROM orders o JOIN users u ON o.user_id = u.id
                            WHERE o.id = ? AND o.deleted = 0');
     $stmt->execute([$order_id]);
@@ -132,13 +135,26 @@ if ($new_status !== 'pending' && $order['username'] !== 'walkin_guest') {
         $reach .= "• Phone: {$config['store_phone']}\n";
     }
     $reach .= "• Email: {$config['admin_email']}\n• Visit our store\n";
-    // Ready (pickup or courier delivery): what is left to pay. Completed: confirms the balance that was just recorded.
+    // Ready: what is left to pay. Completed: confirms the balance that was just recorded.
+    $balance_line = 'Balance to pay: ' . peso_text($amounts['balance']) . ' (total ' . peso_text($amounts['total']) . ', paid ' . peso_text($amounts['paid']) . ').';
     $pickup_balance = $amounts['balance'] > 0
-        ? 'Balance to pay: ' . peso_text($amounts['balance']) . ' (total ' . peso_text($amounts['total']) . ', paid ' . peso_text($amounts['paid']) . "). Please pay it at pickup, or before we ship your order.\n\n"
+        ? "{$balance_line} Please pay it when you pick up your order.\n\n"
         : "Your order is fully paid.\n\n";
+    // Delivery orders: where it goes, and that the shipping fee is still to come
+    $delivery = $order['fulfillment'] === 'delivery' ? address_from_row($order, 'delivery_') : null;
+    $address_block = $delivery ? address_text($delivery) . "\n\n" : '';
+    $ship_balance = $amounts['balance'] > 0
+        ? "{$balance_line}\n\nWe will contact you with the shipping fee. Please pay the balance and the shipping fee before we ship your order.\n\n"
+        : "Your order is fully paid. We will contact you with the shipping fee and ship your order once it is paid.\n\n";
     $completed_paid = $balance_paid
         ? 'We received your balance of ' . peso_text($balance_paid['amount']) . " ({$balance_paid['service']}). Your order is fully paid.\n\n"
         : '';
+    $ready_text = $delivery
+        ? "Dear {$name},\n\nGood news! Your order #{$order_id} is ready to ship.\n\nYour order includes:\n{$products}\nWe will send it by LBC or another courier to:\n{$address_block}{$ship_balance}You can reach us through:\n{$reach}\nThank you for choosing LA Consolacion Jewelry!\n\n{$sign_off}"
+        : "Dear {$name},\n\nGood news! Your order #{$order_id} is ready for pickup.\n\nYour order includes:\n{$products}\n{$pickup_balance}You can pick it up at our store. If you would rather have it shipped via LBC or another courier (shipping fee paid by you), contact us to arrange it.\n\nYou can reach us through:\n{$reach}\nThank you for choosing LA Consolacion Jewelry!\n\n{$sign_off}";
+    $completed_text = $delivery
+        ? "Dear {$name},\n\nYour order #{$order_id} is completed and on its way to you by courier, to:\n{$address_block}Your order includes:\n{$products}\n{$completed_paid}Thank you for choosing LA Consolacion Jewelry!\n\n{$sign_off}"
+        : "Dear {$name},\n\nThe order #{$order_id} is completed.\n\nYour order includes:\n{$products}\n{$completed_paid}Thank you for choosing LA Consolacion Jewelry!\n\n{$sign_off}";
     $emails = [
         'processing' => [
             'Your Order is Being Processed - LA Consolacion Jewelry',
@@ -146,11 +162,11 @@ if ($new_status !== 'pending' && $order['username'] !== 'walkin_guest') {
         ],
         'waiting_for_buyer' => [
             'Your Order is Ready - LA Consolacion Jewelry',
-            "Dear {$name},\n\nGood news! Your order #{$order_id} is ready.\n\nYour order includes:\n{$products}\n{$pickup_balance}You can pick it up at our store, or we can ship it via LBC or another courier (shipping fee paid by you). Contact us to arrange it.\n\nYou can reach us through:\n{$reach}\nThank you for choosing LA Consolacion Jewelry!\n\n{$sign_off}",
+            $ready_text,
         ],
         'completed' => [
-            'Your Order is Completed - LA Consolacion Jewelry',
-            "Dear {$name},\n\nThe order #{$order_id} is completed.\n\nYour order includes:\n{$products}\n{$completed_paid}Thank you for choosing LA Consolacion Jewelry!\n\n{$sign_off}",
+            $delivery ? 'Your Order is On Its Way - LA Consolacion Jewelry' : 'Your Order is Completed - LA Consolacion Jewelry',
+            $completed_text,
         ],
         // Only sent when the shop cancels (a customer cancelling their own order gets no email), so it does not
         // say who cancelled it

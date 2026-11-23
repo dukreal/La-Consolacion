@@ -1,6 +1,7 @@
 import { useEffect, useMemo, useRef, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { useAuth } from '../../hooks/useAuth'
+import SavedAddressCard from '../../components/delivery/SavedAddressCard'
 import { getProfile, updateProfile } from '../../services/profileService'
 import '../../styles/profile.css'
 
@@ -261,6 +262,14 @@ export default function Profile() {
               </form>
             )}
           </div>
+
+          {/* Delivery address for checkout (saved on its own, with its own Save button) */}
+          {saved && (
+            <SavedAddressCard
+              initial={saved.address}
+              defaults={{ name: `${saved.firstName || ''} ${saved.lastName || ''}`.trim(), mobile: saved.mobileNumber || '' }}
+            />
+          )}
         </div>
       </div>
     </div>
