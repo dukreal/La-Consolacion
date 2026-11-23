@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useRef, useState } from 'react'
+import { useNavigate, useSearchParams } from 'react-router-dom'
 import CartPanel from '../../components/cart/CartPanel'
-import OrderHistoryPanel from '../../components/orders/OrderHistoryPanel'
 import LoadingOverlay from '../../components/common/LoadingOverlay'
 import CategoryFilter from '../../components/shop/CategoryFilter'
 import ProductCard from '../../components/shop/ProductCard'
@@ -39,7 +39,7 @@ export default function Shop() {
   const [lockHeight, setLockHeight] = useState(0) // keeps the grid's height while cards swap, so the page does not jump
   const [selected, setSelected] = useState(null) // the product shown in the modal
   const [cartOpen, setCartOpen] = useState(false)
-  const [ordersOpen, setOrdersOpen] = useState(false)
+  const navigate = useNavigate()
   const filterTimer = useRef(null)
   const releaseTimer = useRef(null)
   const gridRef = useRef(null)
@@ -78,9 +78,12 @@ export default function Shop() {
   }, [])
   useOpenFromUrl('openCart', openCart)
 
-  // ...and "Order History" through ?openOrderHistory=true
-  const openOrders = useCallback(() => setOrdersOpen(true), [])
-  useOpenFromUrl('openOrderHistory', openOrders)
+  // Old "Order History" links (?openOrderHistory=true) go to My Account, where the order history is now
+  const [searchParams] = useSearchParams()
+  const oldOrdersLink = searchParams.get('openOrderHistory') === 'true'
+  useEffect(() => {
+    if (oldOrdersLink) navigate('/profile?tab=orders', { replace: true })
+  }, [oldOrdersLink, navigate])
 
   // Buy Now and Proceed to Checkout
   const checkout = useCheckout({ onCartClose: closeCart })
@@ -184,7 +187,6 @@ export default function Shop() {
 
       {/* The cart panel comes before the modal, so a product opened from the page sits above it */}
       <CartPanel open={cartOpen} onClose={closeCart} onCheckout={checkout.checkoutCart} />
-      <OrderHistoryPanel open={ordersOpen} onClose={() => setOrdersOpen(false)} />
 
       {selected && (
         <ProductModal

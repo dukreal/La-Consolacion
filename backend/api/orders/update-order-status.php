@@ -14,6 +14,7 @@ require_once __DIR__ . '/../../helpers/mailer.php';
 require_once __DIR__ . '/../../helpers/payments.php';
 require_once __DIR__ . '/../../helpers/stock.php';
 require_once __DIR__ . '/../../helpers/delivery.php';
+require_once __DIR__ . '/../../helpers/orders.php'; // order_ref(): LCJ-0951 in the emails
 
 $admin = require_admin();
 
@@ -126,6 +127,7 @@ if ($new_status !== 'pending' && $order['username'] !== 'walkin_guest') {
     }
 
     $config = require __DIR__ . '/../../config/app.php';
+    $ref = order_ref($order_id); // how the customer sees the order: LCJ-0951
     $name = $order['first_name'];
     $sign_off = "Best regards,\nThe LA Consolacion Jewelry Team";
     // How to reach the shop. The old text put the admin email in the Phone line too; the phone line now only
@@ -150,15 +152,15 @@ if ($new_status !== 'pending' && $order['username'] !== 'walkin_guest') {
         ? 'We received your balance of ' . peso_text($balance_paid['amount']) . " ({$balance_paid['service']}). Your order is fully paid.\n\n"
         : '';
     $ready_text = $delivery
-        ? "Dear {$name},\n\nGood news! Your order #{$order_id} is ready to ship.\n\nYour order includes:\n{$products}\nWe will send it by LBC or another courier to:\n{$address_block}{$ship_balance}You can reach us through:\n{$reach}\nThank you for choosing LA Consolacion Jewelry!\n\n{$sign_off}"
-        : "Dear {$name},\n\nGood news! Your order #{$order_id} is ready for pickup.\n\nYour order includes:\n{$products}\n{$pickup_balance}You can pick it up at our store. If you would rather have it shipped via LBC or another courier (shipping fee paid by you), contact us to arrange it.\n\nYou can reach us through:\n{$reach}\nThank you for choosing LA Consolacion Jewelry!\n\n{$sign_off}";
+        ? "Dear {$name},\n\nGood news! Your order {$ref} is ready to ship.\n\nYour order includes:\n{$products}\nWe will send it by LBC or another courier to:\n{$address_block}{$ship_balance}You can reach us through:\n{$reach}\nThank you for choosing LA Consolacion Jewelry!\n\n{$sign_off}"
+        : "Dear {$name},\n\nGood news! Your order {$ref} is ready for pickup.\n\nYour order includes:\n{$products}\n{$pickup_balance}You can pick it up at our store. If you would rather have it shipped via LBC or another courier (shipping fee paid by you), contact us to arrange it.\n\nYou can reach us through:\n{$reach}\nThank you for choosing LA Consolacion Jewelry!\n\n{$sign_off}";
     $completed_text = $delivery
-        ? "Dear {$name},\n\nYour order #{$order_id} is completed and on its way to you by courier, to:\n{$address_block}Your order includes:\n{$products}\n{$completed_paid}Thank you for choosing LA Consolacion Jewelry!\n\n{$sign_off}"
-        : "Dear {$name},\n\nThe order #{$order_id} is completed.\n\nYour order includes:\n{$products}\n{$completed_paid}Thank you for choosing LA Consolacion Jewelry!\n\n{$sign_off}";
+        ? "Dear {$name},\n\nYour order {$ref} is completed and on its way to you by courier, to:\n{$address_block}Your order includes:\n{$products}\n{$completed_paid}Thank you for choosing LA Consolacion Jewelry!\n\n{$sign_off}"
+        : "Dear {$name},\n\nYour order {$ref} is completed.\n\nYour order includes:\n{$products}\n{$completed_paid}Thank you for choosing LA Consolacion Jewelry!\n\n{$sign_off}";
     $emails = [
         'processing' => [
             'Your Order is Being Processed - LA Consolacion Jewelry',
-            "Dear {$name},\n\nWe are processing your order #{$order_id}.\n\nYour order includes:\n{$products}\nWe're working hard to prepare your jewelry items with care and attention to detail.\n\nThank you for choosing LA Consolacion Jewelry!\n\n{$sign_off}",
+            "Dear {$name},\n\nWe are processing your order {$ref}.\n\nYour order includes:\n{$products}\nWe're working hard to prepare your jewelry items with care and attention to detail.\n\nThank you for choosing LA Consolacion Jewelry!\n\n{$sign_off}",
         ],
         'waiting_for_buyer' => [
             'Your Order is Ready - LA Consolacion Jewelry',
@@ -172,7 +174,7 @@ if ($new_status !== 'pending' && $order['username'] !== 'walkin_guest') {
         // say who cancelled it
         'cancelled' => [
             'Your Order Has Been Cancelled - LA Consolacion Jewelry',
-            "Dear {$name},\n\nYour order #{$order_id} has been cancelled.\n\nYour order included:\n{$products}\nIf you have any questions, please contact us:\n{$reach}\nThank you for considering LA Consolacion Jewelry!\n\n{$sign_off}",
+            "Dear {$name},\n\nYour order {$ref} has been cancelled.\n\nYour order included:\n{$products}\nIf you have any questions, please contact us:\n{$reach}\nThank you for considering LA Consolacion Jewelry!\n\n{$sign_off}",
         ],
     ];
     [$subject, $text] = $emails[$new_status];

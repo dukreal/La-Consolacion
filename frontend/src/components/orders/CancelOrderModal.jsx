@@ -3,6 +3,7 @@ import { useAnimatedModal } from '../../hooks/useAnimatedModal'
 import { useEscapeKey } from '../../hooks/useEscapeKey'
 import { useBodyScrollLock } from '../../hooks/useBodyScrollLock'
 import { cancelOrder } from '../../services/orderService'
+import { orderRef } from '../../utils/orderRef'
 
 // "Are you sure you want to cancel this order?" confirmation.
 // onResult({ type, text }) shows the success/error popup; onCancelled() reloads the order list.
@@ -51,9 +52,11 @@ export default function CancelOrderModal({ orderId, onClose, onResult, onCancell
               </div>
               <div className="min-w-0">
                 <h3 id="cancelOrderTitle" className="text-lg sm:text-xl font-bold text-gray-900">
-                  Cancel Order #<span id="cancelOrderId">{orderId}</span>?
+                  Cancel this order?
                 </h3>
-                <p className="text-sm text-gray-600">Please confirm before you continue.</p>
+                <p className="text-sm text-gray-600">
+                  Ref. <span id="cancelOrderId">{orderRef(orderId)}</span> · Please confirm before you continue.
+                </p>
               </div>
             </div>
             <button

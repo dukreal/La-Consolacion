@@ -176,7 +176,7 @@ export default function Header({ sticky = false }) {
                         <MenuLink to="/admin" icon="bx-cog" label="Admin Dashboard" extraClass="mt-1" onClick={close} />
                       )}
                       <MenuLink to="/shop?openCart=true" icon="bx-cart" label="My Cart" extraClass="mt-1" onClick={close} />
-                      <MenuLink to="/shop?openOrderHistory=true" icon="bx-history" label="Order History" color="green" extraClass="mt-1" onClick={close} />
+                      <MenuLink to="/profile?tab=orders" icon="bx-history" label="Order History" color="green" extraClass="mt-1" onClick={close} />
 
                       <div className="border-t border-gray-100 mt-2 pt-2 px-1">
                         <button

@@ -95,8 +95,8 @@ export default function SavedAddressCard({ initial, defaults, onSaved }) {
         roomy
       />
 
-      {/* Phones and tablets: stays at the bottom of the screen while the card scrolls past. Desktop: at the end of the card. */}
-      <div className="profile-savebar sticky lg:static bottom-0 z-20 -mx-5 sm:-mx-7 lg:mx-0 mt-5 px-5 sm:px-7 py-3 lg:p-0 bg-white/95 lg:bg-transparent border-t border-gray-100 lg:border-0 rounded-b-2xl lg:rounded-none flex gap-3 lg:justify-end">
+      {/* At the end of the card, and still in view when the form scrolls inside it (small phones, short screens, larger text). */}
+      <div className="profile-savebar sticky bottom-0 z-20 -mx-5 sm:-mx-7 lg:-mx-6 xl:-mx-7 mt-5 px-5 sm:px-7 lg:px-6 xl:px-7 py-3 lg:pt-3 lg:pb-0 bg-white/95 border-t border-gray-100 lg:border-0 rounded-b-2xl lg:rounded-none flex gap-3 lg:justify-end">
         {saved && (
           <button
             type="button"
