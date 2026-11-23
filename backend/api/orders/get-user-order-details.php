@@ -36,7 +36,8 @@ try {
                 p.name, p.description, p.image, p.type
          FROM order_items oi
          JOIN products p ON oi.product_id = p.id
-         WHERE oi.order_id = ?'
+         WHERE oi.order_id = ?
+         ORDER BY oi.id' // the same order as the order history card, so both name the same first product
     );
     $stmt->execute([$order_id]);
     $items = $stmt->fetchAll();

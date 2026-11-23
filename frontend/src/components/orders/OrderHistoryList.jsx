@@ -76,16 +76,11 @@ export default function OrderHistoryList() {
         )}
 
         {orders && orders.length > 0 && (
-          <>
-            <p id="orderHistoryTotal" className="text-sm text-gray-600 mb-3">
-              {orders.length === 1 ? '1 order' : `${orders.length} orders`}, newest first
-            </p>
-            <div className="space-y-3 sm:space-y-4">
-              {orders.map((order) => (
-                <OrderCard key={order.order_id} order={order} onViewDetails={setDetailsId} onCancel={setCancelId} />
-              ))}
-            </div>
-          </>
+          <div id="orderHistoryList" className="space-y-3 sm:space-y-4">
+            {orders.map((order) => (
+              <OrderCard key={order.order_id} order={order} onViewDetails={setDetailsId} onCancel={setCancelId} />
+            ))}
+          </div>
         )}
       </div>
 

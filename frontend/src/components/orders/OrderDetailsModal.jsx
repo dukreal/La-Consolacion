@@ -4,6 +4,7 @@ import { useBodyScrollLock } from '../../hooks/useBodyScrollLock'
 import { useEscapeKey } from '../../hooks/useEscapeKey'
 import { getOrderDetails } from '../../services/orderService'
 import { addressLines } from '../../utils/address'
+import { orderRef, orderTitle } from '../../utils/orderRef'
 import { orderStatus } from '../../utils/orderStatus'
 import { methodLabel } from '../../utils/storePayments'
 
@@ -86,7 +87,7 @@ function Progress({ status }) {
 }
 
 // One order for the customer, as a receipt: status and progress, the items, what was paid and what is left,
-// and how they get it. Phones: slides up from the bottom. Wider screens: a pop-up in the middle.
+// and how they get it. Named by its product, with the reference LCJ-0951 (the same as in the emails). Phones: slides up from the bottom. Wider screens: a pop-up in the middle.
 export default function OrderDetailsModal({ orderId, onClose, onCancel }) {
   const { shown, requestClose } = useAnimatedModal(onClose)
   useEscapeKey(true, requestClose)
@@ -140,8 +141,8 @@ export default function OrderDetailsModal({ orderId, onClose, onCancel }) {
             <div className="flex items-start justify-between gap-3">
               <div className="min-w-0">
                 <div className="flex flex-wrap items-center gap-x-2.5 gap-y-1">
-                  <h2 id="orderDetailsTitle" className="font-['Playfair_Display',serif] text-[1.4rem] sm:text-[1.65rem] font-bold text-[#22306a] leading-tight">
-                    {data ? `Order #${data.order.id}` : 'Order Details'}
+                  <h2 id="orderDetailsTitle" className="font-['Playfair_Display',serif] text-[1.3rem] sm:text-[1.5rem] font-bold text-[#22306a] leading-tight break-words">
+                    {data ? orderTitle(data.products[0]?.name, data.products.length) : 'Order Details'}
                   </h2>
                   {look && (
                     <span id="orderStatusBadge" className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-semibold border ${look.badge}`}>
@@ -150,7 +151,7 @@ export default function OrderDetailsModal({ orderId, onClose, onCancel }) {
                   )}
                 </div>
                 <p id="orderDetailsDate" className="mt-1 text-sm text-gray-600">
-                  {data ? `Ordered ${dateTime(data.order.date_ordered)}` : 'Loading...'}
+                  {data ? `Ref. ${orderRef(data.order.id)} · Ordered ${dateTime(data.order.date_ordered)}` : 'Loading...'}
                 </p>
               </div>
               <button
@@ -222,7 +223,7 @@ export default function OrderDetailsModal({ orderId, onClose, onCancel }) {
                     <span className="text-gray-600 min-w-0">
                       {isDownpayment ? 'Downpayment paid' : 'Paid'}
                       <span className="block text-xs text-gray-500 [overflow-wrap:anywhere]">
-                        {wallet(data.payment.service)} · Ref {data.payment.reference_number}
+                        {wallet(data.payment.service)} · Transaction no. {data.payment.reference_number}
                         {data.payment.uploaded_at ? ` · ${shortDate(data.payment.uploaded_at)}` : ''}
                       </span>
                     </span>

@@ -5,6 +5,7 @@
 // The items go back into stock (helpers/stock.php). No email is sent: the customer did it themselves.
 require_once __DIR__ . '/../../helpers/customer.php';
 require_once __DIR__ . '/../../helpers/stock.php';
+require_once __DIR__ . '/../../helpers/orders.php';
 
 $user_id = require_customer();
 
@@ -62,4 +63,4 @@ try {
     json_response(['success' => false, 'error' => 'Something went wrong. Please try again.'], 500);
 }
 
-json_response(['success' => true, 'message' => "Order #{$order_id} has been cancelled.", 'order_id' => $order_id]);
+json_response(['success' => true, 'message' => 'Your order ' . order_ref($order_id) . ' has been cancelled.', 'order_id' => $order_id]);
