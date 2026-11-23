@@ -132,9 +132,9 @@ if ($new_status !== 'pending' && $order['username'] !== 'walkin_guest') {
         $reach .= "• Phone: {$config['store_phone']}\n";
     }
     $reach .= "• Email: {$config['admin_email']}\n• Visit our store\n";
-    // Ready for pickup: what is left to pay. Completed: confirms the balance that was just recorded.
+    // Ready (pickup or courier delivery): what is left to pay. Completed: confirms the balance that was just recorded.
     $pickup_balance = $amounts['balance'] > 0
-        ? 'Balance to pay at pickup: ' . peso_text($amounts['balance']) . ' (total ' . peso_text($amounts['total']) . ', paid ' . peso_text($amounts['paid']) . ").\n\n"
+        ? 'Balance to pay: ' . peso_text($amounts['balance']) . ' (total ' . peso_text($amounts['total']) . ', paid ' . peso_text($amounts['paid']) . "). Please pay it at pickup, or before we ship your order.\n\n"
         : "Your order is fully paid.\n\n";
     $completed_paid = $balance_paid
         ? 'We received your balance of ' . peso_text($balance_paid['amount']) . " ({$balance_paid['service']}). Your order is fully paid.\n\n"
@@ -145,8 +145,8 @@ if ($new_status !== 'pending' && $order['username'] !== 'walkin_guest') {
             "Dear {$name},\n\nWe are processing your order #{$order_id}.\n\nYour order includes:\n{$products}\nWe're working hard to prepare your jewelry items with care and attention to detail.\n\nThank you for choosing LA Consolacion Jewelry!\n\n{$sign_off}",
         ],
         'waiting_for_buyer' => [
-            'Your Order is Ready for Pickup - LA Consolacion Jewelry',
-            "Dear {$name},\n\nReady for pickup! Your order #{$order_id} is ready.\n\nYour order includes:\n{$products}\n{$pickup_balance}Contact us or go to the location to collect your jewelry items.\n\nYou can reach us through:\n{$reach}\nThank you for choosing LA Consolacion Jewelry!\n\n{$sign_off}",
+            'Your Order is Ready - LA Consolacion Jewelry',
+            "Dear {$name},\n\nGood news! Your order #{$order_id} is ready.\n\nYour order includes:\n{$products}\n{$pickup_balance}You can pick it up at our store, or we can ship it via LBC or another courier (shipping fee paid by you). Contact us to arrange it.\n\nYou can reach us through:\n{$reach}\nThank you for choosing LA Consolacion Jewelry!\n\n{$sign_off}",
         ],
         'completed' => [
             'Your Order is Completed - LA Consolacion Jewelry',

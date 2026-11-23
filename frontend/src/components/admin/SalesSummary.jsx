@@ -80,7 +80,7 @@ export default function SalesSummary({ sales, loading }) {
           <Box title="Balances to collect">
             <p id="salesToCollect" className="mt-1.5 text-[1.75rem] leading-tight font-bold text-amber-700 break-words">₱{formatMoney(toCollect.amount)}</p>
             <p className="mt-1.5 text-sm text-gray-600">
-              {toCollect.orders ? `${plural(toCollect.orders, 'active order')}, paid at pickup` : 'Nothing to collect right now'}
+              {toCollect.orders ? `${plural(toCollect.orders, 'active order')}, at pickup or before shipping` : 'Nothing to collect right now'}
             </p>
           </Box>
 
@@ -103,7 +103,7 @@ export default function SalesSummary({ sales, loading }) {
       )}
 
       <p className="mt-4 text-xs leading-relaxed text-gray-500">
-        Money received counts downpayments, balances paid at pickup and walk-in sales, not cancelled orders. Balances to collect is what active orders
+        Money received counts downpayments, balance payments and walk-in sales, not cancelled orders. Balances to collect is what active orders
         still owe, whatever the period.
       </p>
     </section>

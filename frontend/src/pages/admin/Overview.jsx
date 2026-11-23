@@ -137,7 +137,7 @@ export default function Overview() {
           icon={PackageCheck}
           value={number(stats.waitingOrders)}
           label="Waiting for Buyer"
-          note="Ready for pickup"
+          note="Order is ready"
           noteIcon={Store}
         />
       </div>

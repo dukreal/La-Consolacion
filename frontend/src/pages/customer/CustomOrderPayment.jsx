@@ -24,7 +24,7 @@ export default function CustomOrderPayment() {
   const [error, setError] = useState('')
 
   const downpayment = order ? order.downpayment.toFixed(2) : '0.00'
-  const balance = order ? Math.max(0, order.price - order.downpayment) : 0 // paid at the store at pickup
+  const balance = order ? Math.max(0, order.price - order.downpayment) : 0 // paid at pickup, or before the order is shipped
 
   const handleSubmit = async ({ mobile, reference, screenshot }) => {
     setError('')
@@ -151,9 +151,10 @@ export default function CustomOrderPayment() {
                   <span className="font-semibold text-[#2474b6]">30%</span>
                 </div>
                 <div className="flex justify-between items-center gap-4">
-                  <span className="pay-muted">Balance at pickup</span>
+                  <span className="pay-muted">Balance to pay later</span>
                   <span id="customBalance" className="font-semibold text-[#22306a] whitespace-nowrap">₱{formatMoney(balance)}</span>
                 </div>
+                <p className="text-xs pay-muted -mt-1">Paid at pickup, or before we ship your order by courier.</p>
               </div>
 
               <div className="pay-panel flex flex-wrap justify-between items-center gap-x-4 gap-y-1 px-4 py-3.5 mt-4">

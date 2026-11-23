@@ -203,7 +203,7 @@ export default function PaymentModal({ paymentId, onClose }) {
               <div className="min-w-0">
                 <h3 className="font-semibold">{BALANCE_TEXT[p.orderStatus]?.[0] ?? 'Remaining Balance'}</h3>
                 <p className="text-xs text-white/75 leading-snug max-sm:[@media(max-height:680px)]:hidden [@media(max-height:500px)]:hidden">
-                  {BALANCE_TEXT[p.orderStatus]?.[1] ?? 'To collect at pickup.'}
+                  {BALANCE_TEXT[p.orderStatus]?.[1] ?? 'To collect at pickup or before shipping.'}
                 </p>
               </div>
               <p id="paymentBalance" className="text-xl sm:text-2xl font-bold whitespace-nowrap">{peso(balance)}</p>
