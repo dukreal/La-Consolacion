@@ -26,8 +26,9 @@ export default function AboutStore() {
           <div className="about-text-col">
             <h2 className="store-title">Visit Our Store</h2>
             <p>
-              Have a face-to-face consultation for your custom order or pickup your jewelry at our
-              physical store.
+              Have a face-to-face consultation for your custom order or pick up your jewelry at our
+              physical store. Can&apos;t visit? We ship via LBC or another courier, with the shipping fee
+              paid by you; we&apos;ll arrange it with you after you order.
             </p>
             <p className="store-name">
               <b>La Consolacion Jewelry</b>

@@ -1,7 +1,7 @@
 const steps = [
   { icon: 'bx-phone-call', title: 'Consult with Us', text: 'Share your vision, inspiration, and budget.' },
   { icon: 'bx-diamond', title: 'Watch the Magic', text: "We'll handcraft your piece with the finest materials." },
-  { icon: 'bx-gift', title: 'Pickup in CDO', text: 'Once ready, pick it up at our store at your convenience.' },
+  { icon: 'bx-gift', title: 'Pickup or Delivery', text: 'Pick it up at our store in CDO, or we ship it via LBC or another courier at your cost.' },
 ]
 
 export default function HowSteps() {
