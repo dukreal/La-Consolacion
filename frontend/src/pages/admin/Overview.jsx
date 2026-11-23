@@ -3,6 +3,7 @@ import { useEffect, useState } from 'react'
 import { Link } from 'react-router-dom'
 import ActivityDialog, { ActivityAvatar, RoleBadge } from '../../components/admin/ActivityDialog'
 import Skeleton, { LoadingArea } from '../../components/admin/Skeleton'
+import SalesSummary from '../../components/admin/SalesSummary'
 import StatCard from '../../components/admin/StatCard'
 import { useAuth } from '../../hooks/useAuth'
 import { formatActivityTime } from '../../utils/activityTime'
@@ -140,6 +141,8 @@ export default function Overview() {
           noteIcon={Store}
         />
       </div>
+
+      <SalesSummary sales={data?.sales} loading={loading} />
 
       {/* Recent Activity Section */}
       <div className="bg-white/80 rounded-2xl shadow-lg px-4 py-5 sm:p-6 lg:p-8">
