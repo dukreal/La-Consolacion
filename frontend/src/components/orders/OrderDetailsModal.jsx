@@ -260,25 +260,33 @@ export default function OrderDetailsModal({ orderId, onClose, onCancel }) {
                   )}
                 </div>
 
-                {/* How they get it */}
-                <div id="orderFulfillment" className="flex items-start gap-3 rounded-2xl bg-[#f5f7fb] px-4 py-3.5 text-sm">
-                  <i className={`bx ${delivery ? 'bx-package' : 'bx-store'} text-xl text-[#2474b6] mt-0.5`} aria-hidden="true"></i>
-                  <div className="min-w-0">
-                    <p className="font-bold text-[#22306a]">{delivery ? 'Delivery by courier' : 'Store pickup'}</p>
-                    {delivery ? (
-                      <div className="text-gray-700 leading-relaxed [overflow-wrap:anywhere]">
-                        {addressLines(delivery).map((line) => (
-                          <div key={line}>{line}</div>
-                        ))}
-                        {delivery.notes && <div className="text-gray-500">Landmark/notes: {delivery.notes}</div>}
-                      </div>
-                    ) : (
-                      <p className="text-gray-600">
-                        {STORE.address}
-                        <span className="block whitespace-nowrap">{STORE.hours}</span>
+                {/* How they get it: same card style as the money box above */}
+                <div id="orderFulfillment" className="rounded-2xl border border-[#e9ecf3] px-4 py-3.5 text-sm">
+                  <p className="flex items-center gap-1.5 text-xs font-semibold uppercase tracking-wide text-gray-500 mb-1.5">
+                    <i className={`bx ${delivery ? 'bx-package' : 'bx-store'} text-base text-[#2474b6]`} aria-hidden="true"></i>
+                    {delivery ? 'Delivery by courier' : 'Store pickup'}
+                  </p>
+                  {delivery ? (
+                    <div className="leading-relaxed [overflow-wrap:anywhere]">
+                      <p className="font-semibold text-gray-900">
+                        {delivery.name} <span className="font-normal text-gray-500">· {delivery.mobile}</span>
                       </p>
-                    )}
-                  </div>
+                      {/* addressLines() starts with "name · mobile", shown above */}
+                      {addressLines(delivery)
+                        .slice(1)
+                        .map((line) => (
+                          <p key={line} className="text-gray-600">
+                            {line}
+                          </p>
+                        ))}
+                      {delivery.notes && <p className="mt-1 text-gray-500 text-[13px]">Landmark: {delivery.notes}</p>}
+                    </div>
+                  ) : (
+                    <div className="leading-relaxed">
+                      <p className="font-semibold text-gray-900">{STORE.address}</p>
+                      <p className="text-gray-600">{STORE.hours}</p>
+                    </div>
+                  )}
                 </div>
               </div>
             )}
