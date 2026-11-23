@@ -1,4 +1,5 @@
 import { useEffect, useState } from 'react'
+import { createPortal } from 'react-dom'
 import { Link } from 'react-router-dom'
 import MessageModal from '../common/MessageModal'
 import { getUserOrders } from '../../services/orderService'
@@ -8,6 +9,8 @@ import OrderDetailsModal from './OrderDetailsModal'
 
 // The customer's orders, for the "Order history" section of My Account (pages/customer/Profile.jsx).
 // It also owns the details pop-up, the cancel pop-up and the success/error message, because they open from here.
+// The pop-ups are put straight into <body> (a portal): inside the My Account card they would be trapped in the card,
+// because its frosted-glass background (backdrop-filter) makes position: fixed relative to the card.
 export default function OrderHistoryList() {
   const [orders, setOrders] = useState(null) // null = not loaded yet
   const [failed, setFailed] = useState(false)
@@ -86,18 +89,24 @@ export default function OrderHistoryList() {
         )}
       </div>
 
-      {detailsId && <OrderDetailsModal orderId={detailsId} onClose={() => setDetailsId(null)} onCancel={setCancelId} />}
+      {(detailsId || cancelId || message) &&
+        createPortal(
+          <div className="shop-page">
+            {detailsId && <OrderDetailsModal orderId={detailsId} onClose={() => setDetailsId(null)} onCancel={setCancelId} />}
 
-      {cancelId && (
-        <CancelOrderModal
-          orderId={cancelId}
-          onClose={() => setCancelId(null)}
-          onResult={setMessage}
-          onCancelled={() => setReloadKey((n) => n + 1)}
-        />
-      )}
+            {cancelId && (
+              <CancelOrderModal
+                orderId={cancelId}
+                onClose={() => setCancelId(null)}
+                onResult={setMessage}
+                onCancelled={() => setReloadKey((n) => n + 1)}
+              />
+            )}
 
-      {message && <MessageModal type={message.type} message={message.text} onClose={() => setMessage(null)} />}
+            {message && <MessageModal type={message.type} message={message.text} onClose={() => setMessage(null)} />}
+          </div>,
+          document.body,
+        )}
     </div>
   )
 }

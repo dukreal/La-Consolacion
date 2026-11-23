@@ -39,9 +39,10 @@ function Field({ icon, label, htmlFor, className = '', children }) {
 const inputClass = 'input-field w-full px-4 py-2.5 lg:py-2 rounded-xl text-base shadow-sm'
 
 // My Account (was profile.php): Personal info, Delivery address and Order history, one at a time.
-// Desktop (lg): a sidebar with the photo, name and menu on the left, the chosen section on the right, so the page
-// fits a laptop screen without scrolling (a long order history scrolls inside its card). Phones and tablets: the
-// name on top, then three tabs, and the Save button stays at the bottom of the screen.
+// The page is exactly one screen tall on every device and never scrolls itself: the title, the photo and the menu
+// stay put, and only the section's content scrolls (a long order history, or a form on a small phone).
+// Desktop (lg): a sidebar with the photo, name and menu on the left, the chosen section on the right.
+// Phones and tablets: the name and three tabs on top, the section under them; the Save button stays at the bottom.
 export default function Profile() {
   const navigate = useNavigate()
   const { refresh } = useAuth()
@@ -149,10 +150,10 @@ export default function Profile() {
     )
 
   return (
-    <div className="profile-page min-h-dvh bg-gradient-to-br from-slate-50 via-blue-50 to-indigo-100">
-      <div className="mx-auto w-full max-w-5xl px-4 sm:px-6 py-5 lg:py-5 xl:py-8">
+    <div className="profile-page h-dvh overflow-hidden bg-gradient-to-br from-slate-50 via-blue-50 to-indigo-100">
+      <div className="mx-auto w-full max-w-5xl h-full flex flex-col px-4 sm:px-6 pt-4 pb-3 sm:py-5 xl:py-8">
         {/* Back button and title */}
-        <div className="flex items-center gap-3 sm:gap-4 mb-4 xl:mb-6">
+        <div className="flex-shrink-0 flex items-center gap-3 sm:gap-4 mb-3 sm:mb-4 xl:mb-6">
           <button
             type="button"
             onClick={goBack}
@@ -174,9 +175,9 @@ export default function Profile() {
         )}
 
         {saved && (
-          <div className="lg:grid lg:grid-cols-[17rem_minmax(0,1fr)] lg:gap-6 lg:items-start">
+          <div className="flex-1 min-h-0 flex flex-col lg:grid lg:grid-cols-[17rem_minmax(0,1fr)] lg:grid-rows-[minmax(0,1fr)] lg:gap-6 lg:items-start">
             {/* Sidebar (desktop) / name and tabs (phones and tablets) */}
-            <aside className="profile-card rounded-2xl shadow-lg p-4 lg:px-4 lg:py-6 mb-4 lg:mb-0 lg:sticky lg:top-6">
+            <aside className="flex-shrink-0 profile-card rounded-2xl shadow-lg p-3 sm:p-4 lg:px-4 lg:py-6 mb-3 sm:mb-4 lg:mb-0 lg:max-h-full lg:overflow-y-auto">
               <div className="flex lg:flex-col items-center gap-3 lg:gap-2 lg:pb-5 lg:mb-4 lg:border-b lg:border-gray-100">
                 <div className="profile-image-container">{avatar('w-14 h-14 lg:w-24 lg:h-24 text-lg lg:text-3xl')}</div>
                 <div className="min-w-0 lg:text-center">
@@ -213,8 +214,8 @@ export default function Profile() {
             </aside>
 
             {/* The chosen section */}
-            <section aria-labelledby="sectionTitle" className="profile-card rounded-2xl shadow-lg p-5 sm:p-7 lg:p-6 xl:p-7">
-              <div className="flex flex-wrap items-start justify-between gap-3 mb-4 xl:mb-5">
+            <section aria-labelledby="sectionTitle" className="flex-1 min-h-0 lg:flex-none lg:max-h-full flex flex-col profile-card rounded-2xl shadow-lg">
+              <div className="flex-shrink-0 flex flex-wrap items-start justify-between gap-3 px-5 sm:px-7 lg:px-6 xl:px-7 pt-5 sm:pt-7 lg:pt-6 xl:pt-7 pb-4">
                 <div className="min-w-0">
                   <h2 id="sectionTitle" className="text-lg sm:text-xl font-bold text-[#22306a]">
                     {current.label}
@@ -237,6 +238,8 @@ export default function Profile() {
                 )}
               </div>
 
+              {/* The part under the title scrolls when it does not fit (the page itself never scrolls) */}
+              <div id="sectionBody" className="flex-1 min-h-0 overflow-y-auto overscroll-contain px-5 sm:px-7 lg:px-6 xl:px-7 pb-5 sm:pb-7 lg:pb-6 xl:pb-7">
               {section === 'info' ? (
                 <form id="profileForm" onSubmit={handleSubmit} noValidate>
                   {errors.length > 0 && (
@@ -289,9 +292,9 @@ export default function Profile() {
                     </Field>
                   </div>
 
-                  {/* Phones and tablets: stays at the bottom of the screen while the card scrolls past (sticky; a fixed bar would
-                      not work inside the card's frosted-glass background). Desktop: at the end of the card. */}
-                  <div className="profile-savebar sticky lg:static bottom-0 z-20 -mx-5 sm:-mx-7 lg:mx-0 mt-5 px-5 sm:px-7 py-3 lg:p-0 bg-white/95 lg:bg-transparent border-t border-gray-100 lg:border-0 rounded-b-2xl lg:rounded-none flex lg:justify-end">
+                  {/* At the end of the card, and still in view when the form scrolls inside it (small phones, short screens,
+                      larger text). A fixed bar would not work inside the card's frosted-glass background. */}
+                  <div className="profile-savebar sticky bottom-0 z-20 -mx-5 sm:-mx-7 lg:-mx-6 xl:-mx-7 mt-5 px-5 sm:px-7 lg:px-6 xl:px-7 py-3 lg:pt-3 lg:pb-0 bg-white/95 border-t border-gray-100 lg:border-0 rounded-b-2xl lg:rounded-none flex lg:justify-end">
                     <button
                       type="submit"
                       disabled={saving}
@@ -303,10 +306,7 @@ export default function Profile() {
                   </div>
                 </form>
               ) : section === 'orders' ? (
-                // Desktop: a long list scrolls inside the card, so the page itself still fits the screen
-                <div className="lg:max-h-[calc(100dvh-17.5rem)] lg:overflow-y-auto lg:-mr-3 lg:pr-3">
-                  <OrderHistoryList />
-                </div>
+                <OrderHistoryList />
               ) : (
                 <SavedAddressCard
                   initial={saved.address}
@@ -314,6 +314,7 @@ export default function Profile() {
                   defaults={{ name: fullName, mobile: saved.mobileNumber || '' }}
                 />
               )}
+              </div>
             </section>
           </div>
         )}
