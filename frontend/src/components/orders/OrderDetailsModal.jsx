@@ -3,6 +3,7 @@ import { useAnimatedModal } from '../../hooks/useAnimatedModal'
 import { useBodyScrollLock } from '../../hooks/useBodyScrollLock'
 import { useEscapeKey } from '../../hooks/useEscapeKey'
 import { getOrderDetails } from '../../services/orderService'
+import { addressLines } from '../../utils/address'
 import { orderStatus } from '../../utils/orderStatus'
 
 // 1500 -> "₱1,500.00"
@@ -174,6 +175,21 @@ export default function OrderDetailsModal({ orderId, onClose, onCancel }) {
                         <p className="text-xs text-gray-600">Total Amount</p>
                         <p id="orderTotal" className="font-semibold text-gray-900 text-sm">{money(data.total)}</p>
                       </div>
+                    </div>
+                    {/* Store pickup, or where a delivery by courier goes */}
+                    <div id="orderFulfillment" className="mt-3 pt-3 border-t border-gray-100 text-sm">
+                      <p className="text-xs text-gray-600">Get it by</p>
+                      <p className="font-semibold text-gray-900">{data.order.delivery ? 'Delivery by courier' : 'Store pickup'}</p>
+                      {data.order.delivery ? (
+                        <div className="mt-1 text-gray-700 leading-relaxed [overflow-wrap:anywhere]">
+                          {addressLines(data.order.delivery).map((line) => (
+                            <div key={line}>{line}</div>
+                          ))}
+                          {data.order.delivery.notes && <div className="text-gray-500">Landmark/notes: {data.order.delivery.notes}</div>}
+                        </div>
+                      ) : (
+                        <p className="text-gray-600">170 Capistrano St, Cagayan de Oro · Mon–Sat, 9 AM – 5 PM</p>
+                      )}
                     </div>
                   </div>
 

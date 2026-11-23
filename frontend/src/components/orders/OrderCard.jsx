@@ -19,6 +19,11 @@ export default function OrderCard({ order, onViewDetails, onCancel }) {
               )}
             </h4>
             <p className="inter text-xs text-gray-500">{order.order_date}</p>
+            {/* Store pickup or delivery by courier (orders from before delivery existed are pickup) */}
+            <p className="inter text-xs text-gray-600 mt-0.5 flex items-center gap-1">
+              <i className={`bx ${order.fulfillment === 'delivery' ? 'bx-package' : 'bx-store'} text-[#2474b6]`} aria-hidden="true"></i>
+              {order.fulfillment === 'delivery' ? 'Delivery by courier' : 'Store pickup'}
+            </p>
           </div>
           <div className="flex flex-col items-end">
             <span className="cormorant font-bold gradient-text text-2xl mb-1">₱{order.total_amount}</span>

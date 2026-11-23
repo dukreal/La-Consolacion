@@ -8,7 +8,7 @@ $user_id = require_customer();
 
 try {
     $stmt = $pdo->prepare(
-        "SELECT o.id AS order_id, o.date_ordered, o.status, o.payment_id, o.date_completed,
+        "SELECT o.id AS order_id, o.date_ordered, o.status, o.fulfillment, o.payment_id, o.date_completed,
                 GROUP_CONCAT(CONCAT(oi.quantity, 'x ', p.name) SEPARATOR ', ') AS order_items,
                 SUM(oi.quantity * oi.price_at_purchase) AS total_amount,
                 MAX(p.type = 'custom') AS is_custom,
@@ -43,6 +43,7 @@ $orders = array_map(function (array $o): array {
         'order_date'       => date('M d, Y', strtotime($o['date_ordered'])),
         'total_amount'     => number_format($total, 2),
         'status'           => $o['status'],
+        'fulfillment'      => $o['fulfillment'], // 'pickup' or 'delivery'
         'order_items'      => $o['order_items'] ?: 'No items',
         'can_cancel'       => customer_can_cancel($o['status']),
         'payment_id'       => $o['payment_id'],

@@ -129,6 +129,25 @@
   color: #fff;
 }
 
+/* Very narrow screens (under 24em: small phones, or larger browser text): the steps that are not the current one
+   show only their number; the label stays for screen readers */
+@media (max-width: 24em) {
+  .payment-page .pay-step-other {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    overflow: hidden;
+    clip: rect(0, 0, 0, 0);
+    white-space: nowrap;
+  }
+}
+
+/* Information box (e.g. how delivery by courier works) */
+.payment-page .pay-note {
+  background: #eef4fb;
+  color: #1f3b63;
+}
+
 /* ---- E-wallet choice ---- */
 .payment-page .pay-wallet {
   border: 1.5px solid #e0e3eb;

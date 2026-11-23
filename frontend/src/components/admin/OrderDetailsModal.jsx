@@ -1,7 +1,8 @@
-import { Gem, Mail, Phone, User } from 'lucide-react'
+import { Check, Copy, Gem, Mail, Package, Phone, Store, User } from 'lucide-react'
 import { useEffect, useRef, useState } from 'react'
 import { useDialog } from '../../hooks/useDialog'
 import { getOrderDetails, updateOrderStatus } from '../../services/adminService'
+import { addressLines } from '../../utils/address'
 import { ADMIN_STATUS_OPTIONS, orderStatus } from '../../utils/orderStatus'
 import { cancelButton, confirmButton } from '../../utils/dialogButtons'
 import BalanceModal from './BalanceModal'
@@ -57,6 +58,7 @@ export default function OrderDetailsModal({ orderId, onClose, onStatusChange }) 
   const [askConfirm, setAskConfirm] = useState(false) // "Please confirm it" pop-up
   const [askBalance, setAskBalance] = useState(false) // "Collect the balance" pop-up (Completed with money still owed)
   const [alert, setAlert] = useState(null)
+  const [copied, setCopied] = useState(false) // "Copied" on the Copy address button for a moment
 
   // Escape closes it (not while a status is being saved); the confirm, balance and message pop-ups opened on top
   // of it handle Escape first
@@ -141,6 +143,17 @@ export default function OrderDetailsModal({ orderId, onClose, onStatusChange }) 
   const customer = data?.customer
 
   const sectionTitle = 'text-sm font-semibold uppercase tracking-wider text-gray-500'
+
+  // Delivery orders: copy the address as text, to paste into the courier's booking form
+  const copyAddress = async () => {
+    try {
+      await navigator.clipboard.writeText(order.deliveryText)
+      setCopied(true)
+      setTimeout(() => setCopied(false), 2000)
+    } catch {
+      setAlert({ type: 'error', title: 'Could not copy', message: 'Select the address and copy it yourself.' })
+    }
+  }
 
   // Phones: one column (status, products, buyer). From 640px: the status row on top, then products and buyer as
   // two equal columns of the same height. The buyer column sets that height (at least 17rem); a long product list
@@ -315,6 +328,43 @@ export default function OrderDetailsModal({ orderId, onClose, onStatusChange }) 
                   </div>
                 )}
               </div>
+
+              {/* How the customer gets the order: delivery by courier (with the address) or store pickup */}
+              {order?.delivery ? (
+                <div id="modalDelivery" className="mt-4 rounded-xl border border-blue-200 bg-blue-50/60 p-3.5">
+                  <div className="flex items-center justify-between gap-2 mb-1.5">
+                    <p className="flex items-center gap-1.5 font-semibold text-[#22306a] text-sm">
+                      <Package className="w-4 h-4" aria-hidden="true" />
+                      Delivery by courier
+                    </p>
+                    <button
+                      type="button"
+                      id="copyAddressBtn"
+                      onClick={copyAddress}
+                      className="inline-flex items-center gap-1.5 min-h-9 px-3 rounded-lg border border-blue-200 bg-white text-xs font-semibold text-[#22306a] transition-colors [@media(hover:hover)]:hover:bg-blue-100"
+                    >
+                      {copied ? <Check className="w-3.5 h-3.5" aria-hidden="true" /> : <Copy className="w-3.5 h-3.5" aria-hidden="true" />}
+                      {copied ? 'Copied' : 'Copy address'}
+                    </button>
+                  </div>
+                  <div className="text-sm text-gray-800 leading-relaxed [overflow-wrap:anywhere]">
+                    {addressLines(order.delivery).map((line, index) => (
+                      <div key={line} className={index === 0 ? 'font-semibold' : ''}>
+                        {line}
+                      </div>
+                    ))}
+                    {order.delivery.notes && <div className="text-gray-600">Landmark/notes: {order.delivery.notes}</div>}
+                  </div>
+                </div>
+              ) : (
+                order &&
+                !customer?.isWalkIn && (
+                  <p id="modalPickup" className="mt-4 flex items-center gap-1.5 text-sm text-gray-700">
+                    <Store className="w-4 h-4 text-gray-400" aria-hidden="true" />
+                    Store pickup
+                  </p>
+                )
+              )}
             </div>
           </div>
         </div>

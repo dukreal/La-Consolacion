@@ -7,7 +7,7 @@ $admin = require_admin();
 
 try {
     $orders = $pdo->query(
-        'SELECT o.id, o.status, o.payment_id, o.date_ordered,
+        'SELECT o.id, o.status, o.fulfillment, o.payment_id, o.date_ordered,
                 u.username, u.role, u.first_name, u.profile_image, pay.service
          FROM orders o
          JOIN users u ON o.user_id = u.id
@@ -57,6 +57,7 @@ json_response([
         return [
             'id'           => (int) $o['id'],
             'status'       => strtolower($o['status']),
+            'fulfillment'  => $o['fulfillment'], // 'pickup' or 'delivery' (walk-in sales are pickup)
             'paid'         => $o['payment_id'] !== null,
             'paymentId'    => $o['payment_id'] !== null ? (int) $o['payment_id'] : null,
             'dateOrdered'  => $o['date_ordered'],
