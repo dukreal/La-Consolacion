@@ -188,7 +188,8 @@ export default function ProductModal({ product, onClose, onAddedToCart, onBuyNow
     { label: 'Type', value: product.type, className: 'capitalize text-[#22306a]', hideOnPhone: true },
     product.material && { label: 'Material', value: product.material, className: 'text-[#22306a]' },
     { label: 'Availability', value: availability.text, className: availability.color, id: 'modalStockBadge' },
-    { label: 'Pickup', value: 'Pickup only - Visit our store', className: 'text-[#22306a]' },
+    // Delivery is arranged with the shop after ordering; the customer pays the courier
+    { label: 'Delivery', value: 'Store pickup, or LBC / courier at your cost', className: 'text-[#22306a]' },
   ].filter(Boolean)
 
   return (

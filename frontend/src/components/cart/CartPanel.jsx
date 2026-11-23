@@ -115,9 +115,9 @@ export default function CartPanel({ open, onClose, onCheckout }) {
                   <span>Secure</span>
                 </div>
                 <div className="flex items-center space-x-1">
-                  {/* The shop is pickup only, so "Free Shipping" was not true */}
-                  <i className="bx bx-store text-[#2474b6]"></i>
-                  <span>Store Pickup</span>
+                  {/* Store pickup, or shipped by LBC / another courier at the customer's cost (so not "Free Shipping") */}
+                  <i className="bx bx-package text-[#2474b6]"></i>
+                  <span>Pickup or Delivery</span>
                 </div>
               </div>
             </div>
