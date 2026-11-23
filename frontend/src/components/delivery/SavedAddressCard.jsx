@@ -3,9 +3,12 @@ import { saveAddress } from '../../services/profileService'
 import { EMPTY_ADDRESS, toAddress, validateAddress } from '../../utils/address'
 import AddressFields from './AddressFields'
 
-// "Delivery Address" on the Profile page: the address used for delivery by courier at checkout.
-//   initial: the saved address from getProfile() (or null), defaults: { name, mobile } to start an empty form with
-export default function SavedAddressCard({ initial, defaults }) {
+// The "Delivery address" section of My Account (pages/customer/Profile.jsx): the address used for delivery by
+// courier at checkout, with its own Save and Remove buttons. The page draws the card and the title around it.
+//   initial: the saved address from getProfile() (or null)
+//   defaults: { name, mobile } to start an empty form with
+//   onSaved(address | null): tells the page, so switching sections does not show an old address
+export default function SavedAddressCard({ initial, defaults, onSaved }) {
   const [saved, setSaved] = useState(initial ? toAddress(initial) : null)
   const [form, setForm] = useState(initial ? toAddress(initial) : { ...EMPTY_ADDRESS, ...defaults })
   const [showErrors, setShowErrors] = useState(false)
@@ -33,6 +36,7 @@ export default function SavedAddressCard({ initial, defaults }) {
         setForm(toAddress(data.address))
         setShowErrors(false)
         setMessage('Your delivery address has been saved.')
+        onSaved?.(data.address)
       } else {
         setServerErrors(data.errors || ['Could not save the address.'])
       }
@@ -54,6 +58,7 @@ export default function SavedAddressCard({ initial, defaults }) {
         setForm({ ...EMPTY_ADDRESS, ...defaults })
         setShowErrors(false)
         setMessage('Your saved address has been removed.')
+        onSaved?.(null)
       } else {
         setServerErrors(data.errors || ['Could not remove the address.'])
       }
@@ -65,15 +70,7 @@ export default function SavedAddressCard({ initial, defaults }) {
   }
 
   return (
-    <section aria-labelledby="addressTitle" className="profile-card rounded-2xl shadow-xl p-5 sm:p-8 mt-6">
-      <div className="mb-5">
-        <h2 id="addressTitle" className="text-lg sm:text-xl font-bold text-gray-800 flex items-center gap-2">
-          <i className="bx bx-package text-xl" style={{ color: '#2474b6' }} aria-hidden="true"></i>
-          Delivery Address
-        </h2>
-        <p className="text-gray-600 text-sm mt-1">Used when you choose delivery by courier at checkout. You can still change it for each order.</p>
-      </div>
-
+    <form id="addressForm" onSubmit={handleSave} noValidate>
       {serverErrors.length > 0 && (
         <div role="alert" className="mb-5 p-3.5 bg-red-50 border border-red-200 rounded-xl text-red-700 text-sm">
           {serverErrors.map((error) => (
@@ -87,37 +84,40 @@ export default function SavedAddressCard({ initial, defaults }) {
         </div>
       )}
 
-      <form onSubmit={handleSave} noValidate>
-        <AddressFields
-          value={form}
-          onChange={setForm}
-          errors={showErrors ? errors : {}}
-          idPrefix="profileAddress"
-          labelClass="block text-gray-800 font-semibold mb-2 text-sm"
-          inputClass="input-field w-full px-4 py-3 rounded-xl text-base shadow-sm transition-all duration-300"
-          invalidClass="border-red-500"
-        />
-        <div className="flex flex-col-reverse sm:flex-row sm:justify-end gap-3 mt-6">
-          {saved && (
-            <button
-              type="button"
-              onClick={handleRemove}
-              disabled={busy}
-              className="min-h-12 px-6 rounded-xl font-semibold text-red-600 border border-red-200 bg-white transition-colors [@media(hover:hover)]:hover:bg-red-50 disabled:opacity-50"
-            >
-              Remove saved address
-            </button>
-          )}
+      <AddressFields
+        value={form}
+        onChange={setForm}
+        errors={showErrors ? errors : {}}
+        idPrefix="profileAddress"
+        labelClass="block text-gray-800 font-semibold mb-1 text-sm"
+        inputClass="input-field w-full px-4 py-2.5 lg:py-2 rounded-xl text-base shadow-sm"
+        invalidClass="border-red-500"
+        roomy
+      />
+
+      {/* Phones and tablets: stays at the bottom of the screen while the card scrolls past. Desktop: at the end of the card. */}
+      <div className="profile-savebar sticky lg:static bottom-0 z-20 -mx-5 sm:-mx-7 lg:mx-0 mt-5 px-5 sm:px-7 py-3 lg:p-0 bg-white/95 lg:bg-transparent border-t border-gray-100 lg:border-0 rounded-b-2xl lg:rounded-none flex gap-3 lg:justify-end">
+        {saved && (
           <button
-            type="submit"
+            type="button"
+            onClick={handleRemove}
             disabled={busy}
-            className="btn-primary justify-center inline-flex items-center gap-2 px-8 py-3 text-white font-bold text-base rounded-xl shadow-lg"
+            aria-label="Remove saved address"
+            className="min-h-12 px-4 lg:px-6 rounded-xl font-semibold text-red-600 border border-red-200 bg-white transition-colors [@media(hover:hover)]:hover:bg-red-50 disabled:opacity-50"
           >
-            <i className="bx bx-save text-lg" aria-hidden="true"></i>
-            {busy ? 'Saving...' : 'Save Address'}
+            <span className="lg:hidden">Remove</span>
+            <span className="hidden lg:inline">Remove saved address</span>
           </button>
-        </div>
-      </form>
-    </section>
+        )}
+        <button
+          type="submit"
+          disabled={busy}
+          className="btn-primary flex-1 lg:flex-none min-h-12 justify-center inline-flex items-center gap-2 px-8 text-white font-bold text-base rounded-xl shadow-lg"
+        >
+          <i className="bx bx-save text-lg" aria-hidden="true"></i>
+          {busy ? 'Saving...' : 'Save Address'}
+        </button>
+      </div>
+    </form>
   )
 }
