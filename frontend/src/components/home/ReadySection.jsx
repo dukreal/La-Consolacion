@@ -12,7 +12,8 @@ export default function ReadySection() {
           <p className="ready-desc">
             Discover our curated collection of handcrafted, ready-to-wear pieces — perfect for
             effortless elegance, meaningful gifts, or everyday beauty. Each design is made with care
-            and available for pickup in-store.
+            and available for pickup in-store, or shipped via LBC or another courier (shipping fee paid
+            by you).
           </p>
           <Link to="/shop" className="shop-btn">
             Browse Collections <span className="ready-arrow">→</span>
