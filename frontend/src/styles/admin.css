@@ -84,6 +84,17 @@
   }
 }
 
+/* Overview "Sales" card: Money received, Balances to collect and Best sellers in one row once each has room
+   (80em = 1280px at normal text size, wider with larger text); below that two per row, Best sellers underneath. */
+@media (min-width: 80em) {
+  .admin-page .sales-grid {
+    grid-template-columns: minmax(0, 1fr) minmax(0, 1fr) minmax(0, 1.25fr);
+  }
+  .admin-page .sales-best {
+    grid-column: auto;
+  }
+}
+
 /* Users: cards on narrower screens, the table from 80em (1280px at normal text, wider with larger text) */
 .admin-page .users-table {
   display: none;
