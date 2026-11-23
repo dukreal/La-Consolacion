@@ -198,7 +198,7 @@ export default function OrderDetailsModal({ orderId, onClose, onCancel }) {
                         </PaymentRow>
                       ) : (
                         balance > 0 && (
-                          <PaymentRow iconBox="bg-orange-100 text-orange-600" icon="bx-wallet" label="Due at pickup">
+                          <PaymentRow iconBox="bg-orange-100 text-orange-600" icon="bx-wallet" label="Balance to pay">
                             <span className="font-bold text-orange-700 text-sm whitespace-nowrap">{money(balance)}</span>
                           </PaymentRow>
                         )

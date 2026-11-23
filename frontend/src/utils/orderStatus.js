@@ -21,7 +21,7 @@ const COLORS = {
 const STATUSES = {
   pending: { label: 'Pending', color: 'yellow' },
   processing: { label: 'Processing', color: 'blue' },
-  waiting_for_buyer: { label: 'Ready for Pickup', adminLabel: 'Waiting for Buyer', shortLabel: 'Waiting', color: 'purple' },
+  waiting_for_buyer: { label: 'Ready', adminLabel: 'Waiting for Buyer', shortLabel: 'Waiting', color: 'purple' },
   completed: { label: 'Completed', color: 'green' },
   cancelled: { label: 'Cancelled', color: 'red' },
 }

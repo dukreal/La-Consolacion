@@ -124,12 +124,13 @@ export default function Checkout() {
                   <span className="font-semibold text-[#2474b6]">30%</span>
                 </div>
                 <div className="flex justify-between items-center gap-4">
-                  <span className="pay-muted">Balance at pickup</span>
+                  <span className="pay-muted">Balance to pay later</span>
                   <span id="summaryBalance" className="font-semibold text-[#22306a] whitespace-nowrap">₱{formatMoney(balance)}</span>
                 </div>
+                <p className="text-xs pay-muted -mt-1">Paid at pickup, or before we ship your order by courier.</p>
               </div>
 
-              {/* What is paid now: the 30% downpayment (the rest is paid at the store, see "Balance at pickup").
+              {/* What is paid now: the 30% downpayment (the rest is paid at pickup or before shipping, see "Balance to pay later").
                   When the label and the amount do not fit side by side (small phones, large text), the amount moves
                   to its own line, on the right */}
               <div className="pay-panel flex flex-wrap justify-between items-center gap-x-4 gap-y-1 px-4 py-3.5 mt-4">

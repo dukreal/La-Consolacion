@@ -50,7 +50,7 @@ export default function OrderCard({ order, onViewDetails, onCancel }) {
                   <span className="font-semibold text-emerald-700">Fully paid</span>
                 ) : (
                   <span>
-                    Balance at pickup: <span className="font-semibold text-orange-700">₱{formatMoney(order.balance)}</span>
+                    Balance to pay: <span className="font-semibold text-orange-700">₱{formatMoney(order.balance)}</span>
                   </span>
                 )}
               </div>

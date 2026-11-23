@@ -16,7 +16,7 @@ import { orderStatus } from '../../utils/orderStatus'
 const STAT_CARDS = [
   { key: 'total', label: 'Total Orders', icon: ShoppingCart, colors: 'from-violet-400 via-violet-500 to-violet-600', noteIcon: TrendingUp },
   { key: 'pending', label: 'Pending', icon: Clock, colors: 'from-amber-400 via-amber-500 to-amber-600', note: 'Awaiting processing', noteIcon: Hourglass },
-  { key: 'processing', label: 'Processing', icon: Settings, colors: 'from-sky-400 via-sky-500 to-sky-600', note: 'Incl. ready for pickup', noteIcon: Store },
+  { key: 'processing', label: 'Processing', icon: Settings, colors: 'from-sky-400 via-sky-500 to-sky-600', note: 'Incl. ready orders', noteIcon: Store },
   { key: 'completed', label: 'Completed', icon: CheckCircle, colors: 'from-emerald-400 via-emerald-500 to-emerald-600', note: 'Handed to buyer', noteIcon: PackageCheck },
 ]
 
