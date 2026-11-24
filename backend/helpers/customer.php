@@ -4,9 +4,10 @@
 require_once __DIR__ . '/../config/db.php';
 require_once __DIR__ . '/json.php';
 
-// Orders the customer can still cancel. Completed and Cancelled are final.
-// 'confirmed' is an old status some early orders may still have.
-const CUSTOMER_CANCELLABLE_STATUSES = ['pending', 'processing', 'confirmed', 'waiting_for_buyer'];
+// Orders the customer can still cancel themselves: only Pending, before the shop starts on it. Once it is
+// Processing or Ready (Waiting for Buyer) the shop has started or finished the work, so the customer contacts
+// the shop instead, which can still cancel it from the admin. Completed and Cancelled are final.
+const CUSTOMER_CANCELLABLE_STATUSES = ['pending'];
 
 function customer_can_cancel(string $status): bool
 {

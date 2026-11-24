@@ -1,9 +1,12 @@
 /* Styles for the Profile page. Ported from the <style> block of the old profile.php.
    Wrapped in .profile-page so they cannot affect other pages. */
-.profile-page .profile-card {
-  background: linear-gradient(135deg, rgba(255, 255, 255, 0.95) 0%, rgba(255, 255, 255, 0.85) 100%);
-  backdrop-filter: blur(20px);
-  border: 1px solid rgba(255, 255, 255, 0.4);
+/* The frosted cards are for desktop; phones and tablets show My Account as plain full-width screens */
+@media (min-width: 1024px) {
+  .profile-page .profile-card {
+    background: linear-gradient(135deg, rgba(255, 255, 255, 0.95) 0%, rgba(255, 255, 255, 0.85) 100%);
+    backdrop-filter: blur(20px);
+    border: 1px solid rgba(255, 255, 255, 0.4);
+  }
 }
 .profile-page .input-field {
   background: rgba(255, 255, 255, 0.8);
@@ -74,5 +77,82 @@
   to {
     opacity: 1;
     transform: translateY(0);
+  }
+}
+
+/* Phones and tablets: Personal info and Delivery address as white groups of rows on the grey page
+   (a small grey label over a borderless box, like a phone's settings). Desktop keeps the boxes (lg:contents in the JSX). */
+@media (max-width: 1023.98px) {
+  .profile-page .pf-heading {
+    padding: 0 4px 6px;
+    font-size: 12px;
+    font-weight: 700;
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
+    color: #6b7280;
+  }
+  .profile-page .pf-group {
+    background: #fff;
+    border: 1px solid #e8ebf2;
+    border-radius: 16px;
+    overflow: hidden;
+  }
+  .profile-page .pf-group > .pf-row,
+  .profile-page .pf-group > .pf-pair {
+    border-bottom: 1px solid #eef0f5;
+  }
+  .profile-page .pf-group > :last-child {
+    border-bottom: 0;
+  }
+  .profile-page .pf-pair {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+  }
+  .profile-page .pf-pair.pf-pair-wide {
+    grid-template-columns: minmax(0, 1.6fr) minmax(0, 1fr);
+  }
+  .profile-page .pf-pair > .pf-row + .pf-row {
+    border-left: 1px solid #eef0f5;
+  }
+  .profile-page .pf-row {
+    padding: 10px 16px;
+    transition: background-color 0.2s ease, box-shadow 0.2s ease;
+  }
+  /* The row being typed in: a light blue fill and a blue line on its left */
+  .profile-page .pf-row:focus-within {
+    background: #f5f8fd;
+    box-shadow: inset 3px 0 0 #2474b6;
+  }
+  .profile-page .pf-row:has([aria-invalid='true']) {
+    background: #fef2f2;
+    box-shadow: inset 3px 0 0 #ef4444;
+  }
+  .profile-page .pf-row label {
+    display: block;
+    margin: 0;
+    font-size: 12px;
+    line-height: 1.4;
+    font-weight: 600;
+    color: #6b7280;
+  }
+  .profile-page .pf-row label i {
+    display: none;
+  }
+  .profile-page .pf-row .input-field,
+  .profile-page .pf-row .input-field:focus {
+    display: block;
+    width: 100%;
+    min-height: 28px;
+    padding: 2px 0 0;
+    border: 0;
+    border-radius: 0;
+    background: transparent;
+    backdrop-filter: none;
+    box-shadow: none;
+    font-size: 16px;
+  }
+  .profile-page .pf-row .input-field.border-red-500,
+  .profile-page .pf-row .input-field.border-green-500 {
+    box-shadow: none !important;
   }
 }

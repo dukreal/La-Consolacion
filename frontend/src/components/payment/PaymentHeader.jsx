@@ -1,6 +1,6 @@
-const STEPS = ['Choose e-wallet', 'Pay & confirm']
+const STEPS = ['Delivery & e-wallet', 'Pay & confirm']
 
-// Title, subtitle and the "1 Choose e-wallet — 2 Pay & confirm" step label at the top of
+// Title, subtitle and the "1 Delivery & e-wallet — 2 Pay & confirm" step label at the top of
 // the Checkout and Custom Order Payment pages. step: 1 or 2 (leave it out to hide the steps).
 export default function PaymentHeader({ title, subtitle, step }) {
   return (
@@ -21,7 +21,9 @@ export default function PaymentHeader({ title, subtitle, step }) {
                 <span className={`pay-step-dot ${state}`}>
                   {state === 'done' ? <i className="bx bx-check text-base" aria-hidden="true"></i> : number}
                 </span>
-                <span className={`whitespace-nowrap ${number === step ? 'font-semibold text-[#22306a]' : 'pay-muted'}`}>{label}</span>
+                {/* Very narrow screens (under 24em: small phones, or larger text): only the current step keeps its label,
+                    the others show their number (the label stays for screen readers) */}
+                <span className={`whitespace-nowrap ${number === step ? 'font-semibold text-[#22306a]' : 'pay-muted pay-step-other'}`}>{label}</span>
               </li>
             )
           })}

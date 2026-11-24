@@ -1,10 +1,12 @@
 import { useState } from 'react'
 import { Link, useNavigate, useParams } from 'react-router-dom'
 import LoadingOverlay from '../../components/common/LoadingOverlay'
+import DeliveryChoice from '../../components/payment/DeliveryChoice'
 import EwalletOptions from '../../components/payment/EwalletOptions'
 import PaymentConfirmStep from '../../components/payment/PaymentConfirmStep'
 import PaymentHeader from '../../components/payment/PaymentHeader'
 import { useCustomOrder } from '../../hooks/useCustomOrder'
+import { useDelivery } from '../../hooks/useDelivery'
 import { submitPayment } from '../../services/paymentService'
 import { formatMoney } from '../../utils/formatMoney'
 import '../../styles/payment.css'
@@ -19,6 +21,7 @@ export default function CustomOrderPayment() {
   const { order, error: loadError, loading } = useCustomOrder(id)
 
   const [service, setService] = useState('gcash')
+  const delivery = useDelivery() // store pickup or delivery by courier, kept while going to step 2 and back
   const [step, setStep] = useState(1)
   const [submitting, setSubmitting] = useState(false)
   const [error, setError] = useState('')
@@ -41,6 +44,7 @@ export default function CustomOrderPayment() {
           fromCart: false,
           productIds: [order.id],
           quantities: [1],
+          delivery: delivery.payload,
         }),
         sleep(3000),
       ])
@@ -90,8 +94,9 @@ export default function CustomOrderPayment() {
 
         {order && !alreadyPaid && step === 1 && (
           <div id="step1" className="grid grid-cols-1 lg:grid-cols-5 gap-5 sm:gap-6 items-start">
-            {/* E-wallet selection (left) */}
-            <div className="lg:col-span-2">
+            {/* Pickup or delivery, then the e-wallet (left) */}
+            <div className="lg:col-span-2 space-y-5 sm:space-y-6">
+              <DeliveryChoice delivery={delivery} />
               <EwalletOptions value={service} onChange={setService} />
             </div>
 
@@ -154,7 +159,15 @@ export default function CustomOrderPayment() {
                   <span className="pay-muted">Balance to pay later</span>
                   <span id="customBalance" className="font-semibold text-[#22306a] whitespace-nowrap">₱{formatMoney(balance)}</span>
                 </div>
-                <p className="text-xs pay-muted -mt-1">Paid at pickup, or before we ship your order by courier.</p>
+                <p className="text-xs pay-muted -mt-1">
+                  {delivery.fulfillment === 'delivery' ? 'Paid with the shipping fee, before we ship your order.' : 'Paid when you pick up your order.'}
+                </p>
+                <div className="flex justify-between items-start gap-4">
+                  <span className="pay-muted">{delivery.fulfillment === 'delivery' ? 'Delivery' : 'Pickup'}</span>
+                  <span id="summaryFulfillment" className="font-semibold text-[#22306a] text-right">
+                    {delivery.fulfillment === 'delivery' ? 'By courier, fee added later' : 'At our CDO store'}
+                  </span>
+                </div>
               </div>
 
               <div className="pay-panel flex flex-wrap justify-between items-center gap-x-4 gap-y-1 px-4 py-3.5 mt-4">
@@ -165,7 +178,7 @@ export default function CustomOrderPayment() {
                 <span id="customDownpayment" className="ml-auto text-xl min-[360px]:text-2xl font-bold text-[#22306a] whitespace-nowrap">₱{formatMoney(downpayment)}</span>
               </div>
 
-              <button id="continueBtn" onClick={() => goToStep(2)} className="pay-btn w-full mt-5">
+              <button id="continueBtn" onClick={() => delivery.check() && goToStep(2)} className="pay-btn w-full mt-5">
                 Continue to Payment
               </button>
             </div>

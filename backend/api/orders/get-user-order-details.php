@@ -5,6 +5,7 @@
 // The status colour and wording are decided by the website (frontend/src/utils/orderStatus.js).
 require_once __DIR__ . '/../../helpers/customer.php';
 require_once __DIR__ . '/../../helpers/payments.php'; // order_amounts()
+require_once __DIR__ . '/../../helpers/delivery.php';
 
 $user_id = require_customer();
 
@@ -16,7 +17,8 @@ if ($order_id < 1) {
 try {
     // Only the customer's own orders
     $stmt = $pdo->prepare(
-        'SELECT o.id, o.status, o.date_ordered, o.date_completed, u.email, u.first_name, u.last_name,
+        'SELECT o.id, o.status, o.date_ordered, o.date_completed, o.fulfillment, ' . implode(', ', address_columns('o.delivery_')) . ',
+                u.email, u.first_name, u.last_name,
                 pay.reference_number, pay.service, pay.mobile, pay.amount, pay.uploaded_at
          FROM orders o
          JOIN users u ON o.user_id = u.id
@@ -34,7 +36,8 @@ try {
                 p.name, p.description, p.image, p.type
          FROM order_items oi
          JOIN products p ON oi.product_id = p.id
-         WHERE oi.order_id = ?'
+         WHERE oi.order_id = ?
+         ORDER BY oi.id' // the same order as the order history card, so both name the same first product
     );
     $stmt->execute([$order_id]);
     $items = $stmt->fetchAll();
@@ -55,6 +58,8 @@ json_response([
         'status'           => $status,
         'reference_number' => $order['reference_number'],
         'service'          => $order['service'],
+        'fulfillment'      => $order['fulfillment'],                  // 'pickup' or 'delivery'
+        'delivery'         => address_from_row($order, 'delivery_'), // where a delivery order goes, or null
     ],
     'customer' => [
         'name'   => $order['first_name'] . ' ' . $order['last_name'],

@@ -1,10 +1,11 @@
 <?php
 // The customer cancels one of their own orders from their order history.
 // POST form: order_id. Answers { success, message } or { success: false, error }.
-// Pending, Processing and Ready for Pickup orders can be cancelled (helpers/customer.php).
+// Only Pending orders can be cancelled by the customer (helpers/customer.php); after that they contact the shop.
 // The items go back into stock (helpers/stock.php). No email is sent: the customer did it themselves.
 require_once __DIR__ . '/../../helpers/customer.php';
 require_once __DIR__ . '/../../helpers/stock.php';
+require_once __DIR__ . '/../../helpers/orders.php';
 
 $user_id = require_customer();
 
@@ -35,7 +36,7 @@ if ($status === 'cancelled') {
     json_response(['success' => false, 'error' => 'This order is already cancelled.'], 422);
 }
 if (!customer_can_cancel($status)) {
-    json_response(['success' => false, 'error' => 'This order can no longer be cancelled because it is already ' . str_replace('_', ' ', $status) . '.'], 422);
+    json_response(['success' => false, 'error' => 'We have already started on this order, so it can no longer be cancelled here. Please contact us if you need to cancel it.'], 422);
 }
 
 try {
@@ -62,4 +63,4 @@ try {
     json_response(['success' => false, 'error' => 'Something went wrong. Please try again.'], 500);
 }
 
-json_response(['success' => true, 'message' => "Order #{$order_id} has been cancelled.", 'order_id' => $order_id]);
+json_response(['success' => true, 'message' => 'Your order ' . order_ref($order_id) . ' has been cancelled.', 'order_id' => $order_id]);

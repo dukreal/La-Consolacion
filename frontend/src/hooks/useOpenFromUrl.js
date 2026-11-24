@@ -2,8 +2,8 @@ import { useEffect } from 'react'
 import { useSearchParams } from 'react-router-dom'
 
 // Opens a panel when the address has ?name=true, then cleans the address.
-// The header's "My Cart" and "Order History" links point at /shop?openCart=true and
-// /shop?openOrderHistory=true. `open` should be a stable function (wrap it in useCallback).
+// The header's "My Cart" link points at /shop?openCart=true (old /shop?openOrderHistory=true links are sent on to
+// My Account by the Shop page). `open` should be a stable function (wrap it in useCallback).
 export function useOpenFromUrl(name, open) {
   const [searchParams, setSearchParams] = useSearchParams()
 

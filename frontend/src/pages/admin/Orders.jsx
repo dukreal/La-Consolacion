@@ -59,6 +59,17 @@ function ProductCell({ item }) {
   )
 }
 
+// "Delivery" on orders the customer wants shipped by courier (pickup is the usual case, so it gets no tag)
+function DeliveryTag({ order }) {
+  if (order.fulfillment !== 'delivery') return null
+  return (
+    <span className="delivery-tag inline-flex items-center gap-1 rounded-full bg-blue-50 border border-blue-200 px-2 py-0.5 text-[11px] font-semibold text-blue-700 whitespace-nowrap">
+      <Package className="w-3 h-3" aria-hidden="true" />
+      Delivery
+    </span>
+  )
+}
+
 // Who placed the order: Walk-In, Admin or Customer (with its color)
 function customerKind(order) {
   if (order.isWalkIn) return { label: 'Walk-In', color: 'text-blue-600' }
@@ -426,9 +437,12 @@ export default function Orders() {
               {orders.map((order) => (
                 <li key={order.id} className="p-4 sm:px-6 sm:py-5" data-order-card={order.id}>
                 <div className="flex items-center justify-between gap-3">
-                  <p className="text-sm text-gray-500 whitespace-nowrap">
-                    <span className="font-semibold text-gray-900">#{order.id}</span> · {formatDate(order.dateOrdered)}
-                  </p>
+                  <div className="flex flex-wrap items-center gap-x-2 gap-y-1 min-w-0">
+                    <p className="text-sm text-gray-500 whitespace-nowrap">
+                      <span className="font-semibold text-gray-900">#{order.id}</span> · {formatDate(order.dateOrdered)}
+                    </p>
+                    <DeliveryTag order={order} />
+                  </div>
                   <StatusPill order={order} />
                 </div>
                 <div className="mt-3 flex items-start gap-3">
@@ -460,6 +474,11 @@ export default function Orders() {
                       <td className="px-6 py-4 w-32">
                         <p className="font-semibold text-gray-900">#{order.id}</p>
                         <p className="text-sm text-gray-500 whitespace-nowrap">{formatDate(order.dateOrdered)}</p>
+                        {order.fulfillment === 'delivery' && (
+                          <div className="mt-1">
+                            <DeliveryTag order={order} />
+                          </div>
+                        )}
                       </td>
                       <td className="px-6 py-4 w-32 text-right">
                         <p className="font-bold text-lg text-gray-900">{peso(order.total)}</p>

@@ -8,8 +8,10 @@ $user_id = require_customer();
 
 try {
     $stmt = $pdo->prepare(
-        "SELECT o.id AS order_id, o.date_ordered, o.status, o.payment_id, o.date_completed,
-                GROUP_CONCAT(CONCAT(oi.quantity, 'x ', p.name) SEPARATOR ', ') AS order_items,
+        "SELECT o.id AS order_id, o.date_ordered, o.status, o.fulfillment, o.payment_id, o.date_completed,
+                GROUP_CONCAT(CONCAT(oi.quantity, 'x ', p.name) ORDER BY oi.id SEPARATOR ', ') AS order_items,
+                SUBSTRING_INDEX(GROUP_CONCAT(p.name ORDER BY oi.id SEPARATOR '\n'), '\n', 1) AS first_item,
+                COUNT(oi.id) AS item_lines,
                 SUM(oi.quantity * oi.price_at_purchase) AS total_amount,
                 MAX(p.type = 'custom') AS is_custom,
                 pay.reference_number, pay.service, pay.amount AS payment_amount,
@@ -43,7 +45,10 @@ $orders = array_map(function (array $o): array {
         'order_date'       => date('M d, Y', strtotime($o['date_ordered'])),
         'total_amount'     => number_format($total, 2),
         'status'           => $o['status'],
+        'fulfillment'      => $o['fulfillment'], // 'pickup' or 'delivery'
         'order_items'      => $o['order_items'] ?: 'No items',
+        'first_item'       => $o['first_item'],          // the card's title: "Crown Diamond Ring"
+        'item_lines'       => (int) $o['item_lines'],    // ... "+ 2 more" when there are more products
         'can_cancel'       => customer_can_cancel($o['status']),
         'payment_id'       => $o['payment_id'],
         'date_completed'   => $o['date_completed'],

@@ -37,3 +37,12 @@ export async function getProfileMobile() {
     return ''
   }
 }
+
+// Saves the delivery address for next time (Profile > Delivery Address); clear: true removes it.
+// Returns PHP's answer: { success, address } or { success: false, errors: [...] }
+export function saveAddress(address, { clear = false } = {}) {
+  const form = new FormData()
+  if (clear) form.append('clear', '1')
+  else Object.entries(address).forEach(([key, value]) => form.append(key, value))
+  return api('/users/save-address.php', { method: 'POST', form })
+}
