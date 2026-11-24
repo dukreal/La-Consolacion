@@ -70,7 +70,7 @@ export default function SavedAddressCard({ initial, defaults, onSaved }) {
   }
 
   return (
-    <form id="addressForm" onSubmit={handleSave} noValidate>
+    <form id="addressForm" onSubmit={handleSave} noValidate className="min-h-full flex flex-col lg:block lg:min-h-0">
       {serverErrors.length > 0 && (
         <div role="alert" className="mb-5 p-3.5 bg-red-50 border border-red-200 rounded-xl text-red-700 text-sm">
           {serverErrors.map((error) => (
@@ -95,8 +95,9 @@ export default function SavedAddressCard({ initial, defaults, onSaved }) {
         roomy
       />
 
-      {/* At the end of the card, and still in view when the form scrolls inside it (small phones, short screens, larger text). */}
-      <div className="profile-savebar sticky bottom-0 z-20 -mx-5 sm:-mx-7 lg:-mx-6 xl:-mx-7 mt-5 px-5 sm:px-7 lg:px-6 xl:px-7 py-3 lg:pt-3 lg:pb-0 bg-white/95 border-t border-gray-100 lg:border-0 rounded-b-2xl lg:rounded-none flex gap-3 lg:justify-end">
+      {/* At the bottom of the screen on phones, at the end of the card on desktop; still in view when the form scrolls. */}
+      <div className="flex-1 min-h-6 lg:hidden" aria-hidden="true"></div>
+      <div className="profile-savebar sticky bottom-0 z-20 -mx-5 sm:-mx-7 lg:-mx-6 xl:-mx-7 lg:mt-5 px-5 sm:px-7 lg:px-6 xl:px-7 pt-3 pb-[max(0.75rem,env(safe-area-inset-bottom))] lg:pb-0 bg-white lg:bg-white/95 border-t border-gray-100 lg:border-0 flex gap-3 lg:justify-end">
         {saved && (
           <button
             type="button"
