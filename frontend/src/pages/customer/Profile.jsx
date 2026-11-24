@@ -318,7 +318,6 @@ export default function Profile() {
                 id="sectionBody"
                 className={`flex-1 min-h-0 overflow-y-auto overscroll-contain px-5 sm:px-7 lg:px-6 xl:px-7 pt-4 lg:pt-0 ${section === 'orders' ? 'pb-5' : 'pb-0'} lg:pb-6 xl:pb-7`}
               >
-              {section !== 'info' && <p className="lg:hidden text-sm text-gray-500 mb-4">{current.hint}</p>}
               {section === 'info' ? (
                 <form id="profileForm" onSubmit={handleSubmit} noValidate className="min-h-full flex flex-col lg:block lg:min-h-0">
                   {/* Phones: the photo and its button at the top of the form */}
