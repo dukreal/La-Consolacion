@@ -321,14 +321,12 @@ export default function Profile() {
               >
               {section === 'info' ? (
                 <form id="profileForm" onSubmit={handleSubmit} noValidate className="min-h-full flex flex-col lg:block lg:min-h-0">
-                  {/* Phones: the photo and its button, in a white group at the top of the form */}
-                  <div className="lg:hidden pf-group flex flex-wrap items-center gap-3.5 px-4 py-3.5 mb-5">
-                    <div className="profile-image-container">{avatar('w-14 h-14 text-lg border-2')}</div>
-                    <p className="flex-1 min-w-[7rem] font-semibold text-gray-800">Profile photo</p>
-                    <label className="inline-flex items-center justify-center gap-1.5 min-h-11 px-3.5 rounded-xl border border-[#d8dce8] bg-white text-[#22306a] text-sm font-semibold cursor-pointer transition-colors [@media(hover:hover)]:hover:border-[#22306a] focus-within:ring-2 focus-within:ring-[#2474b6]/40">
-                      <i className="bx bx-camera text-lg" aria-hidden="true"></i>
-                      Change
-                      <span className="sr-only">photo</span>
+                  {/* Phones: the photo in the middle with a "Change photo" link under it */}
+                  <div className="lg:hidden flex flex-col items-center gap-1 mb-4">
+                    <div className="profile-image-container">{avatar('w-24 h-24 text-3xl')}</div>
+                    <label className="inline-flex items-center gap-1.5 min-h-11 px-3 rounded-xl text-[#2474b6] text-[15px] font-semibold cursor-pointer transition-colors [@media(hover:hover)]:hover:text-[#1a2550] focus-within:ring-2 focus-within:ring-[#2474b6]/40">
+                      <i className="bx bx-camera text-xl" aria-hidden="true"></i>
+                      Change photo
                       {photoInput()}
                     </label>
                   </div>
