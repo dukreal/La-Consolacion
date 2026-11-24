@@ -24,9 +24,10 @@ function savedPhotoUrl(profile) {
   return `https://ui-avatars.com/api/?name=${encodeURIComponent(initials)}&background=2474b6&color=fff`
 }
 
+// One field. On phones it is a row inside a white group (styles/profile.css: .pf-row); on desktop a label over a box.
 function Field({ icon, label, htmlFor, className = '', children }) {
   return (
-    <div className={className}>
+    <div className={`pf-row ${className}`}>
       <label htmlFor={htmlFor} className="block text-gray-800 font-semibold mb-1 text-sm flex items-center gap-2">
         <i className={`bx ${icon} text-base`} style={{ color: '#2474b6' }} aria-hidden="true"></i>
         {label}
@@ -267,7 +268,7 @@ export default function Profile() {
                           id={`section-${s.id}`}
                           aria-current={active ? 'page' : undefined}
                           onClick={() => openSection(s.id)}
-                          className={`profile-nav w-full min-h-11 flex items-center justify-start gap-3 px-3.5 rounded-xl text-[15px] transition-colors ${
+                          className={`profile-nav w-full min-h-11 flex items-center justify-start gap-3 px-3.5 rounded-xl text-[15px] leading-5 transition-colors ${
                             active ? 'bg-[#22306a] text-white font-semibold' : 'text-gray-700 font-medium [@media(hover:hover)]:hover:bg-[#f1f4f9]'
                           }`}
                         >
@@ -285,7 +286,7 @@ export default function Profile() {
             <section
               aria-labelledby="sectionTitle"
               className={`${onMenu ? 'hidden' : 'flex'} lg:flex flex-1 min-h-0 lg:flex-none lg:max-h-full flex-col profile-card lg:rounded-2xl lg:shadow-lg ${
-                section === 'orders' ? 'bg-[#f4f6fa]' : ''
+                'bg-[#f4f6fa]'
               }`}
             >
               {/* Phones: a title bar with a back arrow to the menu. Desktop: the title and hint. */}
@@ -320,12 +321,14 @@ export default function Profile() {
               >
               {section === 'info' ? (
                 <form id="profileForm" onSubmit={handleSubmit} noValidate className="min-h-full flex flex-col lg:block lg:min-h-0">
-                  {/* Phones: the photo and its button at the top of the form */}
-                  <div className="lg:hidden flex items-center gap-4 mb-5">
-                    <div className="profile-image-container">{avatar('w-16 h-16 text-xl')}</div>
-                    <label className="inline-flex items-center justify-center gap-2 min-h-11 px-4 rounded-xl border border-[#d8dce8] bg-white text-[#22306a] text-sm font-semibold cursor-pointer transition-colors [@media(hover:hover)]:hover:border-[#22306a] focus-within:ring-2 focus-within:ring-[#2474b6]/40">
+                  {/* Phones: the photo and its button, in a white group at the top of the form */}
+                  <div className="lg:hidden pf-group flex flex-wrap items-center gap-3.5 px-4 py-3.5 mb-5">
+                    <div className="profile-image-container">{avatar('w-14 h-14 text-lg border-2')}</div>
+                    <p className="flex-1 min-w-[7rem] font-semibold text-gray-800">Profile photo</p>
+                    <label className="inline-flex items-center justify-center gap-1.5 min-h-11 px-3.5 rounded-xl border border-[#d8dce8] bg-white text-[#22306a] text-sm font-semibold cursor-pointer transition-colors [@media(hover:hover)]:hover:border-[#22306a] focus-within:ring-2 focus-within:ring-[#2474b6]/40">
                       <i className="bx bx-camera text-lg" aria-hidden="true"></i>
-                      Change photo
+                      Change
+                      <span className="sr-only">photo</span>
                       {photoInput()}
                     </label>
                   </div>
@@ -344,40 +347,54 @@ export default function Profile() {
                   )}
                   {photo && <p className="mb-4 text-sm text-gray-600">New photo selected. Press Save Changes to keep it.</p>}
 
-                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-x-5 gap-y-4 lg:gap-y-3">
-                    <Field icon="bx-user" label="First Name" htmlFor="profileFirstName">
-                      <input id="profileFirstName" type="text" name="first_name" autoComplete="given-name" value={form.firstName} onChange={set('firstName')} className={inputClass} required />
-                    </Field>
-                    <Field icon="bx-user" label="Last Name" htmlFor="profileLastName">
-                      <input id="profileLastName" type="text" name="last_name" autoComplete="family-name" value={form.lastName} onChange={set('lastName')} className={inputClass} required />
-                    </Field>
-                    <Field icon="bx-at" label="Username" htmlFor="profileUsername">
-                      <input id="profileUsername" type="text" name="username" autoComplete="username" value={form.username} onChange={set('username')} className={inputClass} required />
-                    </Field>
-                    <Field icon="bx-phone" label="Mobile Number" htmlFor="profileMobile">
-                      <input
-                        id="profileMobile"
-                        type="tel"
-                        name="mobile_number"
-                        inputMode="numeric"
-                        autoComplete="tel"
-                        value={mobile}
-                        onChange={setMobile}
-                        className={inputClass + mobileClass}
-                        maxLength={11}
-                        placeholder="09XXXXXXXXX"
-                        aria-invalid={checkedMobile && mobileInvalid ? true : undefined}
-                        aria-describedby={checkedMobile && mobileInvalid ? 'mobileNumberWarning' : undefined}
-                      />
-                      {checkedMobile && mobileInvalid && (
-                        <p id="mobileNumberWarning" className="mt-1.5 text-red-600 text-xs">
-                          Mobile number must be exactly 11 digits (e.g., 09123456789)
-                        </p>
-                      )}
-                    </Field>
-                    <Field icon="bx-envelope" label="Email Address" htmlFor="profileEmail" className="sm:col-span-2">
-                      <input id="profileEmail" type="email" name="email" autoComplete="email" value={form.email} onChange={set('email')} className={inputClass} required />
-                    </Field>
+                  {/* Phones: the fields in two white groups, Name and Contact. Desktop: the groups disappear (lg:contents) and
+                      the fields sit in one two-column grid. */}
+                  <div className="grid grid-cols-1 lg:grid-cols-2 gap-x-5 gap-y-5 lg:gap-y-3">
+                    <div className="lg:contents">
+                      <h3 className="pf-heading lg:hidden">Name</h3>
+                      <div className="pf-group lg:contents">
+                        <div className="pf-pair lg:contents">
+                          <Field icon="bx-user" label="First Name" htmlFor="profileFirstName">
+                            <input id="profileFirstName" type="text" name="first_name" autoComplete="given-name" value={form.firstName} onChange={set('firstName')} className={inputClass} required />
+                          </Field>
+                          <Field icon="bx-user" label="Last Name" htmlFor="profileLastName">
+                            <input id="profileLastName" type="text" name="last_name" autoComplete="family-name" value={form.lastName} onChange={set('lastName')} className={inputClass} required />
+                          </Field>
+                        </div>
+                        <Field icon="bx-at" label="Username" htmlFor="profileUsername">
+                          <input id="profileUsername" type="text" name="username" autoComplete="username" value={form.username} onChange={set('username')} className={inputClass} required />
+                        </Field>
+                      </div>
+                    </div>
+                    <div className="lg:contents">
+                      <h3 className="pf-heading lg:hidden">Contact</h3>
+                      <div className="pf-group lg:contents">
+                        <Field icon="bx-phone" label="Mobile Number" htmlFor="profileMobile">
+                          <input
+                            id="profileMobile"
+                            type="tel"
+                            name="mobile_number"
+                            inputMode="numeric"
+                            autoComplete="tel"
+                            value={mobile}
+                            onChange={setMobile}
+                            className={inputClass + mobileClass}
+                            maxLength={11}
+                            placeholder="09XXXXXXXXX"
+                            aria-invalid={checkedMobile && mobileInvalid ? true : undefined}
+                            aria-describedby={checkedMobile && mobileInvalid ? 'mobileNumberWarning' : undefined}
+                          />
+                          {checkedMobile && mobileInvalid && (
+                            <p id="mobileNumberWarning" className="mt-1.5 text-red-600 text-xs">
+                              Mobile number must be exactly 11 digits (e.g., 09123456789)
+                            </p>
+                          )}
+                        </Field>
+                        <Field icon="bx-envelope" label="Email Address" htmlFor="profileEmail" className="lg:col-span-2">
+                          <input id="profileEmail" type="email" name="email" autoComplete="email" value={form.email} onChange={set('email')} className={inputClass} required />
+                        </Field>
+                      </div>
+                    </div>
                   </div>
 
                   {/* At the bottom of the screen on phones, at the end of the card on desktop; still in view when the form

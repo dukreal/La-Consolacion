@@ -93,6 +93,7 @@ export default function SavedAddressCard({ initial, defaults, onSaved }) {
         inputClass="input-field w-full px-4 py-2.5 lg:py-2 rounded-xl text-base shadow-sm"
         invalidClass="border-red-500"
         roomy
+        grouped
       />
 
       {/* At the bottom of the screen on phones, at the end of the card on desktop; still in view when the form scrolls. */}
