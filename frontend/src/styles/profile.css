@@ -1,9 +1,12 @@
 /* Styles for the Profile page. Ported from the <style> block of the old profile.php.
    Wrapped in .profile-page so they cannot affect other pages. */
-.profile-page .profile-card {
-  background: linear-gradient(135deg, rgba(255, 255, 255, 0.95) 0%, rgba(255, 255, 255, 0.85) 100%);
-  backdrop-filter: blur(20px);
-  border: 1px solid rgba(255, 255, 255, 0.4);
+/* The frosted cards are for desktop; phones and tablets show My Account as plain full-width screens */
+@media (min-width: 1024px) {
+  .profile-page .profile-card {
+    background: linear-gradient(135deg, rgba(255, 255, 255, 0.95) 0%, rgba(255, 255, 255, 0.85) 100%);
+    backdrop-filter: blur(20px);
+    border: 1px solid rgba(255, 255, 255, 0.4);
+  }
 }
 .profile-page .input-field {
   background: rgba(255, 255, 255, 0.8);
