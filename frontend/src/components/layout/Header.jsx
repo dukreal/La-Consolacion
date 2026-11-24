@@ -112,7 +112,7 @@ export default function Header({ sticky = false }) {
           </Link>
 
           {/* ml-auto keeps the links and profile button on the right, next to the hamburger on phones and tablets */}
-          <div className="ml-auto flex items-center space-x-8">
+          <div className="ml-auto flex items-center lg:space-x-8">
             {/* Navigation */}
             <nav className="hidden lg:flex items-center space-x-6">
               {NAV_LINKS.map((l) => (
