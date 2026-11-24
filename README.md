@@ -39,8 +39,12 @@ If your `lcj` database was made **before** a change, run each file in `database/
 | File | Since | What it adds |
 |---|---|---|
 | `2026-11-21-order-balance-payment.sql` | v1.2.0 | `orders.balance_payment_id`: the balance a customer pays at pickup |
+| `2026-11-23-delivery-address.sql` | v1.5.0 | `orders.fulfillment` and `orders.delivery_*`: store pickup or courier delivery with the address; `users.address_*`: the customer's saved address |
 
-Without it, the Orders details, the Payment pop-up and the customer order list show database errors.
+If you skip one, the pages that use its columns show database errors (for example "Unknown column 'address_name'").
+
+#### Backups
+Back up the database and the uploaded pictures before running a migration, and regularly. See [database/BACKUP.md](database/BACKUP.md) for how to back up, check and restore them.
 
 ### 2. Mailer
 ```bash
