@@ -6,6 +6,7 @@ import ProtectedRoute from './components/common/ProtectedRoute'
 import PublicLayout from './components/layout/PublicLayout'
 import Checkout from './pages/customer/Checkout'
 import CustomOrderPayment from './pages/customer/CustomOrderPayment'
+import PayBalance from './pages/customer/PayBalance'
 import PaymentSuccess from './pages/customer/PaymentSuccess'
 import Profile from './pages/customer/Profile'
 import Shop from './pages/customer/Shop'
@@ -53,6 +54,7 @@ export default function App() {
         <Route path="/checkout" element={<Checkout />} />
         <Route path="/profile" element={<Profile />} />
         <Route path="/custom-order/:id/payment" element={<CustomOrderPayment />} />
+        <Route path="/orders/:ref/pay" element={<PayBalance />} />
       </Route>
       <Route path="/payment-success" element={<PaymentSuccess />} />
       <Route path="/custom-order/:id" element={<CustomOrderPreview />} />
