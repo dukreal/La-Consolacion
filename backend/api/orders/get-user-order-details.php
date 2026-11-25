@@ -90,7 +90,9 @@ json_response([
     'items_total'     => $amounts['itemsTotal'],
     'shipping_fee'    => $amounts['shippingFee'], // delivery orders, once the shop sets it; else null
     'total'           => $amounts['total'],       // items + shipping fee
-    'balance_payment' => $amounts['balancePayment'], // { service, reference_number, amount, uploaded_at } or null
+    'balance_payment' => $amounts['balancePayment'] ? array_intersect_key(
+        $amounts['balancePayment'], array_flip(['service', 'reference_number', 'amount', 'uploaded_at'])
+    ) : null, // { service, reference_number, amount, uploaded_at } or null
     // Paid online and the shop is checking it: { service, reference_number, amount, uploaded_at } or null
     'balance_submitted' => $amounts['balanceSubmitted'] ? array_intersect_key(
         $amounts['balanceSubmitted'], array_flip(['service', 'reference_number', 'amount', 'uploaded_at'])

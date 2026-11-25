@@ -111,6 +111,8 @@ json_response([
         'referenceNumber' => $amounts['balancePayment']['reference_number'],
         'amount'          => $amounts['balancePayment']['amount'],
         'paidAt'          => $amounts['balancePayment']['uploaded_at'],
+        // A screenshot the customer uploaded (uploads/payments/payment_...); store payments only have a logo
+        'image'           => str_starts_with((string) $amounts['balancePayment']['image'], 'payment_') ? $amounts['balancePayment']['image'] : null,
     ] : null,
     // Paid online by the customer and not checked yet (image: uploads/payments), or null
     'balanceSubmitted' => $amounts['balanceSubmitted'] ? [

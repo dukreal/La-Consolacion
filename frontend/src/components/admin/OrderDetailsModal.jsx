@@ -1,12 +1,14 @@
 import { Check, Copy, Gem, Mail, Package, Phone, Store, User } from 'lucide-react'
-import { useEffect, useRef, useState } from 'react'
+import { useCallback, useEffect, useRef, useState } from 'react'
 import { useDialog } from '../../hooks/useDialog'
 import { getOrderDetails, updateOrderStatus } from '../../services/adminService'
 import { addressLines } from '../../utils/address'
+import { readFee, readTracking } from '../../utils/courier'
 import { ADMIN_STATUS_OPTIONS, orderStatus } from '../../utils/orderStatus'
 import { cancelButton, confirmButton } from '../../utils/dialogButtons'
 import BalanceModal from './BalanceModal'
 import IconModal, { OkButton } from './IconModal'
+import ShippingPanel from './ShippingPanel'
 
 // Status names (admin wording) and dot colors come from utils/orderStatus.js, shared with the customer side
 const statusLabel = (status) => orderStatus(status, { admin: true }).label
@@ -49,7 +51,10 @@ function ProductImage({ product }) {
 }
 
 // The "Order Details" pop-up (opened by the Details button on the Orders page).
-//   orderId: which order; onClose(): close it; onStatusChange(id, status): update the table and cards
+//   orderId: which order; onClose(): close it
+//   onStatusChange(id, status, changes): update the table and cards (changes: { total, balanceToCheck })
+// Delivery orders also show the Shipping panel (ShippingPanel.jsx): the shipping fee goes with Waiting for Buyer,
+// the courier and tracking number with Completed (On its way).
 export default function OrderDetailsModal({ orderId, onClose, onStatusChange }) {
   const [data, setData] = useState(null)
   const [error, setError] = useState('')
@@ -59,26 +64,64 @@ export default function OrderDetailsModal({ orderId, onClose, onStatusChange }) 
   const [askBalance, setAskBalance] = useState(false) // "Collect the balance" pop-up (Completed with money still owed)
   const [alert, setAlert] = useState(null)
   const [copied, setCopied] = useState(false) // "Copied" on the Copy address button for a moment
+  // Delivery orders: the shipping fee, courier and tracking number typed in the Shipping panel for a status change
+  const [shipForm, setShipForm] = useState({ fee: '', courier: '', otherCourier: '', tracking: '' })
+  const [shipErrors, setShipErrors] = useState({})
 
   // Escape closes it (not while a status is being saved); the confirm, balance and message pop-ups opened on top
   // of it handle Escape first
   const box = useRef(null)
   useDialog(box, () => !busy && onClose())
 
-  useEffect(() => {
-    getOrderDetails(orderId)
-      .then((d) => {
+  // Loads the order (again after a save). A delivery order whose payment waits to be checked opens on
+  // Completed (On its way): checking it and shipping is the next step.
+  const load = useCallback(
+    () =>
+      getOrderDetails(orderId).then((d) => {
         if (!d.success) throw new Error(d.message || d.error)
         setData(d)
-        setSelected(d.order.paid ? d.order.status : 'pending')
-      })
-      .catch(() => setError('Error loading order details'))
-  }, [orderId])
+        const next = d.balanceSubmitted && d.order.status === 'waiting_for_buyer' ? 'completed' : d.order.status
+        setSelected(d.order.paid ? next : 'pending')
+        return d
+      }),
+    [orderId],
+  )
+
+  useEffect(() => {
+    load().catch(() => setError('Error loading order details'))
+  }, [load])
 
   const order = data?.order
   const current = order?.status
   const unpaid = order && !order.paid
   const locked = order && order.paid && order.dateCompleted && isFinal(current)
+  const isDelivery = Boolean(order?.delivery)
+  const showShipping = isDelivery && order.paid && current !== 'cancelled'
+  // The fee has to be typed when the order becomes Ready, or ships, without one yet
+  const needsFee = isDelivery && data?.shippingFee === null && (selected === 'waiting_for_buyer' || selected === 'completed')
+
+  const pickStatus = (value) => {
+    setSelected(value)
+    setShipErrors({})
+  }
+
+  // What the Shipping panel adds to a status change: { shipping } to send, or { errors } to show in the panel
+  const shippingFor = (status) => {
+    if (!isDelivery) return {}
+    const shipping = {}
+    const errors = {}
+    if (needsFee) {
+      const fee = readFee(shipForm.fee)
+      if (fee === null) errors.fee = 'Enter the shipping fee in pesos, for example 180 or 180.50.'
+      else shipping.fee = fee
+    }
+    if (status === 'completed') {
+      const t = readTracking(shipForm)
+      if (t.errors) Object.assign(errors, t.errors)
+      else Object.assign(shipping, t)
+    }
+    return Object.keys(errors).length ? { errors } : { shipping }
+  }
 
   // Completed / Cancelled picked: only the green Confirm Order button shows (it asks before saving).
   // Otherwise: the Update Status button, with what it says and whether it can be clicked.
@@ -91,9 +134,15 @@ export default function OrderDetailsModal({ orderId, onClose, onStatusChange }) 
 
   // balance: { method, reference } when the balance paid at pickup is recorded with Completed
   const saveStatus = async (status, successAlert, balance) => {
+    const { shipping, errors } = shippingFor(status)
+    if (errors) {
+      setShipErrors(errors)
+      setAskBalance(false)
+      return
+    }
     setBusy(true)
     try {
-      const res = await updateOrderStatus(orderId, status, balance)
+      const res = await updateOrderStatus(orderId, status, balance, shipping)
       if (res.success) {
         setData((d) => ({
           ...d,
@@ -101,7 +150,10 @@ export default function OrderDetailsModal({ orderId, onClose, onStatusChange }) 
           ...(res.balanceRecorded ? { paid: d.total, balance: 0 } : {}),
         }))
         setAskBalance(false)
-        onStatusChange(orderId, status)
+        setShipErrors({})
+        // Delivery orders: reload, so the Shipping panel shows the saved fee, payment and tracking number
+        const fresh = isDelivery ? await load().catch(() => null) : null
+        onStatusChange(orderId, status, fresh ? { total: fresh.total, balanceToCheck: Boolean(fresh.balanceSubmitted) } : {})
         // emailSent is false when the customer should have been emailed but the mailer failed (not running, Gmail
         // refused it...). The status is saved either way; say so, so the shop can tell the customer itself.
         setAlert(
@@ -131,7 +183,21 @@ export default function OrderDetailsModal({ orderId, onClose, onStatusChange }) 
   }
 
   // Confirm Order: Completed while the customer still owes money asks how the balance was paid first
-  const needsBalance = selected === 'completed' && (data?.balance ?? 0) > 0
+  // (not when they paid it online: Confirm Order counts that payment as checked)
+  const needsBalance = selected === 'completed' && (data?.balance ?? 0) > 0 && !data?.balanceSubmitted
+  const clickConfirm = () => {
+    const { errors } = shippingFor(selected)
+    if (errors) return setShipErrors(errors)
+    if (needsBalance) setAskBalance(true)
+    else setAskConfirm(true)
+  }
+
+  // A button in the Shipping panel saved something (fee, payment taken back, tracking fixed)
+  const panelSaved = async (message) => {
+    const fresh = await load().catch(() => null)
+    if (fresh) onStatusChange(orderId, fresh.order.status, { total: fresh.total, balanceToCheck: Boolean(fresh.balanceSubmitted) })
+    setAlert({ type: 'success', title: 'Saved', message })
+  }
   const handleBalance = (balance) =>
     saveStatus('completed', {
       type: 'success',
@@ -206,12 +272,12 @@ export default function OrderDetailsModal({ orderId, onClose, onStatusChange }) 
               <select
                 id="modalStatusSelect"
                 value={selected}
-                onChange={(e) => setSelected(e.target.value)}
+                onChange={(e) => pickStatus(e.target.value)}
                 disabled={!order || unpaid || locked || busy}
                 className="h-11 w-full sm:flex-1 min-w-0 px-3 bg-white border border-[#d8dce8] rounded-[10px] text-gray-900 outline-none focus:border-[#2474b6] focus:ring-4 focus:ring-[#2474b6]/15 disabled:bg-gray-100 disabled:text-gray-500"
               >
                 {ADMIN_STATUS_OPTIONS.map((s) => (
-                  <option key={s.value} value={s.value}>{s.label}</option>
+                  <option key={s.value} value={s.value}>{isDelivery && s.value === 'completed' ? 'Completed (On its way)' : s.label}</option>
                 ))}
               </select>
               {!showConfirm && (
@@ -229,7 +295,7 @@ export default function OrderDetailsModal({ orderId, onClose, onStatusChange }) 
                 <button
                   type="button"
                   id="modalConfirmOrderBtn"
-                  onClick={() => (needsBalance ? setAskBalance(true) : setAskConfirm(true))}
+                  onClick={clickConfirm}
                   disabled={busy}
                   className={`${greenButton} ${buttonBase} disabled:opacity-75`}
                 >
@@ -238,6 +304,22 @@ export default function OrderDetailsModal({ orderId, onClose, onStatusChange }) 
               )}
             </div>
           </div>
+
+          {showShipping && (
+            <ShippingPanel
+              data={data}
+              selected={selected}
+              form={shipForm}
+              setForm={(update) => {
+                setShipForm(update)
+                setShipErrors({}) // an error goes away as soon as the admin types again
+              }}
+              errors={shipErrors}
+              onRecordPayment={() => pickStatus('completed')}
+              onSaved={panelSaved}
+              onError={(message) => setAlert({ type: 'error', title: 'Error', message })}
+            />
+          )}
 
           <div className="grid grid-cols-1 sm:grid-cols-2 sm:min-h-[17rem] sm:divide-x divide-gray-100">
             {/* Products */}
@@ -271,7 +353,14 @@ export default function OrderDetailsModal({ orderId, onClose, onStatusChange }) 
                 ))}
               </div>
               <div className="mt-auto pt-4 flex-shrink-0">
-                <div className="flex justify-between items-center border-t border-gray-200 pt-4">
+                {/* Delivery orders: the shipping fee is part of the total */}
+                {data?.shippingFee != null && (
+                  <div id="modalShippingFee" className="flex justify-between gap-3 border-t border-gray-200 pt-3 pb-1 text-sm text-gray-600">
+                    <span>Shipping fee</span>
+                    <span>{peso(data.shippingFee)}</span>
+                  </div>
+                )}
+                <div className={`flex justify-between items-center border-t border-gray-200 ${data?.shippingFee != null ? 'pt-3' : 'pt-4'}`}>
                   <span className="font-semibold text-gray-700">Total</span>
                   <span className="font-bold text-xl sm:text-2xl text-[#22306a]" id="modalTotal">{peso(data?.total ?? 0)}</span>
                 </div>
@@ -393,7 +482,11 @@ export default function OrderDetailsModal({ orderId, onClose, onStatusChange }) 
           id="confirmPermanentModal"
           type="warning"
           title="Please confirm it"
-          message={`Are you sure you want to mark this order as ${statusLabel(selected).toLowerCase()}? This action is permanent and cannot be undone.`}
+          message={
+            isDelivery && selected === 'completed'
+              ? `${data?.balanceSubmitted ? `Is the ${peso(data.balanceSubmitted.amount)} payment in your e-wallet? ` : ''}The order will be marked On its way (completed) and the customer gets the tracking number. This action is permanent and cannot be undone.`
+              : `Are you sure you want to mark this order as ${statusLabel(selected).toLowerCase()}? This action is permanent and cannot be undone.`
+          }
           onClose={() => setAskConfirm(false)}
         >
           <button type="button" id="confirmPermanentYesBtn" onClick={handleConfirm} className={confirmButton}>

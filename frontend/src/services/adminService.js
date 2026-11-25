@@ -137,20 +137,35 @@ export function deleteOrder(id) {
   return api('/orders/delete-order.php', { method: 'POST', form: { id } })
 }
 
-// One order for the Details pop-up: { order, customer, products, total }
+// One order for the Details pop-up: { order, customer, products, total, paid, balance, shippingFee, ... }
 export function getOrderDetails(orderId) {
   return api(`/orders/get-order-details.php?order_id=${orderId}`)
 }
 
-// Changes an order's status. Returns { success, status, emailSent } or { success: false, error }
+// Changes an order's status. Returns { success, status, emailSent, balanceRecorded } or { success: false, error }
 // balance: { method, reference } when Completed also records the balance paid at pickup (see BalanceModal)
-export function updateOrderStatus(orderId, status, balance) {
+// shipping (delivery orders): { fee } with Waiting for Buyer, { courier, tracking } with Completed (On its way)
+export function updateOrderStatus(orderId, status, balance, shipping) {
   const form = { order_id: orderId, new_status: status }
   if (balance) {
     form.balance_method = balance.method
     form.balance_reference = balance.reference
   }
+  if (shipping?.fee !== undefined) form.shipping_fee = shipping.fee
+  if (shipping?.courier !== undefined) {
+    form.courier = shipping.courier
+    form.tracking_number = shipping.tracking
+  }
   return api('/orders/update-order-status.php', { method: 'POST', form })
+}
+
+// The Shipping panel of a delivery order (backend/api/orders/update-shipping.php):
+//   updateShipping(id, 'fee', { shipping_fee })                 change the fee while Waiting for Buyer
+//   updateShipping(id, 'reject_payment')                       "Payment doesn't match"
+//   updateShipping(id, 'tracking', { courier, tracking_number }) fix them after the order shipped
+// Returns { success, message } or { success: false, error }
+export function updateShipping(orderId, action, fields = {}) {
+  return api('/orders/update-shipping.php', { method: 'POST', form: { order_id: orderId, action, ...fields } })
 }
 
 // One payment for the Payment pop-up (screenshot, reference, amounts)

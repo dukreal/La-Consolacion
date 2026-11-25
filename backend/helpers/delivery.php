@@ -115,7 +115,12 @@ const COURIERS = ['LBC', 'J&T Express'];
 // 0 is allowed (free shipping).
 function read_shipping_fee($value): ?float
 {
-    $value = is_string($value) ? str_replace([',', '₱', ' '], '', $value) : '';
+    $value = is_string($value) ? str_replace(['₱', ' '], '', $value) : '';
+    // A comma only as a thousands separator: "1,200" yes, "1,80" no
+    if (!preg_match('/^(\d{1,3}(,\d{3})+|\d+)(\.\d{1,2})?$/', $value)) {
+        return null;
+    }
+    $value = str_replace(',', '', $value);
     if (!preg_match('/^\d{1,7}(\.\d{1,2})?$/', $value)) {
         return null;
     }

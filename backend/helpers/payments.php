@@ -16,9 +16,9 @@ const STORE_PAYMENT_METHODS = [
 //   paid:        the downpayment (orders.payment_id) plus the balance payment once it counts (orders.balance_payment_id):
 //                one the admin recorded, or one the customer paid online and the admin has checked
 //   balance:     what the customer still owes (never below 0; centavos rounded)
-//   balancePayment:   the balance payment that counts (service, reference_number, amount, uploaded_at), or null
+//   balancePayment:   the balance payment that counts (service, reference_number, amount, uploaded_at, image), or null
 //   balanceSubmitted: a balance the customer paid online that the admin has not checked yet
-//                     (orders.balance_to_check = 1; the same keys plus mobile and image), or null.
+//                     (orders.balance_to_check = 1; the same keys plus mobile), or null.
 //                     It is not in paid or balance until the admin checks it.
 function order_amounts(PDO $pdo, int $order_id): array
 {
@@ -44,6 +44,7 @@ function order_amounts(PDO $pdo, int $order_id): array
         'reference_number' => $row['reference_number'],
         'amount'           => (float) $row['amount'],
         'uploaded_at'      => $row['uploaded_at'],
+        'image'            => $row['image'],
     ] : null;
     $to_check = $balance_row && (int) $row['balance_to_check'] === 1;
 
@@ -58,7 +59,7 @@ function order_amounts(PDO $pdo, int $order_id): array
         'paid'             => $paid,
         'balance'          => max(0, round($total - $paid, 2)),
         'balancePayment'   => $to_check ? null : $balance_row,
-        'balanceSubmitted' => $to_check ? $balance_row + ['mobile' => $row['mobile'], 'image' => $row['image']] : null,
+        'balanceSubmitted' => $to_check ? $balance_row + ['mobile' => $row['mobile']] : null,
     ];
 }
 
