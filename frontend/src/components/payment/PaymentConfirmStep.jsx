@@ -116,9 +116,10 @@ export default function PaymentConfirmStep({ amount, onSubmit, onBack, error, su
             </div>
           )}
 
-          {/* Pinned to the bottom of the card on wide screens. Small phones (under 380px): stacked,
-              Confirm Payment on top, so the two buttons never make the card wider than the screen. */}
-          <div className="mt-auto flex flex-col-reverse min-[380px]:flex-row gap-3">
+          {/* Pinned to the bottom of the card on wide screens. Small phones: stacked, Confirm Payment on top,
+              so the two buttons never make the card wider than the screen. The breakpoint is in rem so it grows
+              with the phone's text size: 23.75rem is 380px with normal text, about 475px with 20px text. */}
+          <div className="mt-auto flex flex-col-reverse [@media(min-width:23.75rem)]:flex-row gap-3">
             {onBack && (
               <button type="button" onClick={onBack} disabled={submitting} className="pay-btn-outline">
                 <i className="bx bx-arrow-back text-lg" aria-hidden="true"></i>
@@ -128,7 +129,7 @@ export default function PaymentConfirmStep({ amount, onSubmit, onBack, error, su
             <button
               type="submit"
               disabled={submitting || mobile.length !== 11 || reference.trim() === ''}
-              className="pay-btn min-[380px]:flex-1 px-4 whitespace-nowrap"
+              className="pay-btn [@media(min-width:23.75rem)]:flex-1 px-4 whitespace-nowrap"
             >
               Confirm Payment
             </button>

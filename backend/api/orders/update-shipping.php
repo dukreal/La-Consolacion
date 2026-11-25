@@ -64,11 +64,14 @@ try {
             $fail('Please enter the shipping fee in pesos, for example 180 or 180.50.');
         }
         $changed = $order['shipping_fee'] === null || (float) $order['shipping_fee'] !== $fee;
-        $pdo->prepare('UPDATE orders SET shipping_fee = ? WHERE id = ?')->execute([$fee, $order_id]);
-        $old = $order['shipping_fee'] !== null ? peso_text((float) $order['shipping_fee']) : 'none';
-        log_action($pdo, $admin['username'], 'Change Shipping Fee', "Order ID: {$order_id}; shipping fee changed from {$old} to " . peso_text($fee));
-        $message = 'Shipping fee changed to ' . peso_text($fee) . '.';
-        if ($changed) {
+        if (!$changed) {
+            // Saved with the same amount: nothing to save, log or email
+            $message = 'The shipping fee is already ' . peso_text($fee) . '. Nothing was changed.';
+        } else {
+            $pdo->prepare('UPDATE orders SET shipping_fee = ? WHERE id = ?')->execute([$fee, $order_id]);
+            $old = $order['shipping_fee'] !== null ? peso_text((float) $order['shipping_fee']) : 'none';
+            log_action($pdo, $admin['username'], 'Change Shipping Fee', "Order ID: {$order_id}; shipping fee changed from {$old} to " . peso_text($fee));
+            $message = 'Shipping fee changed to ' . peso_text($fee) . '.';
             $amounts = order_amounts($pdo, $order_id);
             $email = [
                 'shipping fee',
