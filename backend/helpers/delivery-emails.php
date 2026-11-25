@@ -31,22 +31,25 @@ function pay_link(array $config, int $order_id): string
 //   Shipping fee: ₱180.00
 //   Total to pay: ₱5,779.30
 // When the items are already fully paid, only the shipping fee is left to pay.
+// When the customer already sent a payment that is being checked, it says "Total" instead of "to pay".
 function delivery_amount_text(array $amounts): string
 {
     if ($amounts['balance'] <= 0) {
         return "Your order is fully paid.\n";
     }
+    $to_pay = $amounts['balanceSubmitted'] ? '' : ' to pay';
     $fee = peso_text($amounts['shippingFee'] ?? 0);
     $items_balance = max(0, round($amounts['itemsTotal'] - $amounts['paid'], 2));
     if ($items_balance <= 0) {
-        return "Your items are fully paid.\nShipping fee to pay: {$fee}\n";
+        return "Your items are fully paid.\nShipping fee{$to_pay}: {$fee}\n";
     }
     return 'Balance: ' . peso_text($items_balance) . ' (total ' . peso_text($amounts['itemsTotal']) . ', paid ' . peso_text($amounts['paid']) . ")\n"
         . "Shipping fee: {$fee}\n"
-        . 'Total to pay: ' . peso_text($amounts['balance']) . "\n";
+        . ($to_pay ? 'Total to pay: ' : 'Total: ') . peso_text($amounts['balance']) . "\n";
 }
 
-// The Pay online link and what happens next (nothing to pay: just that it ships soon)
+// The Pay online link and what happens next (nothing to pay: just that it ships soon; a payment being checked:
+// that we have it, and a link to the order history, where the customer sees "Payment sent · Being checked")
 function delivery_pay_text(array $config, int $order_id, array $amounts): string
 {
     if ($amounts['balance'] <= 0) {
@@ -54,7 +57,8 @@ function delivery_pay_text(array $config, int $order_id, array $amounts): string
     }
     if ($amounts['balanceSubmitted']) {
         return 'We received your payment of ' . peso_text($amounts['balanceSubmitted']['amount'])
-            . " and are checking it. We will ship your order and email you the tracking number once it is confirmed.\n";
+            . " and are checking it. We will ship your order and email you the tracking number once it is confirmed.\n"
+            . 'See your order: ' . rtrim($config['frontend_url'], '/') . "/profile?tab=orders\n";
     }
     return 'Pay online here: ' . pay_link($config, $order_id) . "\n"
         . "We check your payment, then ship your order and email you the tracking number.\n";
