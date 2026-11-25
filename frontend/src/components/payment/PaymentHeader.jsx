@@ -1,8 +1,9 @@
 const STEPS = ['Delivery & e-wallet', 'Pay & confirm']
 
 // Title, subtitle and the "1 Delivery & e-wallet — 2 Pay & confirm" step label at the top of
-// the Checkout and Custom Order Payment pages. step: 1 or 2 (leave it out to hide the steps).
-export default function PaymentHeader({ title, subtitle, step }) {
+// the Checkout, Custom Order Payment and Pay for Your Order pages. step: 1 or 2 (leave it out to hide the steps).
+// steps: other labels for the two steps (Pay for Your Order has no delivery choice: "E-wallet").
+export default function PaymentHeader({ title, subtitle, step, steps = STEPS }) {
   return (
     <div className="mb-6 lg:mb-7 flex flex-col lg:flex-row lg:items-end lg:justify-between gap-4">
       <div>
@@ -12,7 +13,7 @@ export default function PaymentHeader({ title, subtitle, step }) {
 
       {step && (
         <ol className="flex items-center gap-2 min-[360px]:gap-2.5 text-[13px] min-[360px]:text-sm" aria-label="Payment steps">
-          {STEPS.map((label, index) => {
+          {steps.map((label, index) => {
             const number = index + 1
             const state = number === step ? 'active' : number < step ? 'done' : ''
             return (

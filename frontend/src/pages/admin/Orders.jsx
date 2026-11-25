@@ -70,6 +70,16 @@ function DeliveryTag({ order }) {
   )
 }
 
+// A delivery order the customer paid online, waiting for the admin to check the payment (Shipping panel)
+function BalanceSubmittedTag({ order }) {
+  if (!order.balanceToCheck || order.status !== 'waiting_for_buyer') return null
+  return (
+    <span className="balance-submitted-tag inline-flex items-center rounded-md bg-amber-50 border border-amber-200 px-2 py-0.5 text-[11px] font-semibold text-amber-800 whitespace-nowrap">
+      Balance submitted
+    </span>
+  )
+}
+
 // Who placed the order: Walk-In, Admin or Customer (with its color)
 function customerKind(order) {
   if (order.isWalkIn) return { label: 'Walk-In', color: 'text-blue-600' }
@@ -314,8 +324,9 @@ export default function Orders() {
   const closeWalkinToast = useCallback(() => setWalkinToast(false), [])
 
   // A status changed in the Details pop-up: update that row and the stat cards without reloading
-  const handleStatusChange = useCallback((id, status) => {
-    setData((d) => ({ ...d, orders: d.orders.map((o) => (o.id === id ? { ...o, status } : o)) }))
+  // (changes: a delivery order's new total and "Balance submitted" label, from the Shipping panel)
+  const handleStatusChange = useCallback((id, status, changes = {}) => {
+    setData((d) => ({ ...d, orders: d.orders.map((o) => (o.id === id ? { ...o, status, ...changes } : o)) }))
   }, [])
 
   // Only finished or unpaid orders can be deleted (the server checks this too). Deleting a paid, active order
@@ -442,6 +453,7 @@ export default function Orders() {
                       <span className="font-semibold text-gray-900">#{order.id}</span> · {formatDate(order.dateOrdered)}
                     </p>
                     <DeliveryTag order={order} />
+                    <BalanceSubmittedTag order={order} />
                   </div>
                   <StatusPill order={order} />
                 </div>
@@ -486,7 +498,12 @@ export default function Orders() {
                           <p className="text-xs text-gray-500 uppercase">{order.service}</p>
                         )}
                       </td>
-                      <td className="px-6 py-4 w-32 text-center status-cell"><StatusPill order={order} /></td>
+                      <td className="px-6 py-4 w-32 text-center status-cell">
+                        <StatusPill order={order} />
+                        {order.balanceToCheck && order.status === 'waiting_for_buyer' && (
+                          <div className="mt-1.5"><BalanceSubmittedTag order={order} /></div>
+                        )}
+                      </td>
                       <td className="px-6 py-4 w-32 text-center">
                         <OrderActions order={order} adminLevel={data.adminLevel} className="justify-center" {...actionHandlers} />
                       </td>

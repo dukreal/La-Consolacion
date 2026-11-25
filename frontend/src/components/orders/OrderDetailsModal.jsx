@@ -5,6 +5,7 @@ import { useBodyScrollLock } from '../../hooks/useBodyScrollLock'
 import { useEscapeKey } from '../../hooks/useEscapeKey'
 import { getOrderDetails } from '../../services/orderService'
 import { addressLines } from '../../utils/address'
+import { courierSite } from '../../utils/courier'
 import { orderRef, orderTitle } from '../../utils/orderRef'
 import { orderStatus } from '../../utils/orderStatus'
 import { methodLabel } from '../../utils/storePayments'
@@ -24,8 +25,10 @@ const STORE = { address: '170 Capistrano St, Cagayan de Oro', hours: 'Mon–Sat,
 // 'gcash' / 'GCASH' -> 'GCash'
 const wallet = (service) => methodLabel(String(service || '').toUpperCase())
 
-// The four steps an order goes through; `done` is how many are finished for each status
+// The four steps an order goes through; `done` is how many are finished for each status.
+// Delivery orders say "Ready to ship" and "On its way" (Completed is when the shop ships it).
 const STEPS = ['Order placed', 'Processing', 'Ready', 'Completed']
+const DELIVERY_STEPS = ['Order placed', 'Processing', 'Ready to ship', 'On its way']
 const DONE = { pending: 1, processing: 2, waiting_for_buyer: 3, completed: 4 }
 
 // Product picture, with a gem icon when the file is missing
@@ -49,12 +52,14 @@ function ProductThumb({ product }) {
   )
 }
 
-// Order placed → Processing → Ready → Completed. The current step has a ring; finished ones a check.
-function Progress({ status }) {
+// Order placed → Processing → Ready → Completed (delivery: Ready to ship → On its way).
+// The current step has a ring; finished ones a check.
+function Progress({ status, delivery }) {
   const done = DONE[status] ?? 1
+  const steps = delivery ? DELIVERY_STEPS : STEPS
   return (
     <ol id="orderProgress" aria-label="Order progress" className="grid grid-cols-4">
-      {STEPS.map((step, index) => {
+      {steps.map((step, index) => {
         const finished = index < done - 1 || (status === 'completed' && index === 3)
         const current = index === done - 1 && status !== 'completed'
         return (
@@ -66,7 +71,7 @@ function Progress({ status }) {
             } ${current ? 'font-bold' : finished ? 'font-semibold' : 'font-medium'}`}
           >
             {/* The line to the next step */}
-            {index < STEPS.length - 1 && (
+            {index < steps.length - 1 && (
               <span aria-hidden="true" className={`absolute top-[13px] left-1/2 w-full h-[3px] ${index < done - 1 ? 'bg-[#22306a]' : 'bg-[#e3e7ef]'}`} />
             )}
             <span
@@ -88,11 +93,15 @@ function Progress({ status }) {
 
 // One order for the customer, as a receipt: status and progress, the items, what was paid and what is left,
 // and how they get it. Named by its product, with the reference LCJ-0951 (the same as in the emails). Phones: slides up from the bottom. Wider screens: a pop-up in the middle.
+// Delivery orders: the shipping fee is in the receipt once the shop sets it. When the order is ready to ship the
+// customer pays the rest online (the Pay button opens /orders/LCJ-0951/pay); the shop checks that payment, then
+// ships it, and the courier and tracking number appear under the address.
 export default function OrderDetailsModal({ orderId, onClose, onCancel }) {
   const { shown, requestClose } = useAnimatedModal(onClose)
   useEscapeKey(true, requestClose)
   useBodyScrollLock()
   const [state, setState] = useState({ status: 'loading' }) // loading | ready | error
+  const [copied, setCopied] = useState(false) // "Copied" on the Copy number button for a moment
 
   useEffect(() => {
     let cancelled = false
@@ -119,6 +128,24 @@ export default function OrderDetailsModal({ orderId, onClose, onCancel }) {
   const balancePayment = data?.balance_payment ?? null
   const balance = data ? Number(data.balance ?? Math.max(0, Number(data.total) - paid)) : 0
   const isDownpayment = data ? paid < Number(data.total) : false
+  // Delivery orders: the shipping fee (once set), a payment of the rest being checked, the tracking number
+  const fee = data?.shipping_fee ?? null
+  const submitted = data?.balance_submitted ?? null
+  const canPay = Boolean(data?.can_pay)
+  const tracking = delivery && data?.order.tracking_number ? { courier: data.order.courier, number: data.order.tracking_number } : null
+  const trackSite = tracking ? courierSite(tracking.courier) : null
+  // The main action (Pay, Track) is navy in the content, so Close turns white then
+  const closeIsSecondary = canPay || Boolean(trackSite)
+
+  const copyTracking = async () => {
+    try {
+      await navigator.clipboard.writeText(tracking.number)
+      setCopied(true)
+      setTimeout(() => setCopied(false), 2000)
+    } catch {
+      // The number stays on screen to copy by hand
+    }
+  }
 
   return (
     <div id="orderDetailsModal" className="fixed inset-0 z-[9999]">
@@ -193,7 +220,7 @@ export default function OrderDetailsModal({ orderId, onClose, onCancel }) {
                     This order was cancelled{data.order.date_completed ? ` on ${shortDate(data.order.date_completed)}` : ''}.
                   </p>
                 ) : (
-                  <Progress status={status} />
+                  <Progress status={status} delivery={Boolean(delivery)} />
                 )}
 
                 {/* The items */}
@@ -215,10 +242,23 @@ export default function OrderDetailsModal({ orderId, onClose, onCancel }) {
 
                 {/* The money: total, what was paid, what is left */}
                 <div id="paymentInfo" className="rounded-2xl border border-[#e9ecf3] px-4 py-3.5 space-y-2.5 text-sm">
-                  <div className="flex justify-between gap-3">
-                    <span className="text-gray-600">Total</span>
-                    <span id="orderTotal" className="font-bold text-gray-900 whitespace-nowrap">{money(data.total)}</span>
-                  </div>
+                  {fee !== null ? (
+                    <>
+                      <div className="flex justify-between gap-3">
+                        <span className="text-gray-600">Items</span>
+                        <span className="font-semibold text-gray-900 whitespace-nowrap">{money(data.items_total)}</span>
+                      </div>
+                      <div className="flex justify-between gap-3">
+                        <span className="text-gray-600">Shipping fee</span>
+                        <span id="orderShippingFee" className="font-semibold text-gray-900 whitespace-nowrap">{money(fee)}</span>
+                      </div>
+                    </>
+                  ) : (
+                    <div className="flex justify-between gap-3">
+                      <span className="text-gray-600">Total</span>
+                      <span id="orderTotal" className="font-bold text-gray-900 whitespace-nowrap">{money(data.total)}</span>
+                    </div>
+                  )}
                   <div className="flex justify-between items-start gap-3">
                     <span className="text-gray-600 min-w-0">
                       {isDownpayment ? 'Downpayment paid' : 'Paid'}
@@ -242,15 +282,42 @@ export default function OrderDetailsModal({ orderId, onClose, onCancel }) {
                     </div>
                   )}
                   <div className="h-px bg-[#eef0f5]" aria-hidden="true"></div>
-                  {balance > 0 && !cancelledOrder ? (
+                  {submitted && !cancelledOrder ? (
+                    // Paid online: the shop checks it, then ships the order
                     <>
                       <div className="flex justify-between items-center gap-3">
-                        <span className="font-bold text-[#22306a]">Balance to pay</span>
+                        <span className="font-bold text-[#22306a]">Payment sent</span>
+                        <span id="orderPaymentChecking" className="inline-flex items-center rounded-full border border-amber-200 bg-amber-50 px-2.5 py-0.5 text-xs font-semibold text-amber-800">
+                          Being checked
+                        </span>
+                      </div>
+                      <p className="text-xs text-gray-500 [overflow-wrap:anywhere]">
+                        We&apos;re checking your {money(submitted.amount)} payment ({wallet(submitted.service)} · {submitted.reference_number}). You&apos;ll get
+                        an email with the tracking number when your order ships.
+                      </p>
+                    </>
+                  ) : balance > 0 && !cancelledOrder ? (
+                    <>
+                      <div className="flex justify-between items-center gap-3">
+                        <span className="font-bold text-[#22306a]">{fee !== null ? 'Left to pay' : 'Balance to pay'}</span>
                         <span id="orderBalance" className="font-bold text-lg text-amber-700 whitespace-nowrap">{money(balance)}</span>
                       </div>
                       <p className="text-xs text-gray-500">
-                        {delivery ? 'Pay it with the shipping fee, before we ship your order.' : 'Pay it when you pick up your order.'}
+                        {canPay
+                          ? 'Balance plus shipping fee. We ship your order once it is paid.'
+                          : delivery
+                            ? 'Pay it with the shipping fee, before we ship your order.'
+                            : 'Pay it when you pick up your order.'}
                       </p>
+                      {canPay && (
+                        <Link
+                          id="payBalanceBtn"
+                          to={`/orders/${orderRef(data.order.id)}/pay`}
+                          className="flex items-center justify-center min-h-12 rounded-xl bg-[#22306a] text-white font-semibold transition-colors [@media(hover:hover)]:hover:bg-[#1a2550]"
+                        >
+                          Pay {money(balance)}
+                        </Link>
+                      )}
                     </>
                   ) : (
                     <div className="flex justify-between items-center gap-3">
@@ -266,6 +333,39 @@ export default function OrderDetailsModal({ orderId, onClose, onCancel }) {
                     <i className={`bx ${delivery ? 'bx-package' : 'bx-store'} text-base text-[#2474b6]`} aria-hidden="true"></i>
                     {delivery ? 'Delivery by courier' : 'Store pickup'}
                   </p>
+                  {/* Shipped: the courier and tracking number, to copy and track on the courier's site */}
+                  {tracking && (
+                    <div id="orderTracking" className="rounded-xl bg-[#f5f6fa] p-3 mb-3">
+                      <p className="text-[13px] text-gray-600">
+                        Shipped{data.order.date_completed ? ` ${shortDate(data.order.date_completed)}` : ''} with{' '}
+                        <span className="font-semibold text-gray-900">{tracking.courier}</span> · Tracking no.
+                      </p>
+                      <p id="orderTrackingNumber" className="text-lg font-bold tracking-wide text-[#22306a] [overflow-wrap:anywhere]">
+                        {tracking.number}
+                      </p>
+                      <div className="flex gap-2 mt-2">
+                        <button
+                          type="button"
+                          onClick={copyTracking}
+                          className="flex-1 min-h-11 inline-flex items-center justify-center gap-1.5 rounded-[10px] border border-[#d1d5db] bg-white text-sm font-semibold text-[#22306a] transition-colors [@media(hover:hover)]:hover:bg-[#f5f6fa]"
+                        >
+                          <i className={`bx ${copied ? 'bx-check' : 'bx-copy'} text-base`} aria-hidden="true"></i>
+                          {copied ? 'Copied' : 'Copy number'}
+                        </button>
+                        {trackSite && (
+                          <a
+                            href={trackSite}
+                            target="_blank"
+                            rel="noreferrer"
+                            className="flex-1 min-h-11 inline-flex items-center justify-center gap-1.5 rounded-[10px] bg-[#22306a] text-sm font-semibold text-white transition-colors [@media(hover:hover)]:hover:bg-[#1a2550]"
+                          >
+                            Track on {tracking.courier}
+                            <i className="bx bx-link-external text-base" aria-hidden="true"></i>
+                          </a>
+                        )}
+                      </div>
+                    </div>
+                  )}
                   {delivery ? (
                     <div className="leading-relaxed [overflow-wrap:anywhere]">
                       <p className="font-semibold text-gray-900">
@@ -298,9 +398,9 @@ export default function OrderDetailsModal({ orderId, onClose, onCancel }) {
             id="orderActions"
             className="flex-shrink-0 flex flex-col sm:flex-row sm:items-center gap-2.5 sm:gap-4 px-5 sm:px-7 pt-3 pb-[max(0.75rem,env(safe-area-inset-bottom))] sm:pb-4 border-t border-gray-100"
           >
-            {data && !data.can_cancel && (status === 'processing' || status === 'waiting_for_buyer') && (
+            {data && !data.can_cancel && (status === 'processing' || status === 'waiting_for_buyer' || (tracking && status === 'completed')) && (
               <p id="cancelHint" className="text-center sm:text-left text-[13px] text-gray-600">
-                Need to cancel?{' '}
+                {tracking && status === 'completed' ? 'Questions about your parcel?' : 'Need to cancel?'}{' '}
                 <Link to="/#contact" onClick={requestClose} className="font-semibold text-[#2474b6] underline underline-offset-2 [@media(hover:hover)]:hover:text-[#22306a]">
                   Contact us
                 </Link>
@@ -322,7 +422,11 @@ export default function OrderDetailsModal({ orderId, onClose, onCancel }) {
               <button
                 type="button"
                 onClick={requestClose}
-                className="min-h-11 px-6 sm:px-8 rounded-xl bg-[#22306a] text-white font-bold transition-colors [@media(hover:hover)]:hover:bg-[#1a2550]"
+                className={`min-h-11 px-6 sm:px-8 rounded-xl font-bold transition-colors ${
+                  closeIsSecondary
+                    ? 'border border-[#d1d5db] bg-white text-[#22306a] [@media(hover:hover)]:hover:bg-[#f5f6fa]'
+                    : 'bg-[#22306a] text-white [@media(hover:hover)]:hover:bg-[#1a2550]'
+                }`}
               >
                 Close
               </button>

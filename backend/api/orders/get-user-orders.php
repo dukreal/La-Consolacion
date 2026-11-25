@@ -9,6 +9,7 @@ $user_id = require_customer();
 try {
     $stmt = $pdo->prepare(
         "SELECT o.id AS order_id, o.date_ordered, o.status, o.fulfillment, o.payment_id, o.date_completed,
+                o.shipping_fee, o.balance_to_check,
                 GROUP_CONCAT(CONCAT(oi.quantity, 'x ', p.name) ORDER BY oi.id SEPARATOR ', ') AS order_items,
                 SUBSTRING_INDEX(GROUP_CONCAT(p.name ORDER BY oi.id SEPARATOR '\n'), '\n', 1) AS first_item,
                 COUNT(oi.id) AS item_lines,
@@ -33,12 +34,16 @@ try {
 }
 
 $orders = array_map(function (array $o): array {
-    $total = (float) ($o['total_amount'] ?? 0);
-    // What is still owed at pickup: 0 once the balance is recorded, when it was paid in full,
+    // The items plus the shipping fee of a delivery order (helpers/payments.php, order_amounts(), counts the same way)
+    $total = (float) ($o['total_amount'] ?? 0) + (float) ($o['shipping_fee'] ?? 0);
+    // A balance paid online counts once the shop has checked it (orders.balance_to_check = 0)
+    $to_check = $o['balance_amount'] !== null && (int) $o['balance_to_check'] === 1;
+    $balance_paid = $o['balance_amount'] !== null && !$to_check ? (float) $o['balance_amount'] : 0;
+    // What is still owed: 0 once the balance is paid, when it was paid in full,
     // or when the order was cancelled (nothing more to pay)
     $balance = $o['status'] === 'cancelled'
         ? 0
-        : max(0, round($total - (float) $o['payment_amount'] - (float) $o['balance_amount'], 2));
+        : max(0, round($total - (float) $o['payment_amount'] - $balance_paid, 2));
 
     return [
         'order_id'         => $o['order_id'],
@@ -57,7 +62,9 @@ $orders = array_map(function (array $o): array {
         'payment_amount'   => $o['payment_amount'],
         'is_custom'        => (bool) $o['is_custom'], // custom orders show the downpayment and the total
         'balance'          => $balance,
-        'balance_paid'     => $o['balance_amount'] !== null,
+        'balance_paid'     => $o['balance_amount'] !== null && !$to_check,
+        'balance_to_check' => $to_check, // paid online, the shop is checking it
+        'shipping_fee'     => $o['shipping_fee'] !== null ? (float) $o['shipping_fee'] : null,
     ];
 }, $rows);
 

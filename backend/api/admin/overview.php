@@ -2,11 +2,12 @@
 // Numbers and recent activity for the admin Overview page (was the PHP at the top of admin-overview.php).
 //
 // sales: the Sales card, for Today, This week and This month
-//   received:  money that came in during the period: downpayments, balances paid at pickup and walk-in sales
-//              (payments by the day they were made; payments of cancelled or deleted orders are left out)
+//   received:  money that came in during the period: downpayments, balances (with any shipping fee) and walk-in
+//              sales (payments by the day they were made; payments of cancelled or deleted orders, and balances paid
+//              online that the admin has not checked yet, are left out)
 //   payments:  how many payments that was
 //   best:      the 5 items sold most in orders placed during the period (not cancelled or deleted, paid)
-//   toCollect: what active orders (Pending, Processing, Waiting for Buyer) still owe at pickup, and how many
+//   toCollect: what active orders (Pending, Processing, Waiting for Buyer) still owe, shipping fees included, and how many
 //              orders that is; the same for every period
 require_once __DIR__ . '/../../helpers/admin.php';
 
@@ -34,11 +35,12 @@ try {
     ];
     $sales = [];
     foreach ($periods as $key => $when) {
-        // A payment belongs to an order as its downpayment (or walk-in payment) or as its balance
+        // A payment belongs to an order as its downpayment (or walk-in payment) or as its balance.
+        // A balance the customer paid online counts once the admin has checked it (balance_to_check = 0).
         $row = $pdo->query(
             "SELECT COALESCE(SUM(pay.amount), 0) AS received, COUNT(*) AS payments
              FROM payments pay
-             JOIN orders o ON (o.payment_id = pay.id OR o.balance_payment_id = pay.id)
+             JOIN orders o ON (o.payment_id = pay.id OR (o.balance_payment_id = pay.id AND o.balance_to_check = 0))
              WHERE o.deleted = 0 AND o.status <> 'cancelled' AND " . sprintf($when, 'pay.uploaded_at')
         )->fetch(PDO::FETCH_ASSOC);
 
@@ -60,14 +62,15 @@ try {
         ];
     }
 
-    // What each active, paid order still owes: its items, less the downpayment and any balance already paid
+    // What each active, paid order still owes: its items and shipping fee, less the downpayment and any balance
+    // already paid (a balance paid online counts once it is checked)
     $owed = $pdo->query(
-        "SELECT COALESCE(SUM(GREATEST(t.total - COALESCE(dp.amount, 0) - COALESCE(bp.amount, 0), 0)), 0) AS amount,
-                COALESCE(SUM(t.total - COALESCE(dp.amount, 0) - COALESCE(bp.amount, 0) > 0.004), 0) AS orders
+        "SELECT COALESCE(SUM(GREATEST(t.total + COALESCE(o.shipping_fee, 0) - COALESCE(dp.amount, 0) - COALESCE(bp.amount, 0), 0)), 0) AS amount,
+                COALESCE(SUM(t.total + COALESCE(o.shipping_fee, 0) - COALESCE(dp.amount, 0) - COALESCE(bp.amount, 0) > 0.004), 0) AS orders
          FROM orders o
          JOIN (SELECT order_id, SUM(price_at_purchase * quantity) AS total FROM order_items GROUP BY order_id) t ON t.order_id = o.id
          JOIN payments dp ON dp.id = o.payment_id
-         LEFT JOIN payments bp ON bp.id = o.balance_payment_id
+         LEFT JOIN payments bp ON bp.id = o.balance_payment_id AND o.balance_to_check = 0
          WHERE o.deleted = 0 AND o.status IN ('pending', 'processing', 'waiting_for_buyer')"
     )->fetch(PDO::FETCH_ASSOC);
     $sales['toCollect'] = ['amount' => round((float) $owed['amount'], 2), 'orders' => (int) $owed['orders']];

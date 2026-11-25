@@ -7,7 +7,8 @@ $admin = require_admin();
 
 try {
     $orders = $pdo->query(
-        'SELECT o.id, o.status, o.fulfillment, o.payment_id, o.date_ordered,
+        'SELECT o.id, o.status, o.fulfillment, o.payment_id, o.date_ordered, o.shipping_fee,
+                o.balance_payment_id, o.balance_to_check,
                 u.username, u.role, u.first_name, u.profile_image, pay.service
          FROM orders o
          JOIN users u ON o.user_id = u.id
@@ -46,7 +47,7 @@ json_response([
     'thisWeek'   => $this_week,
     'orders'     => array_map(function ($o) use ($items_by_order, $profile_dir) {
         $order_items = $items_by_order[$o['id']] ?? [];
-        $total = 0;
+        $total = (float) ($o['shipping_fee'] ?? 0); // a delivery order's shipping fee, plus its items
         foreach ($order_items as $item) {
             $total += $item['price_at_purchase'] * $item['quantity'];
         }
@@ -67,6 +68,8 @@ json_response([
             'profileImage' => $photo,
             'service'      => $o['service'],
             'total'        => $total,
+            // The customer paid the rest online and it waits to be checked ("Balance submitted" label)
+            'balanceToCheck' => $o['balance_payment_id'] !== null && (int) $o['balance_to_check'] === 1,
             'firstItem'    => $first ? [
                 'name'  => $first['name'],
                 'image' => $first['image'],

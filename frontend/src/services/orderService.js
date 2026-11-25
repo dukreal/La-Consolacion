@@ -18,3 +18,15 @@ export async function getOrderDetails(orderId) {
 export function cancelOrder(orderId) {
   return api('/orders/cancel-order.php', { method: 'POST', form: { order_id: orderId } })
 }
+
+// Pays the rest of a delivery order online (Pay for Your Order page): the balance plus the shipping fee.
+// The amount is worked out by PHP. Returns { success, amount } or { success: false, error }
+export function payBalance({ orderId, service, mobile, reference, screenshot }) {
+  const form = new FormData()
+  form.append('order_id', orderId)
+  form.append('service', service)
+  form.append('mobile', mobile)
+  form.append('reference', reference)
+  form.append('payment_screenshot', screenshot)
+  return api('/orders/pay-balance.php', { method: 'POST', form })
+}
