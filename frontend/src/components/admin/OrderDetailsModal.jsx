@@ -9,11 +9,21 @@ import { cancelButton, confirmButton } from '../../utils/dialogButtons'
 import BalanceModal from './BalanceModal'
 import IconModal, { OkButton } from './IconModal'
 import ShippingPanel from './ShippingPanel'
+import StatusPicker from './StatusPicker'
 
 // Status names (admin wording) and dot colors come from utils/orderStatus.js, shared with the customer side
 const statusLabel = (status) => orderStatus(status, { admin: true }).label
 // Completed and Cancelled are final: they need the extra "Confirm Order" step
 const isFinal = (status) => status === 'completed' || status === 'cancelled'
+// A plain hint under each status in the Change Status picker, for the store's staff
+const statusHint = (status, delivery) =>
+  ({
+    pending: 'New order, not started yet',
+    processing: 'You are preparing the item',
+    waiting_for_buyer: delivery ? 'Ready to ship. The customer pays the rest' : 'Ready for pickup at the store',
+    completed: delivery ? 'Shipped with the courier and tracking number' : 'Picked up and fully paid',
+    cancelled: 'Cancel the order. Items go back to stock',
+  })[status] ?? ''
 const peso = (n) => '₱' + Number(n).toLocaleString('en-US', { minimumFractionDigits: 2 })
 // "2026-11-19 10:00:00" -> "Nov 19, 2026 · 10:00 AM"
 const formatDateTime = (value) => {
@@ -67,6 +77,7 @@ export default function OrderDetailsModal({ orderId, onClose, onStatusChange }) 
   // Delivery orders: the shipping fee, courier and tracking number typed in the Shipping panel for a status change
   const [shipForm, setShipForm] = useState({ fee: '', courier: '', otherCourier: '', tracking: '' })
   const [shipErrors, setShipErrors] = useState({})
+  const [scrolled, setScrolled] = useState(false) // the body is scrolled: the pinned Change Status bar gets a shadow
 
   // Escape closes it (not while a status is being saved); the confirm, balance and message pop-ups opened on top
   // of it handle Escape first
@@ -99,6 +110,14 @@ export default function OrderDetailsModal({ orderId, onClose, onStatusChange }) 
   const showShipping = isDelivery && order.paid && current !== 'cancelled'
   // The fee has to be typed when the order becomes Ready, or ships, without one yet
   const needsFee = isDelivery && data?.shippingFee === null && (selected === 'waiting_for_buyer' || selected === 'completed')
+
+  // The Change Status picker's list: every status with its dot and a hint (delivery orders say "On its way")
+  const statusOptions = ADMIN_STATUS_OPTIONS.map((s) => ({
+    ...s,
+    label: isDelivery && s.value === 'completed' ? 'Completed (On its way)' : s.label,
+    hint: statusHint(s.value, isDelivery),
+    final: isFinal(s.value),
+  }))
 
   const pickStatus = (value) => {
     setSelected(value)
@@ -264,22 +283,23 @@ export default function OrderDetailsModal({ orderId, onClose, onStatusChange }) 
           </div>
         </div>
 
-        <div className="flex-1 min-h-0 overflow-y-auto">
-          {/* Change status: right under the header */}
-          <div className="bg-[#f5f7fb] px-5 py-4 sm:px-6 border-b border-gray-100">
-            <label htmlFor="modalStatusSelect" className="block text-sm font-semibold text-gray-700 mb-2">Change Status</label>
-            <div className="flex flex-col sm:flex-row gap-2 sm:gap-3">
-              <select
+        <div className="flex-1 min-h-0 overflow-y-auto" onScroll={(e) => setScrolled(e.currentTarget.scrollTop > 0)}>
+          {/* Change status: right under the header, and pinned there while the rest scrolls */}
+          <div
+            id="modalStatusBar"
+            className={`sticky top-0 z-10 bg-[#f5f7fb] px-5 py-4 sm:px-6 border-b border-gray-100 transition-shadow ${scrolled ? 'shadow-[0_6px_12px_-8px_rgba(34,48,106,0.35)]' : ''}`}
+          >
+            <span id="modalStatusLabel" className="block text-sm font-semibold text-gray-700 mb-2">Change Status</span>
+            <div className="flex flex-col sm:flex-row sm:items-center gap-2 sm:gap-3">
+              <StatusPicker
                 id="modalStatusSelect"
+                labelledBy="modalStatusLabel"
+                options={statusOptions}
                 value={selected}
-                onChange={(e) => pickStatus(e.target.value)}
+                current={current}
+                onChange={pickStatus}
                 disabled={!order || unpaid || locked || busy}
-                className="h-11 w-full sm:flex-1 min-w-0 px-3 bg-white border border-[#d8dce8] rounded-[10px] text-gray-900 outline-none focus:border-[#2474b6] focus:ring-4 focus:ring-[#2474b6]/15 disabled:bg-gray-100 disabled:text-gray-500"
-              >
-                {ADMIN_STATUS_OPTIONS.map((s) => (
-                  <option key={s.value} value={s.value}>{isDelivery && s.value === 'completed' ? 'Completed (On its way)' : s.label}</option>
-                ))}
-              </select>
+              />
               {!showConfirm && (
                 <button
                   type="button"
