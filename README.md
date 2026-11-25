@@ -41,6 +41,7 @@ If your `lcj` database was made **before** a change, run each file in `database/
 | `2026-11-21-order-balance-payment.sql` | v1.2.0 | `orders.balance_payment_id`: the balance a customer pays at pickup |
 | `2026-11-23-delivery-address.sql` | v1.5.0 | `orders.fulfillment` and `orders.delivery_*`: store pickup or courier delivery with the address; `users.address_*`: the customer's saved address |
 | `2026-11-25-user-addresses-table.sql` | v1.6.0 | `user_addresses`: the customer's saved address moves out of `users` into its own table (the `users.address_*` columns are removed). **Back up first.** |
+| `2026-11-25-delivery-tracking.sql` | v1.6.0 | `orders.shipping_fee`, `orders.courier`, `orders.tracking_number` and `orders.balance_to_check`: the shipping fee, paying the rest online, and the courier and tracking number |
 
 If you skip one, the pages that use its columns show database errors (for example "Unknown column 'address_name'").
 

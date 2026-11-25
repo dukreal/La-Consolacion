@@ -105,3 +105,42 @@ function address_text(array $a): string
     }
     return implode("\n", $lines);
 }
+
+// ---- Shipping a delivery order (Delivery Part 2): fee, courier and tracking number ----
+
+// The couriers the admin picks from; any other courier's name is typed in ("Other")
+const COURIERS = ['LBC', 'J&T Express'];
+
+// A shipping fee typed by the admin ("180", "180.50"): the amount, or null when it is not a valid peso amount.
+// 0 is allowed (free shipping).
+function read_shipping_fee($value): ?float
+{
+    $value = is_string($value) ? str_replace([',', '₱', ' '], '', $value) : '';
+    if (!preg_match('/^\d{1,7}(\.\d{1,2})?$/', $value)) {
+        return null;
+    }
+    return round((float) $value, 2);
+}
+
+// The courier and tracking number from a form (fields courier and tracking_number).
+// courier: one of COURIERS, or another courier's name (up to 50 characters).
+// tracking_number: letters, digits, spaces and dashes, up to 100 characters.
+// Returns [courier, tracking_number, errors].
+function read_tracking(array $source): array
+{
+    $clean = fn ($v) => is_string($v) ? trim(preg_replace('/\s+/u', ' ', $v)) : '';
+    $courier = $clean($source['courier'] ?? '');
+    $tracking = $clean($source['tracking_number'] ?? '');
+    $errors = [];
+    if ($courier === '') {
+        $errors[] = 'Please choose the courier.';
+    } elseif (mb_strlen($courier) > 50) {
+        $errors[] = 'The courier name is too long (at most 50 characters).';
+    }
+    if ($tracking === '') {
+        $errors[] = 'Please enter the tracking number.';
+    } elseif (mb_strlen($tracking) > 100 || !preg_match('/^[A-Za-z0-9][A-Za-z0-9 \-]*$/', $tracking)) {
+        $errors[] = 'The tracking number can only have letters, numbers, spaces and dashes (at most 100 characters).';
+    }
+    return [$courier, $tracking, $errors];
+}
