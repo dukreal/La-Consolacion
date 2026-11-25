@@ -333,7 +333,7 @@ export default function ShippingPanel({ data, selected, form, setForm, errors, o
           id="rejectPaymentModal"
           type="warning"
           title="Remove this payment?"
-          message={`The ${peso(submitted.amount)} payment will be removed so the customer can pay again. Please message them to explain what was wrong.`}
+          message={`The ${peso(submitted.amount)} payment will be removed, and the customer gets an email asking them to pay again. You can also message them to explain what was wrong.`}
           onClose={() => setAskReject(false)}
         >
           <button

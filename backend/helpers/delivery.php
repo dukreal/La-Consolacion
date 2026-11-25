@@ -111,6 +111,19 @@ function address_text(array $a): string
 // The couriers the admin picks from; any other courier's name is typed in ("Other")
 const COURIERS = ['LBC', 'J&T Express'];
 
+// The courier's official website, where its tracking box is (for the emails). Same as the website
+// (frontend/src/utils/courier.js): neither courier has a link that fills in the tracking number.
+const COURIER_SITES = [
+    'LBC'         => 'https://www.lbcexpress.com/',
+    'J&T Express' => 'https://www.jtexpress.ph/',
+];
+
+// The tracking website for a courier, or null for another courier
+function courier_site(?string $courier): ?string
+{
+    return COURIER_SITES[$courier] ?? null;
+}
+
 // A shipping fee typed by the admin ("180", "180.50"): the amount, or null when it is not a valid peso amount.
 // 0 is allowed (free shipping).
 function read_shipping_fee($value): ?float
