@@ -180,14 +180,6 @@ CREATE TABLE `users` (
   `password` varchar(255) NOT NULL,
   `role` varchar(20) NOT NULL DEFAULT 'user',
   `profile_image` varchar(255) DEFAULT NULL,
-  `address_name` varchar(150) DEFAULT NULL,
-  `address_mobile` varchar(11) DEFAULT NULL,
-  `address_street` varchar(255) DEFAULT NULL,
-  `address_barangay` varchar(100) DEFAULT NULL,
-  `address_city` varchar(100) DEFAULT NULL,
-  `address_province` varchar(100) DEFAULT NULL,
-  `address_zip` varchar(4) DEFAULT NULL,
-  `address_notes` varchar(255) DEFAULT NULL,
   `deleted` tinyint(1) NOT NULL DEFAULT 0,
   `created_at` timestamp NOT NULL DEFAULT current_timestamp(),
   `updated_at` timestamp NOT NULL DEFAULT current_timestamp() ON UPDATE current_timestamp(),
@@ -197,7 +189,28 @@ CREATE TABLE `users` (
   `verification_token` varchar(255) DEFAULT NULL,
   `token_expires_at` datetime DEFAULT NULL,
   PRIMARY KEY (`id`),
+  UNIQUE KEY `username` (`username`),
   UNIQUE KEY `email` (`email`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
+/*!40101 SET character_set_client = @saved_cs_client */;
+
+-- The delivery address a customer saved for next time: one row per customer at most, no row = none saved.
+-- (Each delivery order keeps its own copy in orders.delivery_*.)
+/*!40101 SET @saved_cs_client     = @@character_set_client */;
+/*!40101 SET character_set_client = utf8mb4 */;
+CREATE TABLE `user_addresses` (
+  `user_id` int(11) NOT NULL,
+  `name` varchar(150) NOT NULL,
+  `mobile` varchar(11) NOT NULL,
+  `street` varchar(255) NOT NULL,
+  `barangay` varchar(100) NOT NULL,
+  `city` varchar(100) NOT NULL,
+  `province` varchar(100) NOT NULL,
+  `zip` varchar(4) NOT NULL,
+  `notes` varchar(255) DEFAULT NULL,
+  `updated_at` timestamp NOT NULL DEFAULT current_timestamp() ON UPDATE current_timestamp(),
+  PRIMARY KEY (`user_id`),
+  CONSTRAINT `user_addresses_user` FOREIGN KEY (`user_id`) REFERENCES `users` (`id`) ON DELETE CASCADE
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
 /*!40101 SET character_set_client = @saved_cs_client */;
 

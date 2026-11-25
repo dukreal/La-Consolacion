@@ -11,7 +11,7 @@ if (!isset($_SESSION['user_id'])) {
 }
 
 $stmt = $pdo->prepare(
-    'SELECT first_name, last_name, username, email, mobile_number, profile_image, ' . implode(', ', address_columns('address_')) . '
+    'SELECT first_name, last_name, username, email, mobile_number, profile_image
      FROM users WHERE id = ? AND deleted = 0'
 );
 $stmt->execute([$_SESSION['user_id']]);
@@ -30,6 +30,6 @@ json_response([
         'email'        => $user['email'],
         'mobileNumber' => $user['mobile_number'] ?? '',
         'profileImage' => $user['profile_image'],
-        'address'      => address_from_row($user, 'address_'),
+        'address'      => saved_address($pdo, (int) $_SESSION['user_id']),
     ],
 ]);

@@ -179,8 +179,7 @@ try {
 
     // "Save this address for next time"
     if ($save_address) {
-        $set = implode(', ', array_map(fn ($c) => "$c = ?", address_columns('address_')));
-        $pdo->prepare("UPDATE users SET $set WHERE id = ?")->execute([...array_values($address), $user_id]);
+        save_saved_address($pdo, (int) $user_id, $address);
     }
 
     if ($from_cart) {

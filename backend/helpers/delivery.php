@@ -4,7 +4,8 @@
 // the order details for the customer and the admin, and the status emails.
 //
 // An address has the same keys everywhere: name, mobile, street, barangay, city, province, zip, notes.
-// In the database they are orders.delivery_<key> (copied at checkout) and users.address_<key> (saved for next time).
+// In the database they are orders.delivery_<key> (copied at checkout) and the columns of the
+// user_addresses table (the one address a customer saved for next time; no row = none saved).
 
 const FULFILLMENTS = ['pickup', 'delivery'];
 
@@ -62,6 +63,29 @@ function address_from_row(array $row, string $prefix): ?array
 function address_columns(string $prefix): array
 {
     return array_map(fn ($key) => $prefix . $key, array_keys(ADDRESS_FIELDS));
+}
+
+// The address the customer saved for next time (user_addresses), or null when there is none
+function saved_address(PDO $pdo, int $user_id): ?array
+{
+    $stmt = $pdo->prepare('SELECT ' . implode(', ', address_columns('')) . ' FROM user_addresses WHERE user_id = ?');
+    $stmt->execute([$user_id]);
+    $row = $stmt->fetch();
+    return $row ? address_from_row($row, '') : null;
+}
+
+// Saves (adds or replaces) the customer's address for next time; null removes it
+function save_saved_address(PDO $pdo, int $user_id, ?array $address): void
+{
+    if ($address === null || $address['street'] === null) {
+        $pdo->prepare('DELETE FROM user_addresses WHERE user_id = ?')->execute([$user_id]);
+        return;
+    }
+    $columns = address_columns('');
+    $marks = implode(', ', array_fill(0, count($columns), '?'));
+    $update = implode(', ', array_map(fn ($c) => "$c = VALUES($c)", $columns));
+    $pdo->prepare('INSERT INTO user_addresses (user_id, ' . implode(', ', $columns) . ") VALUES (?, $marks) ON DUPLICATE KEY UPDATE $update")
+        ->execute([$user_id, ...array_values($address)]);
 }
 
 // The address as lines of text, for the emails and the admin's Copy address button:
