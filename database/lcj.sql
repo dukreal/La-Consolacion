@@ -23,7 +23,7 @@ CREATE TABLE `admin` (
   `user_id` int(11) NOT NULL,
   `admin_level` int(11) NOT NULL DEFAULT 1,
   `last_signed_in` datetime DEFAULT NULL,
-  `last_signed_out` timestamp NULL DEFAULT NULL,
+  `last_signed_out` datetime DEFAULT NULL,
   `deleted` tinyint(1) NOT NULL DEFAULT 0,
   `created_at` timestamp NOT NULL DEFAULT current_timestamp(),
   `updated_at` timestamp NOT NULL DEFAULT current_timestamp() ON UPDATE current_timestamp(),
