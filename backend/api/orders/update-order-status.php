@@ -107,7 +107,7 @@ $fee_now = $set['shipping_fee'] ?? ($amounts['shippingFee'] ?? 0);
 $paid_now = $amounts['paid'] + (isset($set['balance_to_check']) ? $amounts['balanceSubmitted']['amount'] : 0);
 $balance_due = max(0, round($amounts['itemsTotal'] + $fee_now - $paid_now, 2));
 if ($new_status === 'completed' && $balance_due > 0 && isset($set['balance_to_check'])) {
-    $fail('The payment to check is less than what the customer owes (' . peso_text($balance_due) . ' short). Use "Payment doesn\'t match" and ask the customer to pay again.');
+    $fail('The payment to check is less than what the customer owes (' . peso_text($balance_due) . ' short). Use "Wrong payment" and ask the customer to pay again.');
 }
 
 // Completing an order that is not fully paid: the admin says how the balance was paid (at the store, or by chat

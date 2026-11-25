@@ -5,58 +5,94 @@ import { COURIERS, courierSite, readFee, readTracking } from '../../utils/courie
 import { cancelButton, confirmButton } from '../../utils/dialogButtons'
 import IconModal from './IconModal'
 
-// The "Shipping" panel in the admin's Order Details, for delivery orders: three boxes that follow the order.
-//   1 · Shipping fee         typed when the order is set to Waiting for Buyer; "Change fee" until the customer pays
-//   2 · Payment              Waiting for payment → Payment to check (screenshot, "Payment doesn't match") → received
-//   3 · Courier and tracking filled in with Completed (On its way); "Fix tracking no." afterwards
-// The fee, courier and tracking typed for a status change live in OrderDetailsModal (they go with the status);
-// the panel's own buttons (Change fee, Payment doesn't match, Fix tracking no.) save straight away.
+// The "Shipping" panel in the admin's Order Details, for delivery orders. Three rows, like a receipt:
+//   Shipping fee  typed when the order is set to Waiting for Buyer; "Change fee" until the customer pays
+//   Payment       Not paid yet → Check this payment (screenshot, "Wrong payment") → Paid
+//   Courier       filled in with Completed (On its way); "Edit tracking" afterwards
+// From 640px each row is label | value | actions; on phones the label sits above the value and the actions below it.
+// Written for the store's staff: plain words, no technical terms.
 //
+// The fee, courier and tracking typed for a status change live in OrderDetailsModal (they are sent with the status);
+// the panel's own buttons (Change fee, Wrong payment, Edit tracking) save straight away.
 //   data:      the order details (get-order-details.php)
 //   selected:  the status picked in "Change Status"
 //   form, setForm: { fee, courier, otherCourier, tracking } typed for the status change; errors: { fee, courier, tracking }
-//   onRecordPayment(): "Record payment" (paid by chat): picks Completed, so Confirm Order asks how it was paid
+//   onRecordPayment(): "Record payment" (paid by chat or at the store): picks Completed, so Confirm Order asks how
 //   onSaved(message):  a panel button saved something: reload the order and say so
 //   onError(message):  it failed
 const peso = (n) => '₱' + Number(n).toLocaleString('en-US', { minimumFractionDigits: 2 })
-// "2026-11-26 09:14:00" -> "Nov 26, 9:14 AM"
-const shortDateTime = (value) => {
+// "2026-11-26 09:14:00" -> "Nov 26, 9:14 AM" (or just "Nov 26")
+const when = (value, withTime = true) => {
   const d = new Date(String(value).replace(' ', 'T'))
-  return `${d.toLocaleDateString('en-US', { month: 'short', day: 'numeric' })}, ${d.toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit' })}`
+  const day = d.toLocaleDateString('en-US', { month: 'short', day: 'numeric' })
+  return withTime ? `${day}, ${d.toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit' })}` : day
 }
 const serviceName = (s) => ({ gcash: 'GCash', paymaya: 'PayMaya', gotyme: 'GoTyme' })[String(s).toLowerCase()] ?? s
 
-const boxBase = 'rounded-[14px] p-3.5 flex flex-col gap-1.5 min-w-0'
-const boxTitle = 'text-xs font-semibold'
 const inputClass =
   'h-10 w-full min-w-0 px-3 bg-white border border-[#d8dce8] rounded-[10px] text-gray-900 outline-none focus:border-[#2474b6] focus:ring-4 focus:ring-[#2474b6]/15'
-const linkButton = 'self-start p-0 text-sm font-semibold text-[#2474b6] [@media(hover:hover)]:hover:text-[#22306a] outline-none focus-visible:underline'
-const smallNavy = 'h-10 px-3 rounded-[10px] bg-[#22306a] [@media(hover:hover)]:hover:bg-[#1a2550] text-white text-sm font-semibold disabled:opacity-60'
-const smallOutline = 'h-10 px-3 rounded-[10px] border border-[#d8dce8] bg-white text-[#22306a] text-sm font-semibold [@media(hover:hover)]:hover:bg-[#f5f6fa]'
-const errorText = 'text-xs text-red-600'
+const linkButton =
+  'inline-flex items-center gap-1 p-0 text-sm font-semibold text-[#2474b6] whitespace-nowrap [@media(hover:hover)]:hover:text-[#22306a] outline-none focus-visible:underline'
+const smallNavy = 'h-10 px-4 rounded-[10px] bg-[#22306a] [@media(hover:hover)]:hover:bg-[#1a2550] text-white text-sm font-semibold disabled:opacity-60'
+const smallOutline = 'h-10 px-4 rounded-[10px] border border-[#d8dce8] bg-white text-[#22306a] text-sm font-semibold [@media(hover:hover)]:hover:bg-[#f5f6fa]'
+const errorText = 'mt-1 text-xs text-red-600'
+const muted = 'text-sm text-gray-500'
+const amount = 'font-bold text-gray-900'
+const subLine = 'mt-0.5 text-xs text-gray-500 [overflow-wrap:anywhere]'
 
-// The courier dropdown plus "Other" name, and the tracking number (also used by "Fix tracking no.")
+function Badge({ tone, children }) {
+  const tones = {
+    orange: 'text-orange-800 bg-orange-50 border-orange-200',
+    amber: 'text-amber-800 bg-amber-50 border-amber-200',
+    green: 'text-emerald-700 bg-emerald-50 border-emerald-200',
+  }
+  return <span className={`inline-flex items-center rounded-full border px-2 py-px text-xs font-semibold whitespace-nowrap ${tones[tone]}`}>{children}</span>
+}
+
+// One row: label | value | actions (stacked on phones)
+function Row({ label, labelFor, children, actions, first = false }) {
+  const Label = labelFor ? 'label' : 'div'
+  return (
+    <div className={`px-4 py-3 sm:grid sm:grid-cols-[7.5rem_minmax(0,1fr)_auto] sm:gap-4 sm:items-center ${first ? '' : 'border-t border-[#f0f2f6]'}`}>
+      <Label {...(labelFor ? { htmlFor: labelFor } : {})} className="block mb-1 sm:mb-0 text-xs sm:text-sm font-semibold text-gray-500">
+        {label}
+      </Label>
+      <div className="min-w-0">{children}</div>
+      {actions ? <div className="mt-2 sm:mt-0 flex flex-wrap items-center gap-x-4 sm:gap-x-3 gap-y-1.5 sm:justify-end">{actions}</div> : <div className="hidden sm:block" />}
+    </div>
+  )
+}
+
+// Separates actions on one line; on phones the actions can wrap, so they are spaced apart without dots
+const Dot = () => <span aria-hidden="true" className="hidden sm:inline text-gray-300">·</span>
+
+// The courier dropdown plus "Other" name, and the tracking number (for shipping and for "Edit tracking").
+// From 640px the dropdown and the number sit side by side.
 export function TrackingFields({ form, setForm, errors = {}, idPrefix }) {
   const set = (key) => (e) => setForm((f) => ({ ...f, [key]: e.target.value }))
   return (
-    <>
-      <label htmlFor={`${idPrefix}Courier`} className="sr-only">Courier</label>
-      <select id={`${idPrefix}Courier`} value={form.courier} onChange={set('courier')} className={inputClass}>
-        <option value="">Choose courier…</option>
-        {COURIERS.map((c) => <option key={c} value={c}>{c}</option>)}
-        <option value="other">Other</option>
-      </select>
-      {form.courier === 'other' && (
-        <>
-          <label htmlFor={`${idPrefix}Other`} className="sr-only">Courier name</label>
-          <input id={`${idPrefix}Other`} value={form.otherCourier} onChange={set('otherCourier')} maxLength={50} placeholder="Courier name" className={inputClass} />
-        </>
-      )}
-      {errors.courier && <p className={errorText}>{errors.courier}</p>}
-      <label htmlFor={`${idPrefix}Tracking`} className="sr-only">Tracking number</label>
-      <input id={`${idPrefix}Tracking`} value={form.tracking} onChange={set('tracking')} maxLength={100} placeholder="Tracking number" autoComplete="off" className={inputClass} />
-      {errors.tracking && <p className={errorText}>{errors.tracking}</p>}
-    </>
+    <div className="flex flex-col sm:flex-row gap-2">
+      <div className="sm:w-44 flex-shrink-0 flex flex-col gap-2">
+        <label htmlFor={`${idPrefix}Courier`} className="sr-only">Courier</label>
+        <select id={`${idPrefix}Courier`} value={form.courier} onChange={set('courier')} className={inputClass}>
+          <option value="">Choose courier…</option>
+          {COURIERS.map((c) => <option key={c} value={c}>{c}</option>)}
+          <option value="other">Other courier</option>
+        </select>
+        {form.courier === 'other' && (
+          <>
+            <label htmlFor={`${idPrefix}Other`} className="sr-only">Courier name</label>
+            <input id={`${idPrefix}Other`} value={form.otherCourier} onChange={set('otherCourier')} maxLength={50} placeholder="Courier name" className={inputClass} />
+          </>
+        )}
+        {errors.courier && <p className={errorText}>{errors.courier}</p>}
+      </div>
+      <div className="flex-1 min-w-0">
+        <label htmlFor={`${idPrefix}Tracking`} className="sr-only">Tracking number</label>
+        <input id={`${idPrefix}Tracking`} value={form.tracking} onChange={set('tracking')} maxLength={100} placeholder="Tracking number" autoComplete="off" className={inputClass} />
+        {errors.tracking && <p className={errorText}>{errors.tracking}</p>}
+      </div>
+    </div>
   )
 }
 
@@ -66,12 +102,12 @@ export default function ShippingPanel({ data, selected, form, setForm, errors, o
   const fee = data.shippingFee
   const submitted = data.balanceSubmitted
   const shipped = status === 'completed'
-  const shipping = selected === 'completed' && !shipped // the courier and tracking inputs are needed now
+  const shipping = selected === 'completed' && !shipped // the courier and tracking number are needed now
 
   const [saving, setSaving] = useState(false)
   const [editFee, setEditFee] = useState(null) // "Change fee": the new fee being typed
-  const [fix, setFix] = useState(null) // "Fix tracking no.": { courier, otherCourier, tracking }
-  const [fixErrors, setFixErrors] = useState({})
+  const [edit, setEdit] = useState(null) // "Edit tracking": { courier, otherCourier, tracking }
+  const [editErrors, setEditErrors] = useState({})
   const [askReject, setAskReject] = useState(false)
   const [copied, setCopied] = useState(false)
 
@@ -95,15 +131,15 @@ export default function ShippingPanel({ data, selected, form, setForm, errors, o
     run('fee', { shipping_fee: value }, () => setEditFee(null))
   }
 
-  const startFix = () => {
+  const startEdit = () => {
     const known = COURIERS.includes(order.courier)
-    setFix({ courier: known ? order.courier : 'other', otherCourier: known ? '' : order.courier ?? '', tracking: order.trackingNumber ?? '' })
-    setFixErrors({})
+    setEdit({ courier: known ? order.courier : 'other', otherCourier: known ? '' : order.courier ?? '', tracking: order.trackingNumber ?? '' })
+    setEditErrors({})
   }
-  const saveFix = () => {
-    const t = readTracking(fix)
-    if (t.errors) return setFixErrors(t.errors)
-    run('tracking', { courier: t.courier, tracking_number: t.tracking }, () => setFix(null))
+  const saveEdit = () => {
+    const t = readTracking(edit)
+    if (t.errors) return setEditErrors(t.errors)
+    run('tracking', { courier: t.courier, tracking_number: t.tracking }, () => setEdit(null))
   }
 
   const copyTracking = async () => {
@@ -116,13 +152,15 @@ export default function ShippingPanel({ data, selected, form, setForm, errors, o
     }
   }
 
-  // Box 1: the shipping fee
-  let feeBox
-  if (fee === null && !shipped && (selected === 'waiting_for_buyer' || selected === 'completed')) {
-    feeBox = (
-      <div className={`${boxBase} border-2 border-[#2474b6] shadow-[0_0_0_4px_rgba(36,116,182,0.12)]`}>
-        <label htmlFor="shippingFeeInput" className={`${boxTitle} text-[#22306a]`}>1 · Shipping fee</label>
-        <div className="flex items-center h-10 bg-white border border-[#d8dce8] rounded-[10px] px-3 focus-within:border-[#2474b6] focus-within:ring-4 focus-within:ring-[#2474b6]/15">
+  // ---- Shipping fee row
+  const askFee = fee === null && !shipped && (selected === 'waiting_for_buyer' || selected === 'completed')
+  const canChangeFee = status === 'waiting_for_buyer' && fee !== null && !submitted && !data.balancePayment
+  let feeValue
+  let feeActions = null
+  if (askFee) {
+    feeValue = (
+      <>
+        <div className="flex items-center h-10 sm:max-w-[12rem] bg-white border-2 border-[#2474b6] rounded-[10px] px-3 focus-within:ring-4 focus-within:ring-[#2474b6]/15">
           <span className="text-gray-500 mr-1" aria-hidden="true">₱</span>
           <input
             id="shippingFeeInput"
@@ -134,187 +172,168 @@ export default function ShippingPanel({ data, selected, form, setForm, errors, o
             className="w-full min-w-0 bg-transparent outline-none text-gray-900"
           />
         </div>
-        {errors.fee ? <p className={errorText}>{errors.fee}</p> : <p className="text-xs text-gray-600">What the courier charges. The customer pays it with the balance.</p>}
-      </div>
+        {errors.fee ? <p className={errorText}>{errors.fee}</p> : <p className={subLine}>What the courier charges for this parcel.</p>}
+      </>
     )
   } else if (fee === null) {
-    feeBox = (
-      <div className={`${boxBase} border border-dashed border-gray-300 bg-gray-50`}>
-        <span className={`${boxTitle} text-gray-500`}>1 · Shipping fee</span>
-        <span className="text-sm text-gray-600">Typed when you set the order to Waiting for Buyer.</span>
+    feeValue = <span className={muted}>Set it when the order is Waiting for Buyer</span>
+  } else if (editFee !== null) {
+    feeValue = (
+      <div className="flex gap-2">
+        <label htmlFor="changeFeeInput" className="sr-only">New shipping fee</label>
+        <input id="changeFeeInput" inputMode="decimal" value={editFee} onChange={(e) => setEditFee(e.target.value)} className={`${inputClass} sm:max-w-[10rem]`} />
+        <button type="button" onClick={saveFee} disabled={saving} className={smallNavy}>Save</button>
+        <button type="button" onClick={() => setEditFee(null)} className={smallOutline}>Cancel</button>
       </div>
     )
   } else {
-    const canChange = status === 'waiting_for_buyer' && !submitted && !data.balancePayment
-    feeBox = (
-      <div className={`${boxBase} border border-gray-200`}>
-        <span className={`${boxTitle} text-gray-500`}>1 · Shipping fee</span>
-        {editFee !== null ? (
-          <>
-            <label htmlFor="changeFeeInput" className="sr-only">New shipping fee</label>
-            <div className="flex gap-1.5">
-              <input id="changeFeeInput" inputMode="decimal" value={editFee} onChange={(e) => setEditFee(e.target.value)} className={inputClass} />
-              <button type="button" onClick={saveFee} disabled={saving} className={smallNavy}>Save</button>
-            </div>
-            <button type="button" onClick={() => setEditFee(null)} className={`${linkButton} !text-gray-600`}>Cancel</button>
-          </>
-        ) : (
-          <>
-            <span className="text-xl font-bold text-gray-900">{peso(fee)}</span>
-            <span className="text-xs text-gray-600">
-              {shipped ? 'Paid with the balance' : submitted ? "Included in the customer's payment" : status === 'waiting_for_buyer' ? `The customer pays ${peso(data.balance)}` : 'Saved'}
-            </span>
-            {canChange && (
-              <button type="button" onClick={() => setEditFee(String(fee))} className={linkButton}>Change fee</button>
-            )}
-          </>
-        )}
-      </div>
+    feeValue = (
+      <span>
+        <span className={amount}>{peso(fee)}</span>
+        {shipped && <span className={muted}> · paid with the balance</span>}
+      </span>
     )
+    if (canChangeFee) feeActions = <button type="button" onClick={() => setEditFee(String(fee))} className={linkButton}>Change fee</button>
   }
 
-  // Box 2: the payment of the balance and the fee
-  let payBox
+  // ---- Payment row
+  let payValue
+  let payActions = null
   if (submitted) {
-    payBox = (
-      <div className={`${boxBase} border border-amber-200 bg-amber-50`}>
-        <span className={`${boxTitle} text-amber-800`}>2 · Payment to check</span>
-        <span className="font-bold text-gray-900">{peso(submitted.amount)} · {serviceName(submitted.service)}</span>
-        <span className="text-xs text-gray-600 [overflow-wrap:anywhere]">
-          Ref. {submitted.referenceNumber}
-          <br />
-          From {submitted.mobile} · {shortDateTime(submitted.paidAt)}
-        </span>
-        <div className="flex flex-wrap gap-x-4 gap-y-1">
-          <a href={`/uploads/payments/${submitted.image}`} target="_blank" rel="noreferrer" className={linkButton}>View screenshot</a>
-          <button type="button" onClick={() => setAskReject(true)} className="self-start p-0 text-sm font-semibold text-red-700 [@media(hover:hover)]:hover:text-red-800 outline-none focus-visible:underline">
-            Payment doesn&apos;t match
-          </button>
+    payValue = (
+      <>
+        <div className="flex flex-wrap items-center gap-x-2 gap-y-1">
+          <Badge tone="amber">Check this payment</Badge>
+          <span className={amount}>{peso(submitted.amount)} · {serviceName(submitted.service)}</span>
         </div>
-      </div>
+        <p className={subLine}>Ref. {submitted.referenceNumber} · from {submitted.mobile} · {when(submitted.paidAt)}</p>
+      </>
+    )
+    payActions = (
+      <>
+        <a href={`/uploads/payments/${submitted.image}`} target="_blank" rel="noreferrer" className={linkButton}>See screenshot</a>
+        <Dot />
+        <button type="button" onClick={() => setAskReject(true)} className={`${linkButton} !text-red-700 [@media(hover:hover)]:hover:!text-red-800`}>Wrong payment</button>
+      </>
     )
   } else if (shipped || (data.balance === 0 && fee !== null)) {
     const bp = data.balancePayment
-    payBox = (
-      <div className={`${boxBase} border border-emerald-200 bg-emerald-50`}>
-        <span className={`${boxTitle} text-emerald-700 flex items-center gap-1`}>2 · Payment received <Check className="w-3.5 h-3.5" aria-hidden="true" /></span>
-        {bp ? (
-          <>
-            <span className="font-bold text-gray-900">{peso(bp.amount)} · {serviceName(bp.service)}</span>
-            <span className="text-xs text-gray-600 [overflow-wrap:anywhere]">Ref. {bp.referenceNumber} · {shortDateTime(bp.paidAt)}</span>
-            {bp.image && <a href={`/uploads/payments/${bp.image}`} target="_blank" rel="noreferrer" className={linkButton}>View screenshot</a>}
-          </>
-        ) : (
-          <span className="text-sm text-gray-700">Fully paid</span>
-        )}
-      </div>
+    payValue = bp ? (
+      <>
+        <div className="flex flex-wrap items-center gap-x-2 gap-y-1">
+          <Badge tone="green">Paid</Badge>
+          <span className={amount}>{peso(bp.amount)} · {serviceName(bp.service)}</span>
+        </div>
+        <p className={subLine}>Ref. {bp.referenceNumber} · {when(bp.paidAt, false)}</p>
+      </>
+    ) : (
+      <div className="flex items-center gap-2"><Badge tone="green">Paid</Badge><span className={muted}>Fully paid</span></div>
     )
+    if (bp?.image) payActions = <a href={`/uploads/payments/${bp.image}`} target="_blank" rel="noreferrer" className={linkButton}>See screenshot</a>
   } else if (status === 'waiting_for_buyer' && fee !== null) {
-    payBox = (
-      <div className={`${boxBase} border border-orange-200 bg-orange-50`}>
-        <span className={`${boxTitle} text-orange-800`}>2 · Waiting for payment</span>
-        <div className="flex justify-between gap-2 text-sm text-gray-600"><span>Remaining balance</span><span className="text-gray-900">{peso(data.balance - fee)}</span></div>
-        <div className="flex justify-between gap-2 text-sm text-gray-600"><span>Shipping fee</span><span className="text-gray-900">{peso(fee)}</span></div>
-        <div className="h-px bg-orange-200" />
-        <div className="flex justify-between gap-2 text-sm font-bold text-orange-800"><span>To pay</span><span>{peso(data.balance)}</span></div>
-        <span className="text-xs text-gray-600">
-          Not paid yet. Paid by chat instead?{' '}
-          <button type="button" onClick={onRecordPayment} className="p-0 font-semibold text-[#2474b6] [@media(hover:hover)]:hover:text-[#22306a] outline-none focus-visible:underline">Record payment</button>
-        </span>
-      </div>
+    payValue = (
+      <>
+        <div className="flex flex-wrap items-center gap-x-2 gap-y-1">
+          <Badge tone="orange">Not paid yet</Badge>
+          <span className={amount}>{peso(data.balance)}</span>
+          <span className={muted}>to pay</span>
+        </div>
+        <p className={subLine}>Balance {peso(data.balance - fee)} + shipping fee {peso(fee)}</p>
+      </>
+    )
+    payActions = (
+      <button type="button" onClick={onRecordPayment} title="The customer paid by chat or at the store" className={linkButton}>
+        Record payment
+      </button>
     )
   } else {
-    payBox = (
-      <div className={`${boxBase} border border-dashed border-gray-300 bg-gray-50`}>
-        <span className={`${boxTitle} text-gray-500`}>2 · Balance and shipping fee</span>
-        <span className="text-sm text-gray-600">The customer pays them online once you set the fee{data.balance > 0 ? ` (balance now ${peso(data.balance)})` : ''}.</span>
-      </div>
+    payValue = (
+      <span className={muted}>
+        The customer pays online after you set the fee{data.balance > 0 ? ` (balance now ${peso(data.balance)})` : ''}
+      </span>
     )
   }
 
-  // Box 3: courier and tracking number
-  let trackBox
-  if (shipped && fix) {
-    trackBox = (
-      <div className={`${boxBase} border-2 border-[#2474b6]`}>
-        <span className={`${boxTitle} text-[#22306a]`}>3 · Fix courier and tracking</span>
+  // ---- Courier row
+  let courierValue
+  let courierActions = null
+  if (shipped && edit) {
+    courierValue = (
+      <>
         <TrackingFields
-          form={fix}
+          form={edit}
           setForm={(update) => {
-            setFix(update)
-            setFixErrors({})
+            setEdit(update)
+            setEditErrors({})
           }}
-          errors={fixErrors}
-          idPrefix="fix"
+          errors={editErrors}
+          idPrefix="edit"
         />
-        <div className="flex gap-1.5">
-          <button type="button" onClick={saveFix} disabled={saving} className={smallNavy}>Save</button>
-          <button type="button" onClick={() => setFix(null)} className={smallOutline}>Cancel</button>
+        <div className="mt-2 flex gap-2">
+          <button type="button" onClick={saveEdit} disabled={saving} className={smallNavy}>Save</button>
+          <button type="button" onClick={() => setEdit(null)} className={smallOutline}>Cancel</button>
         </div>
-      </div>
+      </>
     )
   } else if (shipped) {
     const site = courierSite(order.courier)
-    trackBox = (
-      <div className={`${boxBase} border border-gray-200`}>
-        <span className={`${boxTitle} text-gray-500`}>3 · Shipped{order.dateCompleted ? ` ${shortDateTime(order.dateCompleted).split(',')[0]}` : ''} · {order.courier}</span>
-        <span className="text-xs text-gray-600">Tracking number</span>
-        <span className="text-lg font-bold tracking-wide text-[#22306a] [overflow-wrap:anywhere]">{order.trackingNumber}</span>
-        <div className="flex flex-wrap gap-x-4 gap-y-1">
-          <button type="button" onClick={copyTracking} className={`${linkButton} inline-flex items-center gap-1`}>
-            {copied ? <Check className="w-3.5 h-3.5" aria-hidden="true" /> : <Copy className="w-3.5 h-3.5" aria-hidden="true" />}
-            {copied ? 'Copied' : 'Copy'}
-          </button>
-          {site && (
-            <a href={site} target="_blank" rel="noreferrer" className={`${linkButton} inline-flex items-center gap-1`}>
-              Track on {order.courier} <ExternalLink className="w-3.5 h-3.5" aria-hidden="true" />
+    courierValue = (
+      <>
+        <p className="text-xs text-gray-500">{order.courier}{order.dateCompleted ? ` · shipped ${when(order.dateCompleted, false)}` : ''}</p>
+        <p className="text-lg font-bold tracking-wide text-[#22306a] [overflow-wrap:anywhere]">{order.trackingNumber}</p>
+      </>
+    )
+    courierActions = (
+      <>
+        <button type="button" onClick={copyTracking} className={linkButton}>
+          {copied ? <Check className="w-3.5 h-3.5" aria-hidden="true" /> : <Copy className="w-3.5 h-3.5" aria-hidden="true" />}
+          {copied ? 'Copied' : 'Copy number'}
+        </button>
+        {site && (
+          <>
+            <Dot />
+            <a href={site} target="_blank" rel="noreferrer" className={linkButton}>
+              Track parcel <ExternalLink className="w-3.5 h-3.5" aria-hidden="true" />
             </a>
-          )}
-          <button type="button" onClick={startFix} className={`${linkButton} !text-gray-600 [@media(hover:hover)]:hover:!text-[#22306a]`}>Fix tracking no.</button>
-        </div>
-      </div>
+          </>
+        )}
+        <Dot />
+        <button type="button" onClick={startEdit} className={`${linkButton} !text-gray-600 [@media(hover:hover)]:hover:!text-[#22306a]`}>Edit tracking</button>
+      </>
     )
   } else if (shipping) {
-    trackBox = (
-      <div className={`${boxBase} border-2 border-[#2474b6] shadow-[0_0_0_4px_rgba(36,116,182,0.12)]`}>
-        <span className={`${boxTitle} text-[#22306a]`}>3 · Courier and tracking</span>
-        <TrackingFields form={form} setForm={setForm} errors={errors} idPrefix="ship" />
-      </div>
-    )
+    courierValue = <TrackingFields form={form} setForm={setForm} errors={errors} idPrefix="ship" />
   } else {
-    trackBox = (
-      <div className={`${boxBase} border border-dashed border-gray-300 bg-gray-50`}>
-        <span className={`${boxTitle} text-gray-500`}>3 · Courier and tracking</span>
-        <span className="text-sm text-gray-600">Filled in when you ship, after the payment is checked.</span>
-      </div>
-    )
+    courierValue = <span className={muted}>Fill in when you ship</span>
   }
 
   let note = null
-  if (submitted && !shipped) note = 'Check the screenshot against your e-wallet, fill in box 3, then Confirm Order: the order is marked On its way and the customer gets the tracking number. "Payment doesn\'t match" takes the payment back so the customer can pay again (contact them to explain).'
-  else if (shipped) note = 'The order is locked. Only the courier and tracking number can still be fixed, for a typo.'
-  else if (status === 'waiting_for_buyer' && fee !== null) note = 'The customer was emailed this total with a Pay now link. When they pay, box 2 shows their screenshot to check.'
-  else if (selected === 'waiting_for_buyer') note = 'Update Status saves the fee and emails the customer the total to pay.'
+  if (submitted && !shipped) note = 'Check that the money is in your e-wallet, fill in the courier and tracking number, then click Confirm Order.'
+  else if (shipped) note = 'This order is finished. Only the tracking number can still be edited.'
+  else if (status === 'waiting_for_buyer' && fee !== null) note = 'The customer got an email with this amount and a Pay now link.'
+  else if (askFee && selected === 'waiting_for_buyer') note = 'Update Status saves the fee and emails the customer what to pay.'
 
   return (
     <section id="shippingPanel" aria-labelledby="shippingPanelTitle" className="px-5 py-4 sm:px-6 border-b border-gray-100">
-      <h3 id="shippingPanelTitle" className="flex items-center gap-2 mb-3 text-sm font-semibold uppercase tracking-wider text-gray-500">
+      <h3 id="shippingPanelTitle" className="flex items-center gap-2 mb-2.5 text-sm font-semibold uppercase tracking-wider text-gray-500">
         <Truck className="w-4 h-4 text-[#2474b6]" aria-hidden="true" />
         Shipping
       </h3>
-      <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
-        {feeBox}
-        {payBox}
-        {trackBox}
+      <div className="rounded-[14px] border border-gray-200">
+        <Row label="Shipping fee" labelFor={askFee ? 'shippingFeeInput' : undefined} actions={feeActions} first>
+          {feeValue}
+        </Row>
+        <Row label="Payment" actions={payActions}>{payValue}</Row>
+        <Row label="Courier" actions={courierActions}>{courierValue}</Row>
       </div>
-      {note && <p className="mt-2.5 text-xs text-gray-600">{note}</p>}
+      {note && <p className="mt-2 text-xs text-gray-600">{note}</p>}
 
       {askReject && (
         <IconModal
           id="rejectPaymentModal"
           type="warning"
-          title="Payment doesn't match?"
-          message={`The ${peso(submitted.amount)} payment is taken back and the customer can pay again from their order. Contact them to explain what was wrong.`}
+          title="Remove this payment?"
+          message={`The ${peso(submitted.amount)} payment will be removed so the customer can pay again. Please message them to explain what was wrong.`}
           onClose={() => setAskReject(false)}
         >
           <button
@@ -326,7 +345,7 @@ export default function ShippingPanel({ data, selected, form, setForm, errors, o
             }}
             className={confirmButton}
           >
-            Take it back
+            Remove payment
           </button>
           <button type="button" onClick={() => setAskReject(false)} data-autofocus className={cancelButton}>
             Cancel

@@ -3,10 +3,10 @@
 // POST form: order_id, action, and:
 //   action=fee             shipping_fee: change the fee of a Ready (Waiting for Buyer) order, until the customer
 //                          has paid the rest. (The fee is first set with the status: update-order-status.php.)
-//   action=reject_payment  "Payment doesn't match": takes back the balance the customer paid online, before it is
+//   action=reject_payment  "Wrong payment": takes back the balance the customer paid online, before it is
 //                          checked, so the Pay button comes back for them. The payment row and its screenshot stay
 //                          for the record. The admin contacts the customer to explain.
-//   action=tracking        courier, tracking_number: fix them after the order shipped (Completed), e.g. a typo.
+//   action=tracking        "Edit tracking": courier, tracking_number, after the order shipped (Completed), e.g. a typo.
 // Answers { success, message } or { success: false, error }.
 require_once __DIR__ . '/../../helpers/admin.php';
 require_once __DIR__ . '/../../helpers/payments.php';
@@ -74,7 +74,7 @@ try {
             "Payment Doesn't Match",
             "Order ID: {$order_id}; online payment of " . peso_text($paid['amount']) . " ({$paid['service']}, ref. {$paid['reference_number']}) taken back"
         );
-        $message = 'The payment was taken back. The customer can pay again; please contact them to explain.';
+        $message = 'Payment removed. The customer can pay again. Please message them to explain what was wrong.';
     } else {
         if ($order['status'] !== 'completed') {
             $fail('The courier and tracking number are filled in when the order ships (Completed).');
@@ -90,7 +90,7 @@ try {
             'Fix Tracking Number',
             "Order ID: {$order_id}; {$order['courier']} {$order['tracking_number']} changed to {$courier} {$tracking}"
         );
-        $message = 'Tracking number saved.';
+        $message = 'Tracking number updated.';
     }
 } catch (PDOException $e) {
     error_log('update-shipping.php database error: ' . $e->getMessage());
