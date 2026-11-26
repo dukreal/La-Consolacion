@@ -17,10 +17,12 @@ $stmt->execute([$email]);
 $user = $stmt->fetch();
 
 if ($user) {
+    // Only a hash of the token is saved: the link in the email has the token itself, so someone who sees
+    // the database (or a backup of it) cannot use a reset link (api/auth/reset-password.php compares hashes)
     $token = bin2hex(random_bytes(32));
     $expiry = date('Y-m-d H:i:s', strtotime('+1 hour'));
     $stmt = $pdo->prepare('UPDATE users SET password_reset_token = ?, token_expiry = ? WHERE email = ?');
-    $stmt->execute([$token, $expiry, $email]);
+    $stmt->execute([hash('sha256', $token), $expiry, $email]);
 
     // The link opens the React page /reset-password
     $config = require __DIR__ . '/../../config/app.php';

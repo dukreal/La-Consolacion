@@ -187,7 +187,7 @@ CREATE TABLE `users` (
   `deleted` tinyint(1) NOT NULL DEFAULT 0,
   `created_at` timestamp NOT NULL DEFAULT current_timestamp(),
   `updated_at` timestamp NOT NULL DEFAULT current_timestamp() ON UPDATE current_timestamp(),
-  `password_reset_token` varchar(255) DEFAULT NULL,
+  `password_reset_token` varchar(255) DEFAULT NULL, -- a hash of the token in the reset link, never the token itself
   `token_expiry` datetime DEFAULT NULL,
   `is_verified` tinyint(1) DEFAULT 0,
   `verification_token` varchar(255) DEFAULT NULL,
@@ -215,6 +215,19 @@ CREATE TABLE `user_addresses` (
   `updated_at` timestamp NOT NULL DEFAULT current_timestamp() ON UPDATE current_timestamp(),
   PRIMARY KEY (`user_id`),
   CONSTRAINT `user_addresses_user` FOREIGN KEY (`user_id`) REFERENCES `users` (`id`) ON DELETE CASCADE
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
+/*!40101 SET character_set_client = @saved_cs_client */;
+
+-- Wrong passwords per email (backend/helpers/login-limit.php): after 5 wrong tries, locked_until is set
+-- 15 minutes ahead and the password is not checked until then. A successful login removes the row.
+/*!40101 SET @saved_cs_client     = @@character_set_client */;
+/*!40101 SET character_set_client = utf8mb4 */;
+CREATE TABLE `login_attempts` (
+  `email` varchar(255) NOT NULL,
+  `failed` int(11) NOT NULL DEFAULT 0,
+  `locked_until` datetime DEFAULT NULL,
+  `updated_at` timestamp NOT NULL DEFAULT current_timestamp() ON UPDATE current_timestamp(),
+  PRIMARY KEY (`email`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
 /*!40101 SET character_set_client = @saved_cs_client */;
 
