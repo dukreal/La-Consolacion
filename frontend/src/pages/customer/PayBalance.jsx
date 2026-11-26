@@ -176,7 +176,7 @@ export default function PayBalance() {
         )}
 
         {ready && step === 2 && (
-          <PaymentConfirmStep amount={amount.toFixed(2)} onSubmit={handleSubmit} onBack={() => goToStep(1)} error={error} submitting={submitting} />
+          <PaymentConfirmStep amount={amount.toFixed(2)} service={service} onSubmit={handleSubmit} onBack={() => goToStep(1)} error={error} submitting={submitting} />
         )}
       </div>
 
