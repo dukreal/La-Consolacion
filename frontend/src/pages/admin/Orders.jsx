@@ -178,11 +178,14 @@ function CustomerAvatar({ order, size = 'w-10 h-10', iconSize = 'w-5 h-5' }) {
 function CustomerCell({ order }) {
   const kind = customerKind(order)
   return (
-    <div className="flex items-center gap-4">
+    <div className="flex items-center gap-4 min-w-0">
       <CustomerAvatar order={order} />
-      <div>
-        <div className="font-bold text-gray-900 leading-tight">{order.isWalkIn ? 'Walk-In Sale' : order.username}</div>
-        <div className={`text-xs font-semibold uppercase tracking-wider ${kind.color}`}>{kind.label}</div>
+      {/* The column has a fixed width: a very long username ends in "…" (the whole name shows on hover) */}
+      <div className="min-w-0">
+        <div className="font-bold text-gray-900 leading-tight truncate" title={order.isWalkIn ? undefined : order.username}>
+          {order.isWalkIn ? 'Walk-In Sale' : order.username}
+        </div>
+        <div className={`text-xs font-semibold uppercase tracking-wider truncate ${kind.color}`}>{kind.label}</div>
       </div>
     </div>
   )
@@ -295,17 +298,17 @@ function OrderRowSkeleton({ canDelete }) {
           <div className="flex-1"><Skeleton className="h-4 w-40" /><Skeleton className="mt-2 h-3 w-24" /></div>
         </div>
       </td>
-      <td className="px-6 py-4 w-40">
+      <td className="px-4 py-4">
         <div className="flex items-center gap-4">
           <Skeleton className="w-10 h-10 flex-shrink-0 !rounded-full" />
           <div className="flex-1"><Skeleton className="h-4 w-[4.75rem]" /><Skeleton className="mt-2 h-3 w-14" /></div>
         </div>
       </td>
-      <td className="px-6 py-4 w-32"><Skeleton className="h-4 w-10" /><Skeleton className="mt-2 h-3 w-[5.5rem]" /></td>
-      <td className="px-6 py-4 w-32"><Skeleton className="ml-auto h-5 w-16" /></td>
-      <td className="px-6 py-4 w-32"><Skeleton className="mx-auto h-6 w-[5.75rem]" /></td>
+      <td className="px-4 py-4"><Skeleton className="h-4 w-10" /><Skeleton className="mt-2 h-3 w-[5.5rem]" /></td>
+      <td className="px-4 py-4"><Skeleton className="ml-auto h-5 w-16" /></td>
+      <td className="px-4 py-4"><Skeleton className="mx-auto h-6 w-[5.75rem]" /></td>
       {/* Same widths as the Details / Payment / Delete buttons, so the columns keep their place */}
-      <td className="px-6 py-4 w-32">
+      <td className="px-6 py-4">
         <div className="flex justify-center gap-2">
           <Skeleton className="h-6 w-[3.95rem] !rounded-lg" />
           <Skeleton className="h-6 w-[4.65rem] !rounded-lg" />
@@ -317,16 +320,32 @@ function OrderRowSkeleton({ canDelete }) {
 }
 
 // The table's column headings (the loading placeholder table uses the same ones, so the columns do not shift)
+// Fixed column widths (in rem, so they grow with the browser's text size): every column stays in the same
+// place whatever is searched or filtered. Each has room for its widest content (e.g. Details / Payment /
+// Delete); Product gets the rest. Used by the table and by its loading placeholder.
+function OrdersTableCols() {
+  return (
+    <colgroup>
+      <col />
+      <col className="w-[12.5rem]" />
+      <col className="w-[8rem]" />
+      <col className="w-[8rem]" />
+      <col className="w-[8rem]" />
+      <col className="w-[17rem]" />
+    </colgroup>
+  )
+}
+
 function OrdersTableHead() {
   return (
     <thead className="bg-gray-50 border-b border-gray-200">
       <tr>
         <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">PRODUCT NAME</th>
-        <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider w-40">CUSTOMER NAME</th>
-        <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider whitespace-nowrap w-32">ORDER ID</th>
-        <th className="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider w-32">AMOUNT</th>
-        <th className="px-6 py-3 text-center text-xs font-medium text-gray-500 uppercase tracking-wider w-32">STATUS</th>
-        <th className="px-6 py-3 text-center text-xs font-medium text-gray-500 uppercase tracking-wider w-32">ACTION</th>
+        <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">CUSTOMER NAME</th>
+        <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider whitespace-nowrap">ORDER ID</th>
+        <th className="px-4 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">AMOUNT</th>
+        <th className="px-4 py-3 text-center text-xs font-medium text-gray-500 uppercase tracking-wider">STATUS</th>
+        <th className="px-6 py-3 text-center text-xs font-medium text-gray-500 uppercase tracking-wider">ACTION</th>
       </tr>
     </thead>
   )
@@ -535,7 +554,8 @@ export default function Orders() {
               {SKELETON_ROWS.map((n) => <OrderCardSkeleton key={n} canDelete={canDelete} />)}
             </ul>
             <div className="orders-table overflow-x-auto">
-              <table className="w-full">
+              <table className="w-full table-fixed">
+                <OrdersTableCols />
                 <OrdersTableHead />
                 <tbody className="bg-white divide-y divide-gray-100">
                   {SKELETON_ROWS.map((n) => <OrderRowSkeleton key={n} canDelete={canDelete} />)}
@@ -615,33 +635,34 @@ export default function Orders() {
             </ul>
 
             <div className="orders-table overflow-x-auto">
-              <table className="w-full">
+              <table className="w-full table-fixed">
+                <OrdersTableCols />
                 <OrdersTableHead />
                 <tbody id="ordersTableBody" className="bg-white divide-y divide-gray-100">
                   {orders.map((order) => (
                     <tr key={order.id} className="hover:bg-gray-50 transition-all duration-200" data-order-id={order.id}>
                       <td className="px-6 py-4"><ProductCell order={order} /></td>
-                      <td className="px-6 py-4 w-40"><CustomerCell order={order} /></td>
-                      <td className="px-6 py-4 w-32">
+                      <td className="px-4 py-4"><CustomerCell order={order} /></td>
+                      <td className="px-4 py-4">
                         <p className="font-semibold text-gray-900">#{order.id}</p>
                         <p className="text-sm text-gray-500 whitespace-nowrap">{formatDate(order.dateOrdered)}</p>
                         <div className="mt-1">
                           <DeliveryTag order={order} />
                         </div>
                       </td>
-                      <td className="px-6 py-4 w-32 text-right">
+                      <td className="px-4 py-4 text-right">
                         <p className="font-bold text-lg text-gray-900">{peso(order.total)}</p>
                         {order.service && order.service !== 'custom' && (
                           <p className="text-xs text-gray-500 uppercase">{order.service}</p>
                         )}
                       </td>
-                      <td className="px-6 py-4 w-32 text-center status-cell">
+                      <td className="px-4 py-4 text-center status-cell">
                         <StatusPill order={order} />
                         {order.balanceToCheck && order.status === 'waiting_for_buyer' && (
                           <div className="mt-1.5"><BalanceSubmittedTag order={order} /></div>
                         )}
                       </td>
-                      <td className="px-6 py-4 w-32 text-center">
+                      <td className="px-6 py-4 text-center">
                         <OrderActions order={order} adminLevel={data.adminLevel} className="justify-center" {...actionHandlers} />
                       </td>
                     </tr>
