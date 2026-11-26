@@ -55,9 +55,10 @@ function Quantity({ quantity }) {
 
 // The order's products (order.items). One product: its picture and name, as before. Two or more: every product
 // on its own line with a small picture and its quantity, up to 3, then "+2 more products" (Details has them all).
-// children: shown under the product(s) (the customer line on the cards)
+// children: shown under the product(s) (the customer line on the cards). column: the width of the big picture
+// in the one-product rows, so the small pictures sit in the same column and the names line up with theirs.
 const MAX_PRODUCT_LINES = 3
-function OrderProducts({ order, single, children }) {
+function OrderProducts({ order, single, column = 'w-12', children }) {
   const items = order.items ?? (order.firstItem ? [order.firstItem] : [])
   if (items.length < 2) {
     const item = items[0] ?? null
@@ -66,10 +67,12 @@ function OrderProducts({ order, single, children }) {
   const more = items.length - MAX_PRODUCT_LINES
   return (
     <div className="flex-1 min-w-0">
-      <ul className="space-y-1.5" aria-label={`${items.length} products`}>
+      <ul className="flex flex-col gap-2" aria-label={`${items.length} products`}>
         {items.slice(0, MAX_PRODUCT_LINES).map((item, i) => (
-          <li key={i} className="flex items-center gap-2.5 min-w-0">
-            <ProductThumb item={item} size="w-8 h-8" />
+          <li key={i} className="flex items-center gap-3 min-w-0">
+            <span className={`${column} flex-none flex justify-center`}>
+              <ProductThumb item={item} size="w-10 h-10" />
+            </span>
             <p className="font-semibold text-gray-900 leading-snug min-w-0">
               {item.name}
               <Quantity quantity={item.quantity} />
@@ -77,12 +80,20 @@ function OrderProducts({ order, single, children }) {
           </li>
         ))}
       </ul>
-      {more > 0 && (
-        <p className="text-sm text-gray-500 mt-1.5">
-          +{more} more {more === 1 ? 'product' : 'products'}
-        </p>
+      {/* Under the names, not under the pictures */}
+      {(more > 0 || children) && (
+        <div className="flex gap-3">
+          <span className={`${column} flex-none`} aria-hidden="true" />
+          <div className="flex-1 min-w-0">
+            {more > 0 && (
+              <p className="text-sm text-gray-500 mt-2">
+                +{more} more {more === 1 ? 'product' : 'products'}
+              </p>
+            )}
+            {children}
+          </div>
+        </div>
       )}
-      {children}
     </div>
   )
 }
@@ -570,6 +581,7 @@ export default function Orders() {
                 <div className="mt-3 flex items-start gap-3">
                   <OrderProducts
                     order={order}
+                    column="w-11 sm:w-12"
                     single={(item, quantity) => (
                       <>
                         <ProductThumb item={item} size="w-11 h-11 sm:w-12 sm:h-12" />
