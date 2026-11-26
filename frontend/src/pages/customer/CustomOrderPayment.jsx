@@ -188,6 +188,7 @@ export default function CustomOrderPayment() {
         {order && !alreadyPaid && step === 2 && (
           <PaymentConfirmStep
             amount={downpayment}
+            service={service}
             onSubmit={handleSubmit}
             onBack={() => goToStep(1)}
             error={error}
