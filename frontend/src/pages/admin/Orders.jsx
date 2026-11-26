@@ -1,8 +1,9 @@
-import { CheckCircle, Clock, Gem, Hourglass, Package, PackageCheck, PlusCircle, Settings, ShoppingBag, ShoppingCart, Store, Trash2, TrendingUp, User, X } from 'lucide-react'
-import { useCallback, useEffect, useState } from 'react'
+import { CheckCircle, Clock, Gem, Hourglass, Package, PackageCheck, PlusCircle, Search, Settings, ShoppingBag, ShoppingCart, Store, Trash2, TrendingUp, User, X } from 'lucide-react'
+import { useCallback, useEffect, useRef, useState } from 'react'
 import { Link, useLocation, useNavigate } from 'react-router-dom'
 import IconModal, { OkButton } from '../../components/admin/IconModal'
 import OrderDetailsModal from '../../components/admin/OrderDetailsModal'
+import OrderFilters, { OrderPager } from '../../components/admin/OrderFilters'
 import PaymentModal from '../../components/admin/PaymentModal'
 import Skeleton, { LoadingArea } from '../../components/admin/Skeleton'
 import StatCard from '../../components/admin/StatCard'
@@ -306,15 +307,45 @@ export default function Orders() {
   const [detailsId, setDetailsId] = useState(null) // order shown in the Details pop-up
   const [paymentId, setPaymentId] = useState(null) // payment shown in the Payment pop-up
   const [reloading, setReloading] = useState(false) // getting the list again after a delete
-  const refreshing = useRefreshing(reloading)
+  // What is shown: the search (sent a moment after typing stops), status button, type and page
+  const [search, setSearch] = useState('')
+  const [filters, setFilters] = useState({ q: '', status: 'all', type: 'all', page: 1 })
+  const [shownFor, setShownFor] = useState(null) // the filters the list on screen belongs to
+  const filtersKey = JSON.stringify(filters)
+  const fetching = data !== null && shownFor !== filtersKey // another search, filter or page is loading
+  const refreshing = useRefreshing(reloading || fetching)
+  const latest = useRef(0) // only the answer to the newest request is shown (an older, slower one is ignored)
+  const listTop = useRef(null)
 
   const load = useCallback(() => {
-    return getOrders()
-      .then((d) => { setData(d); setError('') })
-      .catch((e) => setError(e.message))
-  }, [])
+    const request = ++latest.current
+    const key = JSON.stringify(filters)
+    return getOrders(filters)
+      .then((d) => { if (request === latest.current) { setData(d); setError('') } })
+      .catch((e) => { if (request === latest.current) setError(e.message) })
+      .finally(() => { if (request === latest.current) setShownFor(key) })
+  }, [filters])
 
   useEffect(() => { load() }, [load])
+
+  // Searching waits until typing stops for a moment, so the list does not jump at every letter
+  useEffect(() => {
+    const q = search.trim()
+    if (q === filters.q) return undefined
+    const timer = setTimeout(() => setFilters((f) => ({ ...f, q, page: 1 })), 300)
+    return () => clearTimeout(timer)
+  }, [search, filters.q])
+
+  const setStatusFilter = useCallback((status) => setFilters((f) => ({ ...f, status, page: 1 })), [])
+  const setTypeFilter = useCallback((type) => setFilters((f) => ({ ...f, type, page: 1 })), [])
+  const clearFilters = useCallback(() => {
+    setSearch('')
+    setFilters({ q: '', status: 'all', type: 'all', page: 1 })
+  }, [])
+  const goToPage = useCallback((page) => {
+    setFilters((f) => ({ ...f, page }))
+    listTop.current?.scrollIntoView({ behavior: 'smooth', block: 'start' })
+  }, [])
 
   // Forget the walk-in message so a refresh does not show it again (the old page cleaned the URL)
   useEffect(() => {
@@ -323,11 +354,13 @@ export default function Orders() {
 
   const closeWalkinToast = useCallback(() => setWalkinToast(false), [])
 
-  // A status changed in the Details pop-up: update that row and the stat cards without reloading
+  // A status changed in the Details pop-up: update that row at once, then get the page again so the stat
+  // cards, the status counts and the list (it may no longer match the status button) are right
   // (changes: a delivery order's new total and "Balance submitted" label, from the Shipping panel)
   const handleStatusChange = useCallback((id, status, changes = {}) => {
     setData((d) => ({ ...d, orders: d.orders.map((o) => (o.id === id ? { ...o, status, ...changes } : o)) }))
-  }, [])
+    load()
+  }, [load])
 
   // Only finished or unpaid orders can be deleted (the server checks this too). Deleting a paid, active order
   // would only hide it: the customer would still see it as active and its stock would never come back.
@@ -366,12 +399,9 @@ export default function Orders() {
   const orders = data?.orders ?? []
   const canDelete = (data?.adminLevel ?? Number(me?.adminLevel)) === 2
   const actionHandlers = { onDetails: setDetailsId, onPayment: setPaymentId, onDelete: askDelete }
-  const stats = {
-    total: orders.length,
-    pending: orders.filter((o) => o.status === 'pending').length,
-    processing: orders.filter((o) => o.status === 'processing' || o.status === 'waiting_for_buyer').length,
-    completed: orders.filter((o) => o.status === 'completed').length,
-  }
+  // The stat cards count all orders, whatever is searched (the server counts them)
+  const stats = data?.stats ?? { total: 0, pending: 0, processing: 0, completed: 0 }
+  const filtered = filters.q !== '' || filters.status !== 'all' || filters.type !== 'all'
 
   return (
     <>
@@ -412,11 +442,21 @@ export default function Orders() {
       </div>
 
       {/* Table */}
-      <div className={`bg-white rounded-2xl shadow-lg overflow-hidden ${refreshingClass(refreshing)}`} aria-busy={refreshing || undefined}>
+      <div ref={listTop} className="bg-white rounded-2xl shadow-lg overflow-hidden scroll-mt-4" aria-busy={refreshing || undefined}>
         <div className="bg-gradient-to-r from-slate-50 to-sky-50 px-4 py-3 sm:px-6 sm:py-4 border-b border-gray-200">
           <h2 className="text-lg sm:text-2xl font-bold text-gray-800">Order Details</h2>
           <p className="text-sm sm:text-base text-gray-600">Manage individual order status and details</p>
+          <OrderFilters
+            search={search}
+            onSearch={setSearch}
+            type={filters.type}
+            onType={setTypeFilter}
+            status={filters.status}
+            onStatus={setStatusFilter}
+            counts={data?.counts}
+          />
         </div>
+        <div className={refreshingClass(refreshing)}>
 
         {loading ? (
           <LoadingArea label="Loading orders…">
@@ -432,6 +472,21 @@ export default function Orders() {
               </table>
             </div>
           </LoadingArea>
+        ) : data && orders.length === 0 && filtered ? (
+          <div className="text-center py-14 px-4">
+            <div className="w-20 h-20 bg-gray-100 rounded-full flex items-center justify-center mx-auto mb-4">
+              <Search className="w-10 h-10 text-gray-400" />
+            </div>
+            <h3 className="text-xl font-semibold text-gray-600 mb-2">No orders match</h3>
+            <p className="text-gray-500">Try another search, or show all orders.</p>
+            <button
+              type="button"
+              onClick={clearFilters}
+              className="mt-4 px-5 py-2.5 rounded-xl border border-[#22306a] text-[#22306a] font-semibold [@media(hover:hover)]:hover:bg-[#22306a]/5"
+            >
+              Clear search and filters
+            </button>
+          </div>
         ) : data && orders.length === 0 ? (
           <div className="text-center py-16">
             <div className="w-24 h-24 bg-gray-100 rounded-full flex items-center justify-center mx-auto mb-4">
@@ -514,6 +569,18 @@ export default function Orders() {
             </div>
           </>
         )}
+        {data && orders.length > 0 && (
+          <OrderPager
+            page={data.page}
+            pages={data.pages}
+            perPage={data.perPage}
+            matching={data.matching}
+            shownCount={orders.length}
+            filtered={filtered}
+            onPage={goToPage}
+          />
+        )}
+        </div>
       </div>
 
       {detailsId && (
