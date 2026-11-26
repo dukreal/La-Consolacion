@@ -165,6 +165,7 @@ export default function Checkout() {
         ) : (
           <PaymentConfirmStep
             amount={downpayment}
+            service={service}
             onSubmit={handleSubmit}
             onBack={() => goToStep(1)}
             error={error}
