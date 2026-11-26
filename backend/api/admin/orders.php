@@ -1,6 +1,6 @@
 <?php
-// The admin Orders page: one page of orders (20), newest first, deleted ones left out. Each order has its first
-// product, its total and its payment service.
+// The admin Orders page: one page of orders (20), newest first, deleted ones left out. Each order has its products
+// (items, with quantities; firstItem is the first of them), its total and its payment service.
 // GET (all optional):
 //   q       search: an order number (37, #37 or LCJ-0037), or part of the customer's name, username or email,
 //           or of the delivery name
@@ -136,6 +136,13 @@ json_response([
             $total += $item['price_at_purchase'] * $item['quantity'];
         }
         $first = $order_items[0] ?? null;
+        // Every product of the order with its quantity (the list shows up to 3, then "+N more products")
+        $products = array_map(fn ($item) => [
+            'name'     => $item['name'],
+            'image'    => $item['image'],
+            'folder'   => $item['type'] === 'custom' ? 'custom' : 'products',
+            'quantity' => (int) $item['quantity'],
+        ], $order_items);
         // Only send the photo if the file is really there (the old page checked file_exists too)
         $photo = $o['profile_image'] && is_file($profile_dir . $o['profile_image']) ? $o['profile_image'] : null;
 
@@ -154,11 +161,13 @@ json_response([
             'total'        => $total,
             // The customer paid the rest online and it waits to be checked ("Balance submitted" label)
             'balanceToCheck' => $o['balance_payment_id'] !== null && (int) $o['balance_to_check'] === 1,
+            'items'        => $products,
             'firstItem'    => $first ? [
                 'name'  => $first['name'],
                 'image' => $first['image'],
                 // Custom order pictures are in uploads/custom, the rest in uploads/products
                 'folder' => $first['type'] === 'custom' ? 'custom' : 'products',
+                'quantity' => (int) $first['quantity'],
             ] : null,
         ];
     }, $orders),

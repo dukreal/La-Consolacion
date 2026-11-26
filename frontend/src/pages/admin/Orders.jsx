@@ -47,26 +47,81 @@ function ProductThumb({ item, size = 'w-12 h-12' }) {
   )
 }
 
-// Table: picture, name and "Jewelry Product"
-function ProductCell({ item }) {
+// "×2" after a product name when the order has more than one of it
+function Quantity({ quantity }) {
+  if (!quantity || quantity < 2) return null
+  return <span className="font-medium text-gray-500 whitespace-nowrap"> ×{quantity}</span>
+}
+
+// The order's products (order.items). One product: its picture and name, as before. Two or more: every product
+// on its own line with a small picture and its quantity, up to 3, then "+2 more products" (Details has them all).
+// children: shown under the product(s) (the customer line on the cards)
+const MAX_PRODUCT_LINES = 3
+function OrderProducts({ order, single, children }) {
+  const items = order.items ?? (order.firstItem ? [order.firstItem] : [])
+  if (items.length < 2) {
+    const item = items[0] ?? null
+    return single(item, <Quantity quantity={item?.quantity} />)
+  }
+  const more = items.length - MAX_PRODUCT_LINES
   return (
-    <div className="flex items-center space-x-3">
-      <ProductThumb item={item} />
-      <div>
-        <p className="font-semibold text-gray-900">{item ? item.name : 'No Product'}</p>
-        <p className="text-sm text-gray-500">{item ? 'Jewelry Product' : 'No items found'}</p>
-      </div>
+    <div className="flex-1 min-w-0">
+      <ul className="space-y-1.5" aria-label={`${items.length} products`}>
+        {items.slice(0, MAX_PRODUCT_LINES).map((item, i) => (
+          <li key={i} className="flex items-center gap-2.5 min-w-0">
+            <ProductThumb item={item} size="w-8 h-8" />
+            <p className="font-semibold text-gray-900 leading-snug min-w-0">
+              {item.name}
+              <Quantity quantity={item.quantity} />
+            </p>
+          </li>
+        ))}
+      </ul>
+      {more > 0 && (
+        <p className="text-sm text-gray-500 mt-1.5">
+          +{more} more {more === 1 ? 'product' : 'products'}
+        </p>
+      )}
+      {children}
     </div>
   )
 }
 
-// "Delivery" on orders the customer wants shipped by courier (pickup is the usual case, so it gets no tag)
-function DeliveryTag({ order }) {
-  if (order.fulfillment !== 'delivery') return null
+// Table: picture, name and "Jewelry Product" (or the list of products)
+function ProductCell({ order }) {
   return (
-    <span className="delivery-tag inline-flex items-center gap-1 rounded-full bg-blue-50 border border-blue-200 px-2 py-0.5 text-[11px] font-semibold text-blue-700 whitespace-nowrap">
-      <Package className="w-3 h-3" aria-hidden="true" />
-      Delivery
+    <OrderProducts
+      order={order}
+      single={(item, quantity) => (
+        <div className="flex items-center space-x-3">
+          <ProductThumb item={item} />
+          <div>
+            <p className="font-semibold text-gray-900">
+              {item ? item.name : 'No Product'}
+              {quantity}
+            </p>
+            <p className="text-sm text-gray-500">{item ? 'Jewelry Product' : 'No items found'}</p>
+          </div>
+        </div>
+      )}
+    />
+  )
+}
+
+// "Delivery" (shipped by courier) or "Pickup" (at the store; walk-in sales too) on every order
+function DeliveryTag({ order }) {
+  if (order.fulfillment === 'delivery') {
+    return (
+      <span className="delivery-tag inline-flex items-center gap-1 rounded-full bg-blue-50 border border-blue-200 px-2 py-0.5 text-[11px] font-semibold text-blue-700 whitespace-nowrap">
+        <Package className="w-3 h-3" aria-hidden="true" />
+        Delivery
+      </span>
+    )
+  }
+  return (
+    <span className="pickup-tag inline-flex items-center gap-1 rounded-full bg-slate-100 border border-slate-300 px-2 py-0.5 text-[11px] font-semibold text-slate-600 whitespace-nowrap">
+      <Store className="w-3 h-3" aria-hidden="true" />
+      Pickup
     </span>
   )
 }
@@ -513,11 +568,23 @@ export default function Orders() {
                   <StatusPill order={order} />
                 </div>
                 <div className="mt-3 flex items-start gap-3">
-                  <ProductThumb item={order.firstItem} size="w-11 h-11 sm:w-12 sm:h-12" />
-                  <div className="flex-1 min-w-0">
-                    <p className="font-semibold text-gray-900 leading-snug">{order.firstItem ? order.firstItem.name : 'No Product'}</p>
+                  <OrderProducts
+                    order={order}
+                    single={(item, quantity) => (
+                      <>
+                        <ProductThumb item={item} size="w-11 h-11 sm:w-12 sm:h-12" />
+                        <div className="flex-1 min-w-0">
+                          <p className="font-semibold text-gray-900 leading-snug">
+                            {item ? item.name : 'No Product'}
+                            {quantity}
+                          </p>
+                          <CustomerLine order={order} />
+                        </div>
+                      </>
+                    )}
+                  >
                     <CustomerLine order={order} />
-                  </div>
+                  </OrderProducts>
                   <div className="flex-shrink-0 text-right">
                     <p className="font-bold text-base sm:text-lg text-gray-900 leading-tight">{peso(order.total)}</p>
                     {order.service && order.service !== 'custom' && (
@@ -536,16 +603,14 @@ export default function Orders() {
                 <tbody id="ordersTableBody" className="bg-white divide-y divide-gray-100">
                   {orders.map((order) => (
                     <tr key={order.id} className="hover:bg-gray-50 transition-all duration-200" data-order-id={order.id}>
-                      <td className="px-6 py-4"><ProductCell item={order.firstItem} /></td>
+                      <td className="px-6 py-4"><ProductCell order={order} /></td>
                       <td className="px-6 py-4 w-40"><CustomerCell order={order} /></td>
                       <td className="px-6 py-4 w-32">
                         <p className="font-semibold text-gray-900">#{order.id}</p>
                         <p className="text-sm text-gray-500 whitespace-nowrap">{formatDate(order.dateOrdered)}</p>
-                        {order.fulfillment === 'delivery' && (
-                          <div className="mt-1">
-                            <DeliveryTag order={order} />
-                          </div>
-                        )}
+                        <div className="mt-1">
+                          <DeliveryTag order={order} />
+                        </div>
                       </td>
                       <td className="px-6 py-4 w-32 text-right">
                         <p className="font-bold text-lg text-gray-900">{peso(order.total)}</p>
