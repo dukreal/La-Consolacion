@@ -141,6 +141,7 @@ json_response([
             'name'     => $item['name'],
             'image'    => $item['image'],
             'folder'   => $item['type'] === 'custom' ? 'custom' : 'products',
+            'type'     => strtolower((string) $item['type']), // ring, charm, earring, bracelet or custom
             'quantity' => (int) $item['quantity'],
         ], $order_items);
         // Only send the photo if the file is really there (the old page checked file_exists too)
@@ -167,6 +168,7 @@ json_response([
                 'image' => $first['image'],
                 // Custom order pictures are in uploads/custom, the rest in uploads/products
                 'folder' => $first['type'] === 'custom' ? 'custom' : 'products',
+                'type' => strtolower((string) $first['type']),
                 'quantity' => (int) $first['quantity'],
             ] : null,
         ];

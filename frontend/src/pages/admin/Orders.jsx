@@ -98,7 +98,12 @@ function OrderProducts({ order, single, column = 'w-12', children }) {
   )
 }
 
-// Table: picture, name and "Jewelry Product" (or the list of products)
+// What kind of product it is, under its name in the table (the same words as Inventory; custom-made pieces
+// say "Custom order"). Any other type is shown as it is, capitalized.
+const PRODUCT_TYPES = { ring: 'Ring', charm: 'Charm', earring: 'Earring', bracelet: 'Bracelet', custom: 'Custom order' }
+const productType = (type) => PRODUCT_TYPES[type] ?? (type ? type.charAt(0).toUpperCase() + type.slice(1) : 'Product')
+
+// Table: picture, name and its type (or the list of products)
 function ProductCell({ order }) {
   return (
     <OrderProducts
@@ -111,7 +116,7 @@ function ProductCell({ order }) {
               {item ? item.name : 'No Product'}
               {quantity}
             </p>
-            <p className="text-sm text-gray-500">{item ? 'Jewelry Product' : 'No items found'}</p>
+            <p className="text-sm text-gray-500">{item ? productType(item.type) : 'No items found'}</p>
           </div>
         </div>
       )}
