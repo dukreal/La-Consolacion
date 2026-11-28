@@ -1,6 +1,7 @@
 <?php
 // The customer pays the rest of a delivery order online (Pay for Your Order page): the balance plus the shipping fee.
-// POST form: order_id, service (gcash, paymaya, gotyme), mobile (11 digits), reference, payment_screenshot (image).
+// POST form: order_id, mobile (11 digits), reference, payment_screenshot (image). Saved as an InstaPay payment
+// (the customer scans the shop's InstaPay QR with any e-wallet or bank app).
 // The amount is worked out here (never sent by the browser). It is saved as the order's balance payment with
 // orders.balance_to_check = 1: it counts as paid once the admin checks it in the Shipping panel.
 // Only when helpers/payments.php can_pay_online() allows it. Answers { success, amount } or { success: false, error }.
@@ -16,16 +17,13 @@ if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
 reject_oversized_post();
 
 $order_id = (int) ($_POST['order_id'] ?? 0);
-$service = $_POST['service'] ?? '';
+$service = ONLINE_PAYMENT_SERVICE;
 $mobile = preg_replace('/\D/', '', $_POST['mobile'] ?? '');
 $reference = trim($_POST['reference'] ?? '');
 $fail = fn (string $message, int $code = 422) => json_response(['success' => false, 'error' => $message], $code);
 
 if ($order_id < 1) {
     $fail('Order ID is required');
-}
-if (!in_array($service, ['gcash', 'paymaya', 'gotyme'], true)) {
-    $fail('Please choose GCash, PayMaya or GoTyme.');
 }
 if (!preg_match('/^\d{11}$/', $mobile)) {
     $fail('Mobile number must be exactly 11 digits.');

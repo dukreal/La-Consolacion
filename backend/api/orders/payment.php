@@ -9,6 +9,7 @@ session_start();
 require_once __DIR__ . '/../../config/db.php';
 require_once __DIR__ . '/../../helpers/json.php';
 require_once __DIR__ . '/../../helpers/delivery.php';
+require_once __DIR__ . '/../../helpers/payments.php'; // ONLINE_PAYMENT_SERVICE
 
 if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
     json_response(['success' => false, 'error' => 'Method not allowed.'], 405);
@@ -27,7 +28,7 @@ if (empty($_POST) && empty($_FILES) && (int) ($_SERVER['CONTENT_LENGTH'] ?? 0) >
 $amount = $_POST['amount'] ?? '';
 $mobile = $_POST['mobile'] ?? '';
 $reference = $_POST['reference'] ?? '';
-$service = $_POST['service'] ?? '';
+$service = ONLINE_PAYMENT_SERVICE; // every online payment is the shop's InstaPay QR (helpers/payments.php)
 $from_cart = ($_POST['from_cart'] ?? '') === '1';
 
 if (!preg_match('/^\d{1,10}(\.\d{1,2})?$/', $amount)) {

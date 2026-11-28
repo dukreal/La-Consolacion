@@ -85,11 +85,10 @@ function payment_received_text(array $payment, array $amounts): string
     return 'We received your payment of ' . peso_text($payment['amount']) . ' (' . service_name($payment['service']) . ") for {$for}. Your order is fully paid.\n";
 }
 
-// An e-wallet as the customer knows it: online payments are saved as gcash, paymaya, gotyme
-// (the admin's Shipping panel shows the same names: frontend/src/components/admin/ShippingPanel.jsx)
+// A payment's name in the emails: InstaPay or Cash (helpers/payments.php)
 function service_name(string $service): string
 {
-    return ['gcash' => 'GCash', 'paymaya' => 'PayMaya', 'gotyme' => 'GoTyme'][strtolower($service)] ?? $service;
+    return payment_service_name($service);
 }
 
 // The customer of an order: email, first_name, username (or null when the order is not found)

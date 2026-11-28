@@ -121,7 +121,7 @@ if ($new_status === 'completed' && $balance_due > 0) {
         json_response(['success' => false, 'error' => 'Please choose how the balance of ' . peso_text($balance_due) . ' was paid.'], 422);
     }
     if ($method !== 'CASH' && $reference === '') {
-        json_response(['success' => false, 'error' => 'Please enter the e-wallet reference number for the balance.'], 422);
+        json_response(['success' => false, 'error' => 'Please enter the InstaPay reference number for the balance.'], 422);
     }
     if ($method === 'CASH') {
         $reference = 'CASH-' . time();

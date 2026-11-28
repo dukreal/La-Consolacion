@@ -169,7 +169,7 @@ export default function WalkIn() {
             <h2 id="payLabel" className="mb-3 text-xs font-semibold uppercase tracking-wider text-[#2474b6]">Payment</h2>
             <PaymentMethodPicker name="payment_method" value={method} onChange={chooseMethod} labelledBy="payLabel" />
 
-            {/* Reference number, only for e-wallets */}
+            {/* Reference number, only for InstaPay */}
             {method !== 'CASH' && (
               <div id="refField" className="mt-4">
                 <label htmlFor="reference_number" className={labelClass}>{payLabel} reference number</label>
@@ -177,7 +177,7 @@ export default function WalkIn() {
                   type="text"
                   id="reference_number"
                   name="reference_number"
-                  placeholder="13-digit reference number"
+                  placeholder="Reference number"
                   autoComplete="off"
                   required
                   value={reference}

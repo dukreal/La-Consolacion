@@ -5,9 +5,8 @@ import { api } from './api'
 //   quantities: optional list matching productIds (custom orders send [1])
 //   delivery: { fulfillment: 'pickup' | 'delivery', address, saveAddress } from useDelivery() (components/payment/DeliveryChoice)
 // Returns PHP's answer: { success, order_id, amount, mobile, reference } or { success: false, error }
-export function submitPayment({ service, amount, mobile, reference, screenshot, fromCart, productIds = [], quantities, delivery }) {
+export function submitPayment({ amount, mobile, reference, screenshot, fromCart, productIds = [], quantities, delivery }) {
   const form = new FormData()
-  form.append('service', service)
   form.append('amount', amount)
   form.append('mobile', mobile)
   form.append('reference', reference)

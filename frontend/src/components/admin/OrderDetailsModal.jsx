@@ -504,7 +504,7 @@ export default function OrderDetailsModal({ orderId, onClose, onStatusChange }) 
           title="Please confirm it"
           message={
             isDelivery && selected === 'completed'
-              ? `${data?.balanceSubmitted ? `Did you receive the ${peso(data.balanceSubmitted.amount)} in your e-wallet? ` : ''}This marks the order On its way and sends the customer the tracking number. You can't undo this.`
+              ? `${data?.balanceSubmitted ? `Did you receive the ${peso(data.balanceSubmitted.amount)} in the shop's account? ` : ''}This marks the order On its way and sends the customer the tracking number. You can't undo this.`
               : `Are you sure you want to mark this order as ${statusLabel(selected).toLowerCase()}? This action is permanent and cannot be undone.`
           }
           onClose={() => setAskConfirm(false)}

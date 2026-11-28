@@ -2,7 +2,7 @@ import { useState } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
 import LoadingOverlay from '../../components/common/LoadingOverlay'
 import DeliveryChoice from '../../components/payment/DeliveryChoice'
-import EwalletOptions from '../../components/payment/EwalletOptions'
+import InstapayInfo from '../../components/payment/InstapayInfo'
 import PaymentConfirmStep from '../../components/payment/PaymentConfirmStep'
 import PaymentHeader from '../../components/payment/PaymentHeader'
 import { useCart } from '../../hooks/useCart'
@@ -15,13 +15,12 @@ import '../../styles/payment.css'
 const sleep = (ms) => new Promise((resolve) => setTimeout(resolve, ms))
 
 // The checkout page (was payment/payment.html).
-// Step 1: choose an e-wallet and review the order. Step 2: scan the QR code and confirm the payment.
+// Step 1: pickup or delivery, and review the order. Step 2: scan the InstaPay QR code and confirm the payment.
 export default function Checkout() {
   const navigate = useNavigate()
   const { loadCart } = useCart()
   const [{ items, fromCart, total }] = useState(readCheckout) // read once, when the page opens
 
-  const [service, setService] = useState('gcash')
   const delivery = useDelivery() // store pickup or delivery by courier, kept while going to step 2 and back
   const [step, setStep] = useState(1)
   const [submitting, setSubmitting] = useState(false)
@@ -38,7 +37,6 @@ export default function Checkout() {
       // The old page showed its loading screen for 3 seconds before sending the form
       const [data] = await Promise.all([
         submitPayment({
-          service,
           amount: downpayment,
           mobile,
           reference,
@@ -78,7 +76,7 @@ export default function Checkout() {
       <div className="max-w-6xl mx-auto px-5 sm:px-8 py-8">
         <PaymentHeader
           title="Payment Confirmation"
-          subtitle="Complete your order with secure e-wallet payment"
+          subtitle="Complete your order with a secure InstaPay payment"
           step={items.length === 0 && subtotal === 0 ? undefined : step}
         />
 
@@ -93,10 +91,10 @@ export default function Checkout() {
           </div>
         ) : step === 1 ? (
           <div id="step1" className="grid grid-cols-1 lg:grid-cols-5 gap-5 sm:gap-6 items-start">
-            {/* Pickup or delivery, then the e-wallet (left) */}
+            {/* Pickup or delivery, then how they will pay (left) */}
             <div className="lg:col-span-2 space-y-5 sm:space-y-6">
               <DeliveryChoice delivery={delivery} />
-              <EwalletOptions value={service} onChange={setService} />
+              <InstapayInfo />
             </div>
 
             {/* Order Summary (right) */}
@@ -155,7 +153,7 @@ export default function Checkout() {
                   ₱{formatMoney(downpayment)}
                 </span>
               </div>
-              <p className="mt-2 text-xs pay-muted">E-wallet fees might apply.</p>
+              <p className="mt-2 text-xs pay-muted">Your e‑wallet or bank may charge a fee.</p>
 
               <button id="continueBtn" onClick={() => delivery.check() && goToStep(2)} className="pay-btn w-full mt-5">
                 Continue to Payment
@@ -165,7 +163,6 @@ export default function Checkout() {
         ) : (
           <PaymentConfirmStep
             amount={downpayment}
-            service={service}
             onSubmit={handleSubmit}
             onBack={() => goToStep(1)}
             error={error}

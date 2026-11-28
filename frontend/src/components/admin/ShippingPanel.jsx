@@ -3,6 +3,7 @@ import { useState } from 'react'
 import { updateShipping } from '../../services/adminService'
 import { COURIERS, courierSite, readFee, readTracking } from '../../utils/courier'
 import { cancelButton, confirmButton } from '../../utils/dialogButtons'
+import { methodLabel } from '../../utils/storePayments'
 import IconModal from './IconModal'
 
 // The "Shipping" panel in the admin's Order Details, for delivery orders. Three rows, like a receipt:
@@ -27,7 +28,7 @@ const when = (value, withTime = true) => {
   const day = d.toLocaleDateString('en-US', { month: 'short', day: 'numeric' })
   return withTime ? `${day}, ${d.toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit' })}` : day
 }
-const serviceName = (s) => ({ gcash: 'GCash', paymaya: 'PayMaya', gotyme: 'GoTyme' })[String(s).toLowerCase()] ?? s
+const serviceName = methodLabel // InstaPay or Cash (utils/storePayments.js)
 
 const inputClass =
   'h-10 w-full min-w-0 px-3 bg-white border border-[#d8dce8] rounded-[10px] text-gray-900 outline-none focus:border-[#2474b6] focus:ring-4 focus:ring-[#2474b6]/15'
@@ -308,7 +309,7 @@ export default function ShippingPanel({ data, selected, form, setForm, errors, o
   }
 
   let note = null
-  if (submitted && !shipped) note = 'Check that the money is in your e-wallet, fill in the courier and tracking number, then click Confirm Order.'
+  if (submitted && !shipped) note = 'Check that the money is in the shop\'s account, fill in the courier and tracking number, then click Confirm Order.'
   else if (shipped) note = 'This order is finished. Only the tracking number can still be edited.'
   else if (status === 'waiting_for_buyer' && fee !== null) note = 'The customer got an email with this amount and a Pay now link.'
   else if (askFee && selected === 'waiting_for_buyer') note = 'Update Status saves the fee and emails the customer what to pay.'

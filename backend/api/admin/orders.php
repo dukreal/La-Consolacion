@@ -10,6 +10,7 @@
 // Also sends: stats (the stat cards: all orders, not only the ones found), counts (how many of each status
 // match q and type: the numbers on the status buttons), matching (how many match everything), page, pages.
 require_once __DIR__ . '/../../helpers/admin.php';
+require_once __DIR__ . '/../../helpers/payments.php'; // payment_service_name()
 
 $admin = require_admin();
 
@@ -158,7 +159,7 @@ json_response([
             'role'         => $o['role'],
             'isWalkIn'     => $o['username'] === 'walkin_guest',
             'profileImage' => $photo,
-            'service'      => $o['service'],
+            'service'      => payment_service_name($o['service']),
             'total'        => $total,
             // The customer paid the rest online and it waits to be checked ("Balance submitted" label)
             'balanceToCheck' => $o['balance_payment_id'] !== null && (int) $o['balance_to_check'] === 1,

@@ -3,6 +3,7 @@
 // Only paid orders are listed: an unpaid custom order waits for its payment link instead.
 // The status colour and wording are decided by the website (frontend/src/utils/orderStatus.js).
 require_once __DIR__ . '/../../helpers/customer.php';
+require_once __DIR__ . '/../../helpers/payments.php'; // payment_service_name()
 
 $user_id = require_customer();
 
@@ -58,7 +59,7 @@ $orders = array_map(function (array $o): array {
         'payment_id'       => $o['payment_id'],
         'date_completed'   => $o['date_completed'],
         'reference_number' => $o['reference_number'],
-        'service'          => $o['service'],
+        'service'          => payment_service_name($o['service']),
         'payment_amount'   => $o['payment_amount'],
         'is_custom'        => (bool) $o['is_custom'], // custom orders show the downpayment and the total
         'balance'          => $balance,
