@@ -125,9 +125,16 @@ export function recordWalkInSale({ productId, quantity, method, reference }) {
   })
 }
 
-// All orders for the Orders page: { orders, adminLevel }
-export async function getOrders() {
-  const data = await api('/admin/orders.php')
+// One page of orders for the Orders page (search, status, type, page: see backend/api/admin/orders.php):
+// { orders, adminLevel, thisWeek, stats, counts, matching, page, pages, perPage }
+export async function getOrders({ q = '', status = 'all', type = 'all', page = 1 } = {}) {
+  const params = new URLSearchParams()
+  if (q) params.set('q', q)
+  if (status !== 'all') params.set('status', status)
+  if (type !== 'all') params.set('type', type)
+  if (page > 1) params.set('page', page)
+  const query = params.toString()
+  const data = await api('/admin/orders.php' + (query ? `?${query}` : ''))
   if (!data.success) throw new Error(data.message || data.error || 'Could not load orders')
   return data
 }

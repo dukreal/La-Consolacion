@@ -1,8 +1,9 @@
-import { CheckCircle, Clock, Gem, Hourglass, Package, PackageCheck, PlusCircle, Settings, ShoppingBag, ShoppingCart, Store, Trash2, TrendingUp, User, X } from 'lucide-react'
-import { useCallback, useEffect, useState } from 'react'
+import { CheckCircle, Clock, Gem, Hourglass, Package, PackageCheck, PlusCircle, Search, Settings, ShoppingBag, ShoppingCart, Store, Trash2, TrendingUp, User, X } from 'lucide-react'
+import { useCallback, useEffect, useRef, useState } from 'react'
 import { Link, useLocation, useNavigate } from 'react-router-dom'
 import IconModal, { OkButton } from '../../components/admin/IconModal'
 import OrderDetailsModal from '../../components/admin/OrderDetailsModal'
+import OrderFilters, { OrderPager } from '../../components/admin/OrderFilters'
 import PaymentModal from '../../components/admin/PaymentModal'
 import Skeleton, { LoadingArea } from '../../components/admin/Skeleton'
 import StatCard from '../../components/admin/StatCard'
@@ -46,26 +47,97 @@ function ProductThumb({ item, size = 'w-12 h-12' }) {
   )
 }
 
-// Table: picture, name and "Jewelry Product"
-function ProductCell({ item }) {
+// "×2" after a product name when the order has more than one of it
+function Quantity({ quantity }) {
+  if (!quantity || quantity < 2) return null
+  return <span className="font-medium text-gray-500 whitespace-nowrap"> ×{quantity}</span>
+}
+
+// The order's products (order.items). One product: its picture and name, as before. Two or more: every product
+// on its own line with a small picture and its quantity, up to 3, then "+2 more products" (Details has them all).
+// children: shown under the product(s) (the customer line on the cards). column: the width of the big picture
+// in the one-product rows, so the small pictures sit in the same column and the names line up with theirs.
+const MAX_PRODUCT_LINES = 3
+function OrderProducts({ order, single, column = 'w-12', children }) {
+  const items = order.items ?? (order.firstItem ? [order.firstItem] : [])
+  if (items.length < 2) {
+    const item = items[0] ?? null
+    return single(item, <Quantity quantity={item?.quantity} />)
+  }
+  const more = items.length - MAX_PRODUCT_LINES
   return (
-    <div className="flex items-center space-x-3">
-      <ProductThumb item={item} />
-      <div>
-        <p className="font-semibold text-gray-900">{item ? item.name : 'No Product'}</p>
-        <p className="text-sm text-gray-500">{item ? 'Jewelry Product' : 'No items found'}</p>
-      </div>
+    <div className="flex-1 min-w-0">
+      <ul className="flex flex-col gap-2" aria-label={`${items.length} products`}>
+        {items.slice(0, MAX_PRODUCT_LINES).map((item, i) => (
+          <li key={i} className="flex items-center gap-3 min-w-0">
+            <span className={`${column} flex-none flex justify-center`}>
+              <ProductThumb item={item} size="w-10 h-10" />
+            </span>
+            <p className="font-semibold text-gray-900 leading-snug min-w-0">
+              {item.name}
+              <Quantity quantity={item.quantity} />
+            </p>
+          </li>
+        ))}
+      </ul>
+      {/* Under the names, not under the pictures */}
+      {(more > 0 || children) && (
+        <div className="flex gap-3">
+          <span className={`${column} flex-none`} aria-hidden="true" />
+          <div className="flex-1 min-w-0">
+            {more > 0 && (
+              <p className="text-sm text-gray-500 mt-2">
+                +{more} more {more === 1 ? 'product' : 'products'}
+              </p>
+            )}
+            {children}
+          </div>
+        </div>
+      )}
     </div>
   )
 }
 
-// "Delivery" on orders the customer wants shipped by courier (pickup is the usual case, so it gets no tag)
-function DeliveryTag({ order }) {
-  if (order.fulfillment !== 'delivery') return null
+// What kind of product it is, under its name in the table (the same words as Inventory; custom-made pieces
+// say "Custom order"). Any other type is shown as it is, capitalized.
+const PRODUCT_TYPES = { ring: 'Ring', charm: 'Charm', earring: 'Earring', bracelet: 'Bracelet', custom: 'Custom order' }
+const productType = (type) => PRODUCT_TYPES[type] ?? (type ? type.charAt(0).toUpperCase() + type.slice(1) : 'Product')
+
+// Table: picture, name and its type (or the list of products)
+function ProductCell({ order }) {
   return (
-    <span className="delivery-tag inline-flex items-center gap-1 rounded-full bg-blue-50 border border-blue-200 px-2 py-0.5 text-[11px] font-semibold text-blue-700 whitespace-nowrap">
-      <Package className="w-3 h-3" aria-hidden="true" />
-      Delivery
+    <OrderProducts
+      order={order}
+      single={(item, quantity) => (
+        <div className="flex items-center space-x-3">
+          <ProductThumb item={item} />
+          <div>
+            <p className="font-semibold text-gray-900">
+              {item ? item.name : 'No Product'}
+              {quantity}
+            </p>
+            <p className="text-sm text-gray-500">{item ? productType(item.type) : 'No items found'}</p>
+          </div>
+        </div>
+      )}
+    />
+  )
+}
+
+// "Delivery" (shipped by courier) or "Pickup" (at the store; walk-in sales too) on every order
+function DeliveryTag({ order }) {
+  if (order.fulfillment === 'delivery') {
+    return (
+      <span className="delivery-tag inline-flex items-center gap-1 rounded-full bg-blue-50 border border-blue-200 px-2 py-0.5 text-[11px] font-semibold text-blue-700 whitespace-nowrap">
+        <Package className="w-3 h-3" aria-hidden="true" />
+        Delivery
+      </span>
+    )
+  }
+  return (
+    <span className="pickup-tag inline-flex items-center gap-1 rounded-full bg-slate-100 border border-slate-300 px-2 py-0.5 text-[11px] font-semibold text-slate-600 whitespace-nowrap">
+      <Store className="w-3 h-3" aria-hidden="true" />
+      Pickup
     </span>
   )
 }
@@ -106,11 +178,14 @@ function CustomerAvatar({ order, size = 'w-10 h-10', iconSize = 'w-5 h-5' }) {
 function CustomerCell({ order }) {
   const kind = customerKind(order)
   return (
-    <div className="flex items-center gap-4">
+    <div className="flex items-center gap-4 min-w-0">
       <CustomerAvatar order={order} />
-      <div>
-        <div className="font-bold text-gray-900 leading-tight">{order.isWalkIn ? 'Walk-In Sale' : order.username}</div>
-        <div className={`text-xs font-semibold uppercase tracking-wider ${kind.color}`}>{kind.label}</div>
+      {/* The column has a fixed width: a very long username ends in "…" (the whole name shows on hover) */}
+      <div className="min-w-0">
+        <div className="font-bold text-gray-900 leading-tight truncate" title={order.isWalkIn ? undefined : order.username}>
+          {order.isWalkIn ? 'Walk-In Sale' : order.username}
+        </div>
+        <div className={`text-xs font-semibold uppercase tracking-wider truncate ${kind.color}`}>{kind.label}</div>
       </div>
     </div>
   )
@@ -223,17 +298,17 @@ function OrderRowSkeleton({ canDelete }) {
           <div className="flex-1"><Skeleton className="h-4 w-40" /><Skeleton className="mt-2 h-3 w-24" /></div>
         </div>
       </td>
-      <td className="px-6 py-4 w-40">
+      <td className="px-4 py-4">
         <div className="flex items-center gap-4">
           <Skeleton className="w-10 h-10 flex-shrink-0 !rounded-full" />
           <div className="flex-1"><Skeleton className="h-4 w-[4.75rem]" /><Skeleton className="mt-2 h-3 w-14" /></div>
         </div>
       </td>
-      <td className="px-6 py-4 w-32"><Skeleton className="h-4 w-10" /><Skeleton className="mt-2 h-3 w-[5.5rem]" /></td>
-      <td className="px-6 py-4 w-32"><Skeleton className="ml-auto h-5 w-16" /></td>
-      <td className="px-6 py-4 w-32"><Skeleton className="mx-auto h-6 w-[5.75rem]" /></td>
+      <td className="px-4 py-4"><Skeleton className="h-4 w-10" /><Skeleton className="mt-2 h-3 w-[5.5rem]" /></td>
+      <td className="px-4 py-4"><Skeleton className="ml-auto h-5 w-16" /></td>
+      <td className="px-4 py-4"><Skeleton className="mx-auto h-6 w-[5.75rem]" /></td>
       {/* Same widths as the Details / Payment / Delete buttons, so the columns keep their place */}
-      <td className="px-6 py-4 w-32">
+      <td className="px-6 py-4">
         <div className="flex justify-center gap-2">
           <Skeleton className="h-6 w-[3.95rem] !rounded-lg" />
           <Skeleton className="h-6 w-[4.65rem] !rounded-lg" />
@@ -245,16 +320,32 @@ function OrderRowSkeleton({ canDelete }) {
 }
 
 // The table's column headings (the loading placeholder table uses the same ones, so the columns do not shift)
+// Fixed column widths (in rem, so they grow with the browser's text size): every column stays in the same
+// place whatever is searched or filtered. Each has room for its widest content (e.g. Details / Payment /
+// Delete); Product gets the rest. Used by the table and by its loading placeholder.
+function OrdersTableCols() {
+  return (
+    <colgroup>
+      <col />
+      <col className="w-[12.5rem]" />
+      <col className="w-[8rem]" />
+      <col className="w-[8rem]" />
+      <col className="w-[8rem]" />
+      <col className="w-[17rem]" />
+    </colgroup>
+  )
+}
+
 function OrdersTableHead() {
   return (
     <thead className="bg-gray-50 border-b border-gray-200">
       <tr>
         <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">PRODUCT NAME</th>
-        <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider w-40">CUSTOMER NAME</th>
-        <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider whitespace-nowrap w-32">ORDER ID</th>
-        <th className="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider w-32">AMOUNT</th>
-        <th className="px-6 py-3 text-center text-xs font-medium text-gray-500 uppercase tracking-wider w-32">STATUS</th>
-        <th className="px-6 py-3 text-center text-xs font-medium text-gray-500 uppercase tracking-wider w-32">ACTION</th>
+        <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">CUSTOMER NAME</th>
+        <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider whitespace-nowrap">ORDER ID</th>
+        <th className="px-4 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">AMOUNT</th>
+        <th className="px-4 py-3 text-center text-xs font-medium text-gray-500 uppercase tracking-wider">STATUS</th>
+        <th className="px-6 py-3 text-center text-xs font-medium text-gray-500 uppercase tracking-wider">ACTION</th>
       </tr>
     </thead>
   )
@@ -306,15 +397,45 @@ export default function Orders() {
   const [detailsId, setDetailsId] = useState(null) // order shown in the Details pop-up
   const [paymentId, setPaymentId] = useState(null) // payment shown in the Payment pop-up
   const [reloading, setReloading] = useState(false) // getting the list again after a delete
-  const refreshing = useRefreshing(reloading)
+  // What is shown: the search (sent a moment after typing stops), status button, type and page
+  const [search, setSearch] = useState('')
+  const [filters, setFilters] = useState({ q: '', status: 'all', type: 'all', page: 1 })
+  const [shownFor, setShownFor] = useState(null) // the filters the list on screen belongs to
+  const filtersKey = JSON.stringify(filters)
+  const fetching = data !== null && shownFor !== filtersKey // another search, filter or page is loading
+  const refreshing = useRefreshing(reloading || fetching)
+  const latest = useRef(0) // only the answer to the newest request is shown (an older, slower one is ignored)
+  const listTop = useRef(null)
 
   const load = useCallback(() => {
-    return getOrders()
-      .then((d) => { setData(d); setError('') })
-      .catch((e) => setError(e.message))
-  }, [])
+    const request = ++latest.current
+    const key = JSON.stringify(filters)
+    return getOrders(filters)
+      .then((d) => { if (request === latest.current) { setData(d); setError('') } })
+      .catch((e) => { if (request === latest.current) setError(e.message) })
+      .finally(() => { if (request === latest.current) setShownFor(key) })
+  }, [filters])
 
   useEffect(() => { load() }, [load])
+
+  // Searching waits until typing stops for a moment, so the list does not jump at every letter
+  useEffect(() => {
+    const q = search.trim()
+    if (q === filters.q) return undefined
+    const timer = setTimeout(() => setFilters((f) => ({ ...f, q, page: 1 })), 300)
+    return () => clearTimeout(timer)
+  }, [search, filters.q])
+
+  const setStatusFilter = useCallback((status) => setFilters((f) => ({ ...f, status, page: 1 })), [])
+  const setTypeFilter = useCallback((type) => setFilters((f) => ({ ...f, type, page: 1 })), [])
+  const clearFilters = useCallback(() => {
+    setSearch('')
+    setFilters({ q: '', status: 'all', type: 'all', page: 1 })
+  }, [])
+  const goToPage = useCallback((page) => {
+    setFilters((f) => ({ ...f, page }))
+    listTop.current?.scrollIntoView({ behavior: 'smooth', block: 'start' })
+  }, [])
 
   // Forget the walk-in message so a refresh does not show it again (the old page cleaned the URL)
   useEffect(() => {
@@ -323,11 +444,13 @@ export default function Orders() {
 
   const closeWalkinToast = useCallback(() => setWalkinToast(false), [])
 
-  // A status changed in the Details pop-up: update that row and the stat cards without reloading
+  // A status changed in the Details pop-up: update that row at once, then get the page again so the stat
+  // cards, the status counts and the list (it may no longer match the status button) are right
   // (changes: a delivery order's new total and "Balance submitted" label, from the Shipping panel)
   const handleStatusChange = useCallback((id, status, changes = {}) => {
     setData((d) => ({ ...d, orders: d.orders.map((o) => (o.id === id ? { ...o, status, ...changes } : o)) }))
-  }, [])
+    load()
+  }, [load])
 
   // Only finished or unpaid orders can be deleted (the server checks this too). Deleting a paid, active order
   // would only hide it: the customer would still see it as active and its stock would never come back.
@@ -366,12 +489,9 @@ export default function Orders() {
   const orders = data?.orders ?? []
   const canDelete = (data?.adminLevel ?? Number(me?.adminLevel)) === 2
   const actionHandlers = { onDetails: setDetailsId, onPayment: setPaymentId, onDelete: askDelete }
-  const stats = {
-    total: orders.length,
-    pending: orders.filter((o) => o.status === 'pending').length,
-    processing: orders.filter((o) => o.status === 'processing' || o.status === 'waiting_for_buyer').length,
-    completed: orders.filter((o) => o.status === 'completed').length,
-  }
+  // The stat cards count all orders, whatever is searched (the server counts them)
+  const stats = data?.stats ?? { total: 0, pending: 0, processing: 0, completed: 0 }
+  const filtered = filters.q !== '' || filters.status !== 'all' || filters.type !== 'all'
 
   return (
     <>
@@ -412,11 +532,21 @@ export default function Orders() {
       </div>
 
       {/* Table */}
-      <div className={`bg-white rounded-2xl shadow-lg overflow-hidden ${refreshingClass(refreshing)}`} aria-busy={refreshing || undefined}>
+      <div ref={listTop} className="bg-white rounded-2xl shadow-lg overflow-hidden scroll-mt-4" aria-busy={refreshing || undefined}>
         <div className="bg-gradient-to-r from-slate-50 to-sky-50 px-4 py-3 sm:px-6 sm:py-4 border-b border-gray-200">
           <h2 className="text-lg sm:text-2xl font-bold text-gray-800">Order Details</h2>
           <p className="text-sm sm:text-base text-gray-600">Manage individual order status and details</p>
+          <OrderFilters
+            search={search}
+            onSearch={setSearch}
+            type={filters.type}
+            onType={setTypeFilter}
+            status={filters.status}
+            onStatus={setStatusFilter}
+            counts={data?.counts}
+          />
         </div>
+        <div className={refreshingClass(refreshing)}>
 
         {loading ? (
           <LoadingArea label="Loading orders…">
@@ -424,7 +554,8 @@ export default function Orders() {
               {SKELETON_ROWS.map((n) => <OrderCardSkeleton key={n} canDelete={canDelete} />)}
             </ul>
             <div className="orders-table overflow-x-auto">
-              <table className="w-full">
+              <table className="w-full table-fixed">
+                <OrdersTableCols />
                 <OrdersTableHead />
                 <tbody className="bg-white divide-y divide-gray-100">
                   {SKELETON_ROWS.map((n) => <OrderRowSkeleton key={n} canDelete={canDelete} />)}
@@ -432,6 +563,21 @@ export default function Orders() {
               </table>
             </div>
           </LoadingArea>
+        ) : data && orders.length === 0 && filtered ? (
+          <div className="text-center py-14 px-4">
+            <div className="w-20 h-20 bg-gray-100 rounded-full flex items-center justify-center mx-auto mb-4">
+              <Search className="w-10 h-10 text-gray-400" />
+            </div>
+            <h3 className="text-xl font-semibold text-gray-600 mb-2">No orders match</h3>
+            <p className="text-gray-500">Try another search, or show all orders.</p>
+            <button
+              type="button"
+              onClick={clearFilters}
+              className="mt-4 px-5 py-2.5 rounded-xl border border-[#22306a] text-[#22306a] font-semibold [@media(hover:hover)]:hover:bg-[#22306a]/5"
+            >
+              Clear search and filters
+            </button>
+          </div>
         ) : data && orders.length === 0 ? (
           <div className="text-center py-16">
             <div className="w-24 h-24 bg-gray-100 rounded-full flex items-center justify-center mx-auto mb-4">
@@ -458,11 +604,24 @@ export default function Orders() {
                   <StatusPill order={order} />
                 </div>
                 <div className="mt-3 flex items-start gap-3">
-                  <ProductThumb item={order.firstItem} size="w-11 h-11 sm:w-12 sm:h-12" />
-                  <div className="flex-1 min-w-0">
-                    <p className="font-semibold text-gray-900 leading-snug">{order.firstItem ? order.firstItem.name : 'No Product'}</p>
+                  <OrderProducts
+                    order={order}
+                    column="w-11 sm:w-12"
+                    single={(item, quantity) => (
+                      <>
+                        <ProductThumb item={item} size="w-11 h-11 sm:w-12 sm:h-12" />
+                        <div className="flex-1 min-w-0">
+                          <p className="font-semibold text-gray-900 leading-snug">
+                            {item ? item.name : 'No Product'}
+                            {quantity}
+                          </p>
+                          <CustomerLine order={order} />
+                        </div>
+                      </>
+                    )}
+                  >
                     <CustomerLine order={order} />
-                  </div>
+                  </OrderProducts>
                   <div className="flex-shrink-0 text-right">
                     <p className="font-bold text-base sm:text-lg text-gray-900 leading-tight">{peso(order.total)}</p>
                     {order.service && order.service !== 'custom' && (
@@ -476,35 +635,34 @@ export default function Orders() {
             </ul>
 
             <div className="orders-table overflow-x-auto">
-              <table className="w-full">
+              <table className="w-full table-fixed">
+                <OrdersTableCols />
                 <OrdersTableHead />
                 <tbody id="ordersTableBody" className="bg-white divide-y divide-gray-100">
                   {orders.map((order) => (
                     <tr key={order.id} className="hover:bg-gray-50 transition-all duration-200" data-order-id={order.id}>
-                      <td className="px-6 py-4"><ProductCell item={order.firstItem} /></td>
-                      <td className="px-6 py-4 w-40"><CustomerCell order={order} /></td>
-                      <td className="px-6 py-4 w-32">
+                      <td className="px-6 py-4"><ProductCell order={order} /></td>
+                      <td className="px-4 py-4"><CustomerCell order={order} /></td>
+                      <td className="px-4 py-4">
                         <p className="font-semibold text-gray-900">#{order.id}</p>
                         <p className="text-sm text-gray-500 whitespace-nowrap">{formatDate(order.dateOrdered)}</p>
-                        {order.fulfillment === 'delivery' && (
-                          <div className="mt-1">
-                            <DeliveryTag order={order} />
-                          </div>
-                        )}
+                        <div className="mt-1">
+                          <DeliveryTag order={order} />
+                        </div>
                       </td>
-                      <td className="px-6 py-4 w-32 text-right">
+                      <td className="px-4 py-4 text-right">
                         <p className="font-bold text-lg text-gray-900">{peso(order.total)}</p>
                         {order.service && order.service !== 'custom' && (
                           <p className="text-xs text-gray-500 uppercase">{order.service}</p>
                         )}
                       </td>
-                      <td className="px-6 py-4 w-32 text-center status-cell">
+                      <td className="px-4 py-4 text-center status-cell">
                         <StatusPill order={order} />
                         {order.balanceToCheck && order.status === 'waiting_for_buyer' && (
                           <div className="mt-1.5"><BalanceSubmittedTag order={order} /></div>
                         )}
                       </td>
-                      <td className="px-6 py-4 w-32 text-center">
+                      <td className="px-6 py-4 text-center">
                         <OrderActions order={order} adminLevel={data.adminLevel} className="justify-center" {...actionHandlers} />
                       </td>
                     </tr>
@@ -514,6 +672,18 @@ export default function Orders() {
             </div>
           </>
         )}
+        {data && orders.length > 0 && (
+          <OrderPager
+            page={data.page}
+            pages={data.pages}
+            perPage={data.perPage}
+            matching={data.matching}
+            shownCount={orders.length}
+            filtered={filtered}
+            onPage={goToPage}
+          />
+        )}
+        </div>
       </div>
 
       {detailsId && (
