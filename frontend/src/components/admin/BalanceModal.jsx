@@ -10,7 +10,7 @@ const peso = (n) => '₱' + Number(n).toLocaleString('en-US', { minimumFractionD
 
 // "Collect the balance": shown instead of "Please confirm it" when an order is marked Completed while the customer
 // still owes part of the price (the 70% after the 30% downpayment, paid at pickup).
-// The admin picks how it was paid (and the e-wallet reference); onConfirm({ method, reference }) saves it together
+// The admin picks how it was paid (and the InstaPay reference); onConfirm({ method, reference }) saves it together
 // with the Completed status. Cancel / Escape / a click outside close it without changing anything.
 export default function BalanceModal({ orderId, total, paid, balance, busy, onConfirm, onCancel }) {
   const [method, setMethod] = useState('CASH')
@@ -72,7 +72,7 @@ export default function BalanceModal({ orderId, total, paid, balance, busy, onCo
               type="text"
               id="balanceReference"
               name="balance_reference"
-              placeholder="13-digit reference number"
+              placeholder="Reference number"
               autoComplete="off"
               required
               value={reference}

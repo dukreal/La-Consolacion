@@ -116,7 +116,7 @@ export async function getWalkInProducts() {
   return data
 }
 
-// Records a walk-in sale. method: 'CASH' | 'GCASH' | 'PAYMAYA' | 'GOTYME'
+// Records a walk-in sale. method: 'CASH' | 'INSTAPAY'
 // Returns { success, orderId } or { success: false, error }
 export function recordWalkInSale({ productId, quantity, method, reference }) {
   return api('/admin/walk-in.php', {

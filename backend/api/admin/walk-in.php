@@ -45,7 +45,7 @@ if (!isset(STORE_PAYMENT_METHODS[$method])) {
     json_response(['success' => false, 'error' => 'Please choose a payment method.'], 422);
 }
 if ($method !== 'CASH' && $reference === '') {
-    json_response(['success' => false, 'error' => 'Please enter the e-wallet reference number.'], 422);
+    json_response(['success' => false, 'error' => 'Please enter the InstaPay reference number.'], 422);
 }
 if ($method === 'CASH') {
     $reference = 'CASH-' . time();

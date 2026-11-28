@@ -44,6 +44,7 @@ If your `lcj` database was made **before** a change, run each file in `database/
 | `2026-11-25-delivery-tracking.sql` | v1.6.0 | `orders.shipping_fee`, `orders.courier`, `orders.tracking_number` and `orders.balance_to_check`: the shipping fee, paying the rest online, and the courier and tracking number |
 | `2026-11-25-admin-signed-out-datetime.sql` | v1.6.1 | `admin.last_signed_out` becomes `datetime` like `last_signed_in` (a database built from `lcj.sql` had `timestamp`). No data changes |
 | `2026-11-26-login-security.sql` | v1.7.1 | New `login_attempts` table (5 wrong passwords: wait 15 minutes). Clears old password reset links, which are now saved as a hash |
+| `2026-11-28-instapay.sql` | v1.9.0 | Renames saved GCash, PayMaya and GoTyme payments to InstaPay (the shop's QR is InstaPay). Cash stays Cash |
 
 If you skip one, the pages that use its columns show database errors (for example "Unknown column 'address_name'").
 

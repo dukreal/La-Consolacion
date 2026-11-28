@@ -39,7 +39,7 @@ json_response([
     'success'         => true,
     'orderId'         => (int) $payment['order_id'],
     'referenceNumber' => $payment['reference_number'],
-    'service'         => $payment['service'],
+    'service'         => payment_service_name($payment['service']),
     'uploadedAt'      => $payment['uploaded_at'],
     'dateOrdered'     => $payment['date_ordered'],
     'mobile'          => $payment['mobile'],

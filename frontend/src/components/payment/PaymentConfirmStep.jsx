@@ -1,7 +1,6 @@
 import { useEffect, useState } from 'react'
 import { getProfileMobile } from '../../services/profileService'
 import { formatMoney } from '../../utils/formatMoney'
-import { paymentGuide } from '../../utils/paymentGuide'
 import ScreenshotUpload from './ScreenshotUpload'
 
 // One numbered step of "How to pay": a short instruction and one line explaining it
@@ -22,13 +21,10 @@ function GuideStep({ n, title, children }) {
 // Step 2 of every payment page: the QR code on the left, the payment form on the right.
 // Phones and tablets: QR card above the form. Wide screens (lg): side by side, both cards the same height.
 // onSubmit({ mobile, reference, screenshot }) is called only when everything is filled in correctly.
-// onBack() goes back to step 1 (choose another e-wallet).
-// service: the e-wallet chosen in step 1 ('gcash', 'paymaya', 'gotyme'); the "How to pay" steps and the hints
-// under the boxes use its name and where its app shows the reference number (utils/paymentGuide.js).
-export default function PaymentConfirmStep({ amount, service, onSubmit, onBack, error, submitting }) {
-  const guide = paymentGuide(service)
-  const isRefNo = guide.refLabel === 'Ref No.' // GCash: "Find Ref No. on ..."; others: "Find the reference number on ..."
-
+// onBack() goes back to step 1.
+// The QR is the shop's InstaPay QR: any e-wallet or bank app can pay it, so the "How to pay" steps and the hints
+// under the boxes do not name one app.
+export default function PaymentConfirmStep({ amount, onSubmit, onBack, error, submitting }) {
   const [mobile, setMobile] = useState('')
   const [reference, setReference] = useState('')
   const [screenshot, setScreenshot] = useState(null)
@@ -76,22 +72,18 @@ export default function PaymentConfirmStep({ amount, service, onSubmit, onBack, 
 
         {/* Always shown, right under the code, so customers read it before they pay */}
         <div id="paymentGuide" className="w-full mt-5 pt-5 border-t border-[#e5e9f2] text-left">
-          <h3 className="text-[0.9375rem] font-bold text-[#22306a]">How to pay with {guide.name}</h3>
+          <h3 className="text-[0.9375rem] font-bold text-[#22306a]">How to pay with InstaPay</h3>
           <ol className="mt-3.5 space-y-3.5">
             <GuideStep
               n={1}
               title={
-                guide.scanButton ? (
-                  <>
-                    Open {guide.name} and tap <b>{guide.scanButton}</b>
-                  </>
-                ) : (
-                  <>Open {guide.name} and scan this code</>
-                )
+                <>
+                  Open your e‑wallet or bank app and <b>scan this code</b>
+                </>
               }
             >
-              {guide.scanButton ? 'Scan this code. ' : ''}Paying on this phone? Take a screenshot of the code and upload
-              it in {guide.name}.
+              GCash, Maya, GoTyme, MariBank or any InstaPay bank. Paying on this phone? Take a screenshot of the code and
+              upload it in your app.
             </GuideStep>
             <GuideStep
               n={2}
@@ -107,13 +99,11 @@ export default function PaymentConfirmStep({ amount, service, onSubmit, onBack, 
               n={3}
               title={
                 <>
-                  Find {isRefNo ? '' : 'the '}
-                  <b>{guide.refLabel}</b> on the {guide.refPlace}
+                  Find the <b>reference number</b> on your receipt
                 </>
               }
             >
-              Take a screenshot that shows the amount and the {guide.refLabel}
-              {guide.refLabel.endsWith('.') ? '' : '.'}
+              Take a screenshot that shows the amount and the reference number.
             </GuideStep>
             <GuideStep
               n={4}
@@ -155,7 +145,7 @@ export default function PaymentConfirmStep({ amount, service, onSubmit, onBack, 
               </div>
             ) : (
               <p id="mobileHint" className="pay-muted text-[0.8125rem] leading-snug mt-1.5">
-                The number of the {guide.name} account you paid from
+                The number of the e‑wallet or bank account you paid from
               </p>
             )}
           </div>
@@ -175,7 +165,7 @@ export default function PaymentConfirmStep({ amount, service, onSubmit, onBack, 
               aria-describedby="referenceHint"
             />
             <p id="referenceHint" className="pay-muted text-[0.8125rem] leading-snug mt-1.5">
-              The {guide.refLabel} on your {guide.name} {guide.refPlace}
+              The reference number on your payment receipt
             </p>
           </div>
 
@@ -192,7 +182,7 @@ export default function PaymentConfirmStep({ amount, service, onSubmit, onBack, 
               <p className="text-red-600 text-xs mt-1.5">Please upload a payment screenshot.</p>
             ) : (
               <p id="screenshotHint" className="pay-muted text-[0.8125rem] leading-snug mt-1.5">
-                Your {guide.refPlace} with the amount and {guide.refLabel} showing
+                Your receipt with the amount and reference number showing
               </p>
             )}
           </div>

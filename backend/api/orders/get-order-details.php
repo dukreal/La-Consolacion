@@ -70,7 +70,7 @@ json_response([
         'paid'          => $order['payment_id'] !== null,
         'dateOrdered'   => $order['date_ordered'],
         'dateCompleted' => $order['date_completed'],
-        'service'       => $order['service'],
+        'service'       => payment_service_name($order['service']),
         'fulfillment'   => $order['fulfillment'], // 'pickup' or 'delivery'
         // Delivery orders: where it goes, and the same address as text for the Copy address button
         'delivery'      => $delivery,

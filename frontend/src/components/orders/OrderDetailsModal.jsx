@@ -22,7 +22,7 @@ const shortDate = (value) => toDate(value).toLocaleDateString('en-US', { month: 
 
 const STORE = { address: '170 Capistrano St, Cagayan de Oro', hours: 'Mon–Sat, 9 AM – 5 PM' }
 
-// 'gcash' / 'GCASH' -> 'GCash'
+// 'InstaPay' or 'Cash' (old gcash / paymaya / gotyme payments read InstaPay too)
 const wallet = (service) => methodLabel(String(service || '').toUpperCase())
 
 // The four steps an order goes through; `done` is how many are finished for each status.

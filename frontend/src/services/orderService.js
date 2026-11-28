@@ -21,10 +21,9 @@ export function cancelOrder(orderId) {
 
 // Pays the rest of a delivery order online (Pay for Your Order page): the balance plus the shipping fee.
 // The amount is worked out by PHP. Returns { success, amount } or { success: false, error }
-export function payBalance({ orderId, service, mobile, reference, screenshot }) {
+export function payBalance({ orderId, mobile, reference, screenshot }) {
   const form = new FormData()
   form.append('order_id', orderId)
-  form.append('service', service)
   form.append('mobile', mobile)
   form.append('reference', reference)
   form.append('payment_screenshot', screenshot)

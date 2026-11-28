@@ -1,13 +1,30 @@
 <?php
 // Payments made at the store: walk-in sales (api/admin/walk-in.php) and the balance a customer pays at pickup
 // (api/orders/update-order-status.php), or pays by chat for a delivery order.
-// Same payment names and pictures the old walk-in page saved.
+// Cash, or the shop's InstaPay QR scanned with any e-wallet or bank app (GCash, Maya, GoTyme, MariBank, ...).
+// image is only a placeholder name: these payments have no screenshot (see order_amounts()).
 const STORE_PAYMENT_METHODS = [
-    'CASH'    => ['service' => 'Cash',    'image' => 'cash_default.png'],
-    'GCASH'   => ['service' => 'GCash',   'image' => 'gcash-logo.png'],
-    'PAYMAYA' => ['service' => 'PayMaya', 'image' => 'maya-logo.png'],
-    'GOTYME'  => ['service' => 'GoTyme',  'image' => 'gotyme-logo.png'],
+    'CASH'     => ['service' => 'Cash',     'image' => 'cash_default.png'],
+    'INSTAPAY' => ['service' => 'InstaPay', 'image' => 'instapay_default.png'],
 ];
+
+// What online payments are saved as: every customer pays by scanning the shop's InstaPay QR
+// (api/orders/payment.php and api/orders/pay-balance.php)
+const ONLINE_PAYMENT_SERVICE = 'InstaPay';
+
+// A payment's name as people read it. Payments saved before v1.9.0 can say gcash, paymaya or gotyme
+// (the migration renames them; this also covers a database where it has not run yet).
+function payment_service_name(?string $service): ?string
+{
+    if ($service === null) {
+        return null; // no payment yet
+    }
+    $key = strtolower($service);
+    if (in_array($key, ['gcash', 'paymaya', 'maya', 'gotyme', 'instapay'], true)) {
+        return 'InstaPay';
+    }
+    return $key === 'cash' ? 'Cash' : $service;
+}
 
 // How much an order costs, how much has been paid and what is left.
 //   itemsTotal:  the order items added up
@@ -40,11 +57,12 @@ function order_amounts(PDO $pdo, int $order_id): array
     $fee = isset($row['shipping_fee']) ? (float) $row['shipping_fee'] : null;
     $down = (float) ($row['down_amount'] ?? 0);
     $balance_row = isset($row['amount']) ? [
-        'service'          => $row['service'],
+        'service'          => payment_service_name($row['service']),
         'reference_number' => $row['reference_number'],
         'amount'           => (float) $row['amount'],
         'uploaded_at'      => $row['uploaded_at'],
-        'image'            => $row['image'],
+        // Only online payments have a screenshot; one the admin recorded (at the store or by chat) has none
+        'image'            => in_array($row['mobile'], ['In store', 'Walk-in'], true) ? null : $row['image'],
     ] : null;
     $to_check = $balance_row && (int) $row['balance_to_check'] === 1;
 

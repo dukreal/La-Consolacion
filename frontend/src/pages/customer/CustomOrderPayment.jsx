@@ -2,7 +2,7 @@ import { useState } from 'react'
 import { Link, useNavigate, useParams } from 'react-router-dom'
 import LoadingOverlay from '../../components/common/LoadingOverlay'
 import DeliveryChoice from '../../components/payment/DeliveryChoice'
-import EwalletOptions from '../../components/payment/EwalletOptions'
+import InstapayInfo from '../../components/payment/InstapayInfo'
 import PaymentConfirmStep from '../../components/payment/PaymentConfirmStep'
 import PaymentHeader from '../../components/payment/PaymentHeader'
 import { useCustomOrder } from '../../hooks/useCustomOrder'
@@ -20,7 +20,6 @@ export default function CustomOrderPayment() {
   const navigate = useNavigate()
   const { order, error: loadError, loading } = useCustomOrder(id)
 
-  const [service, setService] = useState('gcash')
   const delivery = useDelivery() // store pickup or delivery by courier, kept while going to step 2 and back
   const [step, setStep] = useState(1)
   const [submitting, setSubmitting] = useState(false)
@@ -36,7 +35,6 @@ export default function CustomOrderPayment() {
       // The old page showed its loading screen for 3 seconds before sending the form
       const [data] = await Promise.all([
         submitPayment({
-          service,
           amount: downpayment,
           mobile,
           reference,
@@ -74,7 +72,7 @@ export default function CustomOrderPayment() {
       <div className="max-w-6xl mx-auto px-5 sm:px-8 py-8">
         <PaymentHeader
           title="Custom Order Payment"
-          subtitle="Complete your custom order with secure e-wallet payment"
+          subtitle="Complete your custom order with a secure InstaPay payment"
           step={order && !alreadyPaid ? step : undefined}
         />
 
@@ -94,10 +92,10 @@ export default function CustomOrderPayment() {
 
         {order && !alreadyPaid && step === 1 && (
           <div id="step1" className="grid grid-cols-1 lg:grid-cols-5 gap-5 sm:gap-6 items-start">
-            {/* Pickup or delivery, then the e-wallet (left) */}
+            {/* Pickup or delivery, then how they will pay (left) */}
             <div className="lg:col-span-2 space-y-5 sm:space-y-6">
               <DeliveryChoice delivery={delivery} />
-              <EwalletOptions value={service} onChange={setService} />
+              <InstapayInfo />
             </div>
 
             {/* Custom Order Summary (right) */}
@@ -188,7 +186,6 @@ export default function CustomOrderPayment() {
         {order && !alreadyPaid && step === 2 && (
           <PaymentConfirmStep
             amount={downpayment}
-            service={service}
             onSubmit={handleSubmit}
             onBack={() => goToStep(1)}
             error={error}

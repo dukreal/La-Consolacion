@@ -59,7 +59,7 @@ json_response([
         'date_completed'   => $order['date_completed'],
         'status'           => $status,
         'reference_number' => $order['reference_number'],
-        'service'          => $order['service'],
+        'service'          => payment_service_name($order['service']),
         'fulfillment'      => $order['fulfillment'],                  // 'pickup' or 'delivery'
         'delivery'         => address_from_row($order, 'delivery_'), // where a delivery order goes, or null
         'courier'          => $order['courier'],         // once a delivery order ships, else null
@@ -82,7 +82,7 @@ json_response([
     ], $items),
     'payment' => [
         'reference_number' => $order['reference_number'],
-        'service'          => $order['service'],
+        'service'          => payment_service_name($order['service']),
         'amount'           => $order['amount'],
         'uploaded_at'      => $order['uploaded_at'],
         'mobile'           => $order['mobile'],

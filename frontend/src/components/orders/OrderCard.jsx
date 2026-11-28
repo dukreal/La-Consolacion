@@ -50,7 +50,7 @@ export default function OrderCard({ order, onViewDetails, onCancel }) {
           <div className="mb-3 p-2 bg-gray-50 rounded-lg">
             <div className="flex items-center justify-between gap-3 text-xs text-gray-600">
               <span>Paid with {methodLabel(String(order.service || '').toUpperCase())}</span>
-              {/* The e-wallet's own number, not the order's reference above */}
+              {/* The payment's own reference number, not the order's reference above */}
               <span className="min-w-0 truncate">Transaction no. {order.reference_number}</span>
             </div>
             {/* Paid with a 30% downpayment: what was paid, and the balance to pay at pickup (or that it is paid) */}

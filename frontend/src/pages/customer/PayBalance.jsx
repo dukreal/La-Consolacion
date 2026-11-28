@@ -1,7 +1,7 @@
 import { useEffect, useState } from 'react'
 import { Link, useNavigate, useParams } from 'react-router-dom'
 import LoadingOverlay from '../../components/common/LoadingOverlay'
-import EwalletOptions from '../../components/payment/EwalletOptions'
+import InstapayInfo from '../../components/payment/InstapayInfo'
 import PaymentConfirmStep from '../../components/payment/PaymentConfirmStep'
 import PaymentHeader from '../../components/payment/PaymentHeader'
 import { getOrderDetails, payBalance } from '../../services/orderService'
@@ -14,8 +14,8 @@ const sleep = (ms) => new Promise((resolve) => setTimeout(resolve, ms))
 const ORDERS = '/profile?tab=orders'
 
 // "Pay for Your Order" (/orders/LCJ-0951/pay): a delivery order that is ready to ship, paid online.
-// The customer pays what is left (the balance plus the shipping fee the shop set) with GCash, PayMaya or GoTyme.
-// Same two steps as the Custom Order Payment page: 1. the e-wallet and the order summary, 2. the QR code and the
+// The customer pays what is left (the balance plus the shipping fee the shop set) by scanning the shop's InstaPay QR.
+// Same two steps as the Custom Order Payment page: 1. the order summary, 2. the QR code and the
 // payment form (PaymentConfirmStep). The shop then checks the payment and ships the order.
 // Linked from the "ready to ship" email and from the Pay button in Order Details.
 export default function PayBalance() {
@@ -24,7 +24,6 @@ export default function PayBalance() {
   const navigate = useNavigate()
 
   const [state, setState] = useState(orderId ? { status: 'loading' } : { status: 'error', message: 'We could not find this order.' })
-  const [service, setService] = useState('gcash')
   const [step, setStep] = useState(1)
   const [submitting, setSubmitting] = useState(false)
   const [error, setError] = useState('')
@@ -58,7 +57,7 @@ export default function PayBalance() {
     setSubmitting(true)
     try {
       // Same 3-second loading screen as the other payment pages
-      const [res] = await Promise.all([payBalance({ orderId, service, mobile, reference, screenshot }), sleep(3000)])
+      const [res] = await Promise.all([payBalance({ orderId, mobile, reference, screenshot }), sleep(3000)])
       if (!res.success) {
         setError(res.error || 'Payment failed. Please try again.')
         setSubmitting(false)
@@ -87,7 +86,7 @@ export default function PayBalance() {
           title="Pay for Your Order"
           subtitle={data ? `Balance and shipping fee for ${orderRef(data.order.id)}` : 'Balance and shipping fee'}
           step={ready ? step : undefined}
-          steps={['E-wallet', 'Pay & confirm']}
+          steps={['Review', 'Pay & confirm']}
         />
 
         {state.status === 'loading' && <p className="pay-muted">Loading...</p>}
@@ -104,9 +103,9 @@ export default function PayBalance() {
 
         {ready && step === 1 && (
           <div id="step1" className="grid grid-cols-1 lg:grid-cols-5 gap-5 sm:gap-6 items-start">
-            {/* The e-wallet (left) */}
+            {/* How they will pay (left) */}
             <div className="lg:col-span-2">
-              <EwalletOptions value={service} onChange={setService} />
+              <InstapayInfo />
             </div>
 
             {/* Order Summary (right) */}
@@ -176,7 +175,7 @@ export default function PayBalance() {
         )}
 
         {ready && step === 2 && (
-          <PaymentConfirmStep amount={amount.toFixed(2)} service={service} onSubmit={handleSubmit} onBack={() => goToStep(1)} error={error} submitting={submitting} />
+          <PaymentConfirmStep amount={amount.toFixed(2)} onSubmit={handleSubmit} onBack={() => goToStep(1)} error={error} submitting={submitting} />
         )}
       </div>
 
